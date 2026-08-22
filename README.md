@@ -65,13 +65,24 @@ npm run migrate
 - `GET|PUT /api/v1/athlete/profile`
 - `GET|POST /api/v1/goals`
 - `GET /api/v1/context`
+- `PUT /api/v1/planning/active` — idempotent, version-aware active season/meso/micro/session import
 - `GET /api/v1/training/today`
+- `GET /api/v1/training/week?from=YYYY-MM-DD`
 - `GET /api/v1/checkins/today`
 - `POST /api/v1/checkins`
 - `POST /api/v1/sessions/:id/complete`
 - `POST /api/v1/adaptation/evaluate`
+- `POST /api/v1/adaptation/{id}/apply` — explicitly apply a supported version-bound next-session revision
 - `GET /api/v1/adaptation/latest`
 - `GET /api/v1/adaptation/history`
+
+## Plan lifecycle
+
+The app accepts a versioned active planning package through `PUT /api/v1/planning/active`; see `examples/plan-package.example.json`. IDs and versions are preserved so stale imports cannot silently overwrite newer local session revisions or finalized sessions.
+
+An external Skillz decision may propose a `revised_plan` command for a `planned_session`. The proposal is stored first and only changes the plan through the explicit `/api/v1/adaptation/{id}/apply` endpoint. Applying it checks athlete ownership and `expected_version`, increments the session version, writes `training_plan_revisions`, marks the decision as applied and records an audit event.
+
+Database migrations are ordered and hash-tracked in `schema_migrations`; editing an already applied migration causes deployment to fail instead of silently drifting the schema.
 
 ## Safety and privacy
 

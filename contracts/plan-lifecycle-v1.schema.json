@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GithubLarsKomo/sport-athlete-management-app/contracts/plan-lifecycle-v1.schema.json",
+  "title": "Sport Athlete Management product plan lifecycle v1",
+  "$defs": {
+    "planPackage": {
+      "type": "object",
+      "required": ["schema_version", "season", "mesocycle", "microcycle", "sessions"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "season": {"type": "object", "required": ["id","version","name","start_date","end_date","status"]},
+        "mesocycle": {"type": "object", "required": ["id","version","start_date","end_date","primary_adaptation"]},
+        "microcycle": {"type": "object", "required": ["id","version","start_date","end_date","focus"]},
+        "sessions": {"type": "array", "items": {"type": "object", "required": ["id","version","local_date","planned_start","session_type","objective","planned_duration_min"]}}
+      }
+    },
+    "sessionRevision": {
+      "type": "object",
+      "required": ["entity_type", "entity_id", "expected_version", "patch"],
+      "properties": {
+        "entity_type": {"const": "planned_session"},
+        "entity_id": {"type": "string", "minLength": 1},
+        "expected_version": {"type": "integer", "minimum": 1},
+        "patch": {"type": "object", "minProperties": 1}
+      }
+    }
+  }
+}

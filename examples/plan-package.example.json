@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "season": {
+    "id": "season-2026",
+    "version": 1,
+    "name": "Season 2026",
+    "start_date": "2026-08-01",
+    "end_date": "2026-10-31",
+    "status": "active"
+  },
+  "mesocycle": {
+    "id": "meso-2026-08",
+    "version": 1,
+    "start_date": "2026-08-10",
+    "end_date": "2026-09-06",
+    "primary_adaptation": "sport-specific power"
+  },
+  "microcycle": {
+    "id": "micro-2026-w34",
+    "version": 1,
+    "start_date": "2026-08-17",
+    "end_date": "2026-08-23",
+    "focus": "quality and recovery"
+  },
+  "sessions": [
+    {
+      "id": "session-2026-08-22-pm",
+      "version": 1,
+      "local_date": "2026-08-22",
+      "planned_start": "2026-08-22T17:00:00+02:00",
+      "session_type": "sport",
+      "objective": "High-quality sport-specific session",
+      "planned_duration_min": 60,
+      "planned_rpe": 6,
+      "status": "planned"
+    }
+  ]
+}

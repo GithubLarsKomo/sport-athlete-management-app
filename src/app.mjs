@@ -6,6 +6,7 @@ import { resolveIdentity } from './auth.mjs';
 import { readJson, sendJson, sendText } from './http.mjs';
 import { commonEnvelope, validateCheckin, validateCompletedSession } from './domain/contracts.mjs';
 import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
+import { validatePlanPackage, validateSessionRevisionCommand } from './domain/planning.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
@@ -111,6 +112,18 @@ export function createApplication({ config, repository }) {
         return sendJson(res, 201, { goal: await repository.createGoal(athleteId, body, identity.subject) });
       }
 
+      if (req.method === 'PUT' && url.pathname === '/api/v1/planning/active') {
+        const body = await readJson(req, 512 * 1024);
+        const errors = validatePlanPackage(body);
+        if (errors.length) return sendJson(res, 400, { error: 'invalid_plan_package', details: errors });
+        return sendJson(res, 200, { applied: await repository.applyPlanPackage(athleteId, body, identity.subject) });
+      }
+      if (req.method === 'GET' && url.pathname === '/api/v1/training/week') {
+        const from = url.searchParams.get('from') || localDate();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return sendJson(res, 400, { error: 'invalid_from_date' });
+        return sendJson(res, 200, { sessions: await repository.getWeekSessions(athleteId, from) });
+      }
+
       if (req.method === 'GET' && url.pathname === '/api/v1/context') return sendJson(res, 200, await repository.getContext(athleteId));
       if (req.method === 'GET' && url.pathname === '/api/v1/training/today') return sendJson(res, 200, { session: await repository.getTodaySession(athleteId) });
       if (req.method === 'GET' && url.pathname === '/api/v1/checkins/today') return sendJson(res, 200, { checkin: await repository.getTodayCheckin(athleteId) });
@@ -144,12 +157,15 @@ export function createApplication({ config, repository }) {
       }
 
       if (req.method === 'POST' && url.pathname === '/api/v1/adaptation/evaluate') {
+        const latestCompleted = await repository.getLatestCompletedSession(athleteId);
+        const activePlanned = await repository.getTodaySession(athleteId);
+        const completedPrescription = !activePlanned && latestCompleted?.planned_session_id ? await repository.getPlannedSessionById(athleteId, latestCompleted.planned_session_id) : null;
         const snapshot = {
           profile: await repository.getProfile(athleteId),
           context: await repository.getContext(athleteId),
-          planned_session: await repository.getTodaySession(athleteId),
+          planned_session: activePlanned || completedPrescription,
           daily_checkin: await repository.getTodayCheckin(athleteId),
-          latest_completed_session: await repository.getLatestCompletedSession(athleteId)
+          latest_completed_session: latestCompleted
         };
         let decision;
         try {
@@ -160,6 +176,17 @@ export function createApplication({ config, repository }) {
           decision.trigger = 'adaptation_service_failure';
         }
         return sendJson(res, 201, { decision: await repository.saveAdaptation(athleteId, decision, identity.subject) });
+      }
+
+      const applyMatch = url.pathname.match(/^\/api\/v1\/adaptation\/([^/]+)\/apply$/);
+      if (req.method === 'POST' && applyMatch) {
+        const record = await repository.getAdaptationById(athleteId, applyMatch[1]);
+        if (!record) return sendJson(res, 404, { error: 'adaptation_decision_not_found' });
+        if (record.applied_at) return sendJson(res, 409, { error: 'adaptation_decision_already_applied' });
+        const command = record.decision.revised_plan;
+        const errors = validateSessionRevisionCommand(command);
+        if (errors.length) return sendJson(res, 422, { error: 'unsupported_plan_revision', details: errors });
+        return sendJson(res, 200, { revision: await repository.applySessionRevision(athleteId, applyMatch[1], command, identity.subject) });
       }
 
       if (req.method === 'GET' && url.pathname === '/api/v1/adaptation/latest') return sendJson(res, 200, { decision: await repository.getLatestAdaptation(athleteId) });
