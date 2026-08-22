@@ -4,7 +4,7 @@ Small Node.js WebApp for the operational side of the Sport Athlete Management sy
 
 ## Architectural boundary
 
-`GithubLarsKomo/skillz` owns sport-science reasoning, versioned contracts, safety rules and evaluation. This repository owns UI, authentication, API, MariaDB persistence, audit history and deployment. Canonical P0 and P1 contracts are copied into `contracts/` with provenance in `contracts/PROVENANCE.md`.
+`GithubLarsKomo/skillz` owns sport-science reasoning, versioned contracts, safety rules and evaluation. This repository owns UI, authentication, API, **PostgreSQL persistence**, audit history and deployment. Canonical P0 and P1 contracts are copied into `contracts/` with provenance in `contracts/PROVENANCE.md`.
 
 The WebApp does **not** reimplement the sport-training adaptation engine or the P1 specialist skills. `POST /api/v1/adaptation/evaluate` sends the current input snapshot to `SKILLZ_ADAPTATION_URL` when configured. Without that service, the application records a conservative `YELLOW / review_required` decision and makes no automatic plan change.
 
@@ -39,9 +39,27 @@ P1 writes use a distinct service-to-service endpoint and secret. Set `P1_INGEST_
 
 The internal ingest route must be reachable only through the private application/service network where possible. It is not a browser authoring API. Operational details and verification steps are in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
 
+## Database platform
+
+Hosted and local persistent deployments use PostgreSQL 18.x. The baseline documented for the shared Hetzner/Coolify platform is PostgreSQL 18.6.
+
+The canonical application connection contract is:
+
+```text
+DATABASE_URL=postgresql://<dedicated-user>:<secret>@<private-postgres-host>:5432/sport_athlete
+DB_POOL_MAX=5
+```
+
+Production PostgreSQL is private infrastructure. Do not expose port 5432 publicly; external administration is through SSH/private-network paths or an SSH tunnel. The app owns the `sport_athlete` database and does not read sibling application databases.
+
+The active PostgreSQL migrations live under `migrations/postgresql/`. The older SQL files directly under `migrations/` are frozen MariaDB migration provenance and are not executed by the PostgreSQL migration runner.
+
 ## Local start
 
+A quick local PostgreSQL stack is provided by `docker-compose.example.yml`.
+
 ```bash
+docker compose -f docker-compose.example.yml up -d db
 cp .env.example .env
 npm ci
 npm run migrate
@@ -53,9 +71,11 @@ Open `http://localhost:3000`.
 
 ## Production on Hetzner / Coolify
 
-Use the `Dockerfile`, provision MariaDB 11.8 and put the application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, `DB_PASSWORD`, or a proxy shared secret of at least 32 characters is missing. If P1 ingest is enabled, its separate secret is also required to contain at least 32 characters.
+Use the `Dockerfile`, attach the application to the private PostgreSQL 18.x service and put the application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, a credentialed PostgreSQL `DATABASE_URL`, or a proxy shared secret of at least 32 characters is missing. If P1 ingest is enabled, its separate secret is also required to contain at least 32 characters.
 
 The base deployment runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md); the P1 service boundary is in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
+
+Existing MariaDB installations must use the controlled cutover in [`deploy/MARIADB-TO-POSTGRESQL.md`](deploy/MARIADB-TO-POSTGRESQL.md). There is no dual-write compatibility mode.
 
 Before routing traffic to a new release:
 
@@ -97,7 +117,7 @@ An external Skillz decision may propose a `revised_plan` command for a `planned_
 
 Current P1 specialist artifacts are also included in the adaptation input snapshot when available. They provide specialist context; they do not bypass the central adaptation engine or cause automatic plan mutation by themselves.
 
-Database migrations are ordered and hash-tracked in `schema_migrations`; editing an already applied migration causes deployment to fail instead of silently drifting the schema.
+Database migrations are ordered, transactional where supported and SHA-256 tracked in `schema_migrations`; editing an already applied PostgreSQL migration causes deployment to fail instead of silently drifting the schema. A PostgreSQL advisory transaction lock prevents concurrent migration runners from racing each other.
 
 ## Safety and privacy
 
@@ -120,6 +140,7 @@ npm run check
 npm run migrate
 npm run ready
 npm run test:integration
+npm run reconcile
 ```
 
-CI repeats these checks against MariaDB 11.8 and also builds the production Docker image.
+CI repeats the tests and migration lifecycle against PostgreSQL 18.6 and builds the production Docker image.
