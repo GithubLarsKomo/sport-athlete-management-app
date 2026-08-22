@@ -17,6 +17,6 @@
     "node": ">=22 <23"
   },
   "dependencies": {
-    "mariadb": "^3.4.5"
+    "postgres": "^3.4.9"
   }
 }
