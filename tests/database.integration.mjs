@@ -16,7 +16,7 @@ const plusDate = days => { const d=new Date(); d.setUTCDate(d.getUTCDate()+days)
 
 test.after(async () => { await db.close(); });
 
-test('MariaDB persistence closes plan -> session -> revision lifecycle safely', async () => {
+test('PostgreSQL persistence closes plan -> session -> revision lifecycle safely', async () => {
   await repository.ensureAthlete({ subject: athleteId, athleteId, email: null, displayName: 'Integration Athlete' });
   const baseProfile = {
     ...commonEnvelope(athleteId), profile_version: 1, valid_from: new Date().toISOString(), sport: 'rowing', discipline: '1x', age_band: '50+', training_age_years: 20, availability: { days: 6 }
