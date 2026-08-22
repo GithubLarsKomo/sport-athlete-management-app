@@ -55,7 +55,9 @@ Maintains deployment, trusted authentication, migrations, backup and privacy con
 
 ## Shared platform boundary
 
-Hosted deployments use the shared private MariaDB 11.8 infrastructure defined in `docs/shared-db-infrastructure.md`. The Sport app owns its own `sport_athlete` database and never reads the Masters Diagnostics schema directly.
+The hosted platform standard is the private PostgreSQL 18.x infrastructure defined in `docs/shared-db-infrastructure.md`. The current MariaDB 11.8 persistence layer is an explicitly transitional implementation and remains in service only until the dedicated PostgreSQL provider migration passes integration, data-reconciliation and restore gates.
+
+At convergence, the Sport app owns a dedicated `sport_athlete` PostgreSQL database and least-privilege runtime role and never reads Masters Diagnostics, Grilling or other product databases directly.
 
 ## Frontend authority
 
