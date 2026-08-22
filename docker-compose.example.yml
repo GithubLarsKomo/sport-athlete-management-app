@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: sport_athlete
       POSTGRES_PASSWORD: change-me
     volumes:
-      - sport-athlete-db:/var/lib/postgresql/data
+      - sport-athlete-db:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sport_athlete -d sport_athlete"]
       interval: 10s
