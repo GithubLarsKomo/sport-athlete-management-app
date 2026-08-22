@@ -29,7 +29,7 @@ master-diagnostics     sport app            grilling 2.0 / future apps
                                |
                                v
                          PostgreSQL 18.x
-                         - master_diagnostics
+                         - master_diagnostics (future)
                          - sport_athlete
                          - grilling
                          - <future app database>
@@ -53,7 +53,7 @@ External administration
 
 ## Canonical application connection contract
 
-The target contract for PostgreSQL applications is:
+PostgreSQL applications use:
 
 ```dotenv
 DATABASE_URL=postgresql://<app_user>:<runtime_secret>@postgres:5432/<app_database>
@@ -71,12 +71,12 @@ Recommended logical names:
 | grilling 2.0 | `grilling` | `grilling_app` |
 | future application | dedicated database | dedicated `<app>_app` role |
 
-## Current provider matrix and migration policy
+## Provider matrix
 
-| Application | Current persistence | Target | Policy |
+| Application | Runtime persistence | Target | Policy |
 |---|---|---|---|
-| master-diagnostics | libSQL/SQLite | PostgreSQL 18.x | **Retain libSQL for now.** Migrate only after the existing backup, restore, privacy and offline contracts have PostgreSQL-equivalent evidence. |
-| sport-athlete-management-app | MariaDB 11.8 | PostgreSQL 18.x | MariaDB is transitional. Migrate in a dedicated provider PR with PostgreSQL integration tests and data reconciliation. |
+| master-diagnostics | libSQL/SQLite | PostgreSQL 18.x | **Retain libSQL for now.** Migrate only after existing backup, restore, privacy and offline contracts have PostgreSQL-equivalent evidence. |
+| sport-athlete-management-app | PostgreSQL 18.x | PostgreSQL 18.x | **Runtime converged.** Existing MariaDB production data, if any, still requires the controlled cutover/reconciliation runbook before production switch. |
 | grilling | versioned JSON/files today | PostgreSQL 18.x for Grilling 2.0 persistence | The first DB-backed release starts directly on PostgreSQL; do not introduce a temporary MariaDB layer. |
 | future apps | n/a | PostgreSQL 18.x | PostgreSQL is the default from the first persistent release. |
 
@@ -93,7 +93,22 @@ Provider-specific features that make an already planned migration harder should 
 7. Destructive changes require a verified backup and an explicit rollback/restore path.
 8. PostgreSQL migrations should be transactional where PostgreSQL permits it.
 9. Application timestamps use timezone-aware PostgreSQL types where an instant is represented; local calendar dates remain `date` values.
-10. Structured mutable payloads should prefer `jsonb` over serialized text when queryability or validation benefits from native JSON.
+10. Structured payloads prefer `jsonb` where native JSON storage improves validation/queryability.
+
+## Sport app PostgreSQL implementation
+
+The Sport runtime now satisfies the provider implementation gates:
+
+- Postgres.js is the runtime driver; MariaDB is not in the application runtime dependency path.
+- Production uses `DATABASE_URL` and `DB_POOL_MAX`.
+- PostgreSQL DDL is repository-owned in `migrations/postgresql/` and checksum-protected by `schema_migrations`.
+- Legacy MariaDB migrations remain frozen as provenance and are not interpreted as PostgreSQL migrations.
+- MariaDB upserts and quoting were replaced by PostgreSQL `ON CONFLICT` and PostgreSQL literals.
+- PostgreSQL-native `jsonb`, `timestamptz`, identity columns and `CHECK` constraints replace MariaDB-specific JSON/text, `DATETIME`, `AUTO_INCREMENT` and `ENUM` behavior.
+- Migration execution is transactional and protected against concurrent runners with a PostgreSQL advisory transaction lock.
+- CI executes migrations, readiness and integration tests against PostgreSQL 18.6.
+
+The **production data cutover** is a separate operational gate. It is complete only after the process in `deploy/MARIADB-TO-POSTGRESQL.md` provides source backup evidence, data copy, reconciliation, first PostgreSQL backup/restore evidence and authenticated smoke tests. No dual-write bridge is provided.
 
 ## Extensions and analytical workloads
 
@@ -102,6 +117,8 @@ PostgreSQL extensions are enabled per need, not globally by default.
 - `pgcrypto` may be enabled where database-side UUID/crypto functions are justified.
 - `vector`/pgvector may be enabled for applications that genuinely need vector similarity search.
 - An extension must not create an implicit dependency for unrelated application databases.
+
+The Sport app currently requires no optional PostgreSQL extension.
 
 ## Backup and restore baseline
 
@@ -118,23 +135,9 @@ Minimum controls:
 - no reliance on an application container filesystem as the only backup location;
 - point-in-time recovery may be added at the PostgreSQL service layer and must not replace per-application restore verification.
 
-## Migration gates
+## Masters Diagnostics migration gate
 
-### Sport app: MariaDB -> PostgreSQL
-
-The provider switch is complete only when:
-
-1. persistence code uses a PostgreSQL driver;
-2. MariaDB-specific SQL (`ON DUPLICATE KEY`, `ENUM`, `DATETIME(6)`, `AUTO_INCREMENT`, `FOR UPDATE` assumptions) is ported deliberately;
-3. migrations create a clean PostgreSQL schema and remain checksum-protected;
-4. CI runs the full integration suite against PostgreSQL 18;
-5. representative MariaDB data is exported, imported and reconciled record-for-record for required entities;
-6. backup and restore of `sport_athlete` is demonstrated;
-7. production configuration uses the canonical `DATABASE_URL` contract.
-
-### Masters Diagnostics: libSQL -> PostgreSQL
-
-The provider switch is intentionally later. It is complete only when:
+The provider switch for Masters Diagnostics remains intentionally later. It is complete only when:
 
 1. the Drizzle schema/provider is ported without changing domain semantics;
 2. DB tests run against PostgreSQL rather than mocks;
@@ -144,7 +147,7 @@ The provider switch is intentionally later. It is complete only when:
 6. representative libSQL data is migrated and reconciled;
 7. libSQL hosted support is removed only after all acceptance gates pass.
 
-### Grilling 2.0
+## Grilling 2.0
 
 The first persistent version uses PostgreSQL directly and must include:
 
