@@ -15,3 +15,5 @@ CREATE TABLE IF NOT EXISTS specialist_reasoning_runs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ALTER TABLE specialist_artifacts ADD COLUMN IF NOT EXISTS reasoning_run_id CHAR(36) NULL AFTER created_by_subject;
 ALTER TABLE specialist_artifacts ADD COLUMN IF NOT EXISTS provenance_json LONGTEXT NULL AFTER reasoning_run_id;
+ALTER TABLE specialist_artifacts ADD INDEX idx_specialist_artifact_reasoning_run (reasoning_run_id);
+ALTER TABLE specialist_artifacts ADD CONSTRAINT fk_specialist_artifact_reasoning_run FOREIGN KEY (reasoning_run_id) REFERENCES specialist_reasoning_runs(id) ON DELETE SET NULL;
