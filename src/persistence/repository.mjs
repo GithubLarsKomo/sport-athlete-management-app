@@ -49,7 +49,9 @@ export function createRepository(db) {
 
     async putProfile(athleteId, payload, actor) {
       return db.transaction(async conn => {
-        const rows = await conn.query('SELECT COALESCE(MAX(profile_version),0) AS version FROM athlete_profiles WHERE athlete_id=? FOR UPDATE', [athleteId]);
+        const athlete = await conn.query('SELECT id FROM athletes WHERE id=? FOR UPDATE', [athleteId]);
+        if (!athlete[0]) throw httpError('athlete_not_found', 404);
+        const rows = await conn.query('SELECT COALESCE(MAX(profile_version),0) AS version FROM athlete_profiles WHERE athlete_id=?', [athleteId]);
         const version = Number(rows[0].version) + 1;
         payload.profile_version = version;
         payload.valid_from = new Date().toISOString();
