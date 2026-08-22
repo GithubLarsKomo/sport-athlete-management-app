@@ -12,7 +12,7 @@ Preferred production topology:
 Skillz reasoning service
   -> private Coolify network
   -> sport-athlete-management-app:3000
-  -> MariaDB 11.8 (private network only)
+  -> PostgreSQL 18.x / sport_athlete (private network only)
 ```
 
 Do not expose the internal P1 ingest route as a browser authoring surface. If the public reverse proxy can route by path, deny `/api/v1/internal/*` at the public edge and permit it only on the private service network. If path splitting is not practical, the independent service secret remains mandatory and the public proxy must not inject it.
@@ -26,7 +26,7 @@ P1_INGEST_SHARED_SECRET=<at least 32 random characters>
 P1_INGEST_SECRET_HEADER=x-sam-p1-ingest-secret
 ```
 
-Use a value distinct from `AUTH_PROXY_SHARED_SECRET`, database credentials and any Skillz adaptation bearer token. Leaving `P1_INGEST_SHARED_SECRET` blank disables P1 writes and causes the ingest endpoint to return `503 p1_ingest_disabled`.
+Use a value distinct from `AUTH_PROXY_SHARED_SECRET`, PostgreSQL credentials and any Skillz adaptation bearer token. Leaving `P1_INGEST_SHARED_SECRET` blank disables P1 writes and causes the ingest endpoint to return `503 p1_ingest_disabled`.
 
 ## Request contract
 
@@ -75,7 +75,7 @@ The artifact must additionally satisfy the required fields for its canonical P1 
 
 ## Persistence semantics
 
-For each `(athlete_id, artifact_type)` pair the app assigns an append-only `artifact_version` beginning at 1. It never updates an older P1 artifact in place. Every ingest also creates an `audit_log` event with actor `service:skillz`.
+For each `(athlete_id, artifact_type)` pair the app assigns an append-only `artifact_version` beginning at 1. It never updates an older P1 artifact in place. PostgreSQL stores the canonical payload as `jsonb`. Every ingest also creates an `audit_log` event with actor `service:skillz`.
 
 The version assigned by the product is an audit/persistence version. Domain versions inside a Skillz payload such as `plan_version` remain untouched and may have a different value.
 
@@ -99,7 +99,7 @@ Latest P1 specialist artifacts are included in the authoritative input snapshot 
 
 After `npm run migrate` and before real P1 data is retained, verify all of the following:
 
-- migration `003_specialist_artifacts.sql` is recorded in `schema_migrations`;
+- PostgreSQL migration `003_specialist_artifacts.sql` is recorded in `schema_migrations`;
 - app passes `npm run ready`;
 - blank P1 secret returns `503` on ingest;
 - wrong secret returns `401` before database persistence;
