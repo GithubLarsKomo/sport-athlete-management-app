@@ -24,6 +24,41 @@ function normalizeProvenance(raw, descriptor, runtime) {
   };
 }
 
+function currentArtifacts(snapshot, wantedTypes = []) {
+  const wanted = new Set(wantedTypes);
+  return (snapshot.specialist_artifacts || []).filter(item => wanted.has(item.artifact_type));
+}
+
+export function snapshotForSpecialist(type, snapshot) {
+  switch (type) {
+    case 'strength_power_plan':
+    case 'endurance_plan':
+    case 'testing_plan':
+      return { profile: snapshot.profile, context: snapshot.context, planned_session: snapshot.planned_session };
+    case 'recovery_state':
+      return { profile: snapshot.profile, context: snapshot.context, daily_checkin: snapshot.daily_checkin, latest_completed_session: snapshot.latest_completed_session };
+    case 'fueling_plan':
+    case 'energy_availability_risk':
+      return { profile: snapshot.profile, context: snapshot.context, planned_session: snapshot.planned_session, daily_checkin: snapshot.daily_checkin, latest_completed_session: snapshot.latest_completed_session };
+    case 'rehab_progression':
+      return { profile: snapshot.profile, context: snapshot.context, specialist_artifacts: currentArtifacts(snapshot, ['rehab_progression']) };
+    case 'return_after_illness_plan':
+      return { profile: snapshot.profile, daily_checkin: snapshot.daily_checkin, specialist_artifacts: currentArtifacts(snapshot, ['return_after_illness_plan']) };
+    case 'adaptation_analysis':
+      return { context: snapshot.context, daily_checkin: snapshot.daily_checkin, latest_completed_session: snapshot.latest_completed_session, specialist_artifacts: snapshot.specialist_artifacts || [] };
+    case 'performance_psychology_plan':
+      return { profile: snapshot.profile, context: snapshot.context, planned_session: snapshot.planned_session };
+    case 'mental_health_routing':
+      return { profile: snapshot.profile, daily_checkin: snapshot.daily_checkin };
+    case 'training_music_profile':
+      return { profile: snapshot.profile, planned_session: snapshot.planned_session };
+    case 'environment_adjustment':
+      return { profile: snapshot.profile, context: snapshot.context, planned_session: snapshot.planned_session, specialist_artifacts: currentArtifacts(snapshot, ['recovery_state']) };
+    default:
+      return {};
+  }
+}
+
 async function requestArtifact({ runtime, descriptor, athleteId, trigger, snapshot, fetchImpl }) {
   const headers = { 'content-type': 'application/json' };
   if (runtime.token) headers.authorization = `Bearer ${runtime.token}`;
@@ -76,7 +111,14 @@ export async function produceSpecialistArtifacts({
   for (const type of route.types) {
     const descriptor = specialistDescriptor(type);
     try {
-      const response = await requestArtifact({ runtime, descriptor, athleteId, trigger, snapshot, fetchImpl });
+      const response = await requestArtifact({
+        runtime,
+        descriptor,
+        athleteId,
+        trigger,
+        snapshot: snapshotForSpecialist(type, snapshot),
+        fetchImpl
+      });
       const normalized = normalizeAnySpecialistArtifact(type, athleteId, response.artifact);
       if (normalized.errors.length) {
         errors.push({ type, error: 'invalid_specialist_artifact', details: normalized.errors });
