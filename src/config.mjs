@@ -56,6 +56,10 @@ export function loadConfig() {
       adaptationUrl: env('SKILLZ_ADAPTATION_URL', ''),
       token: env('SKILLZ_ADAPTATION_TOKEN', ''),
       timeoutMs: Number(env('SKILLZ_ADAPTATION_TIMEOUT_MS', '5000'))
+    },
+    p1: {
+      ingestSecret: env('P1_INGEST_SHARED_SECRET', ''),
+      ingestHeader: env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase()
     }
   };
 
@@ -64,6 +68,8 @@ export function loadConfig() {
   if (!Number.isInteger(config.db.connectionLimit) || config.db.connectionLimit < 1 || config.db.connectionLimit > 50) throw new Error('DB_CONNECTION_LIMIT must be 1..50');
   if (!['dev', 'proxy'].includes(authMode)) throw new Error('AUTH_MODE must be dev or proxy');
   if (!Number.isInteger(config.skillz.timeoutMs) || config.skillz.timeoutMs < 250 || config.skillz.timeoutMs > 30000) throw new Error('SKILLZ_ADAPTATION_TIMEOUT_MS must be 250..30000');
+  if (config.p1.ingestSecret && config.p1.ingestSecret.length < 32) throw new Error('P1_INGEST_SHARED_SECRET must contain at least 32 characters when enabled');
+  if (!/^[a-z0-9-]+$/.test(config.p1.ingestHeader)) throw new Error('P1_INGEST_SECRET_HEADER must be a valid lowercase HTTP header name');
 
   if (nodeEnv === 'production') {
     config.publicOrigin = validateProductionOrigin(config.publicOrigin);
