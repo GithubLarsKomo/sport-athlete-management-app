@@ -37,7 +37,7 @@ P1 artifacts are append-only in the product database. The application assigns a 
 
 P1 writes use a distinct service-to-service endpoint and secret. Set `P1_INGEST_SHARED_SECRET` to at least 32 random characters to enable it; leaving it blank disables P1 ingest. The Skillz service must send the configured `P1_INGEST_SECRET_HEADER` and a body containing the target `athlete_id` plus the canonical `artifact`. The app overwrites any athlete ID inside the payload with the authenticated target, validates the P1 contract subset, appends a new version and writes an audit event.
 
-The internal ingest route must be reachable only through the private application/service network where possible. It is not a browser authoring API.
+The internal ingest route must be reachable only through the private application/service network where possible. It is not a browser authoring API. Operational details and verification steps are in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
 
 ## Local start
 
@@ -55,7 +55,7 @@ Open `http://localhost:3000`.
 
 Use the `Dockerfile`, provision MariaDB 11.8 and put the application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, `DB_PASSWORD`, or a proxy shared secret of at least 32 characters is missing. If P1 ingest is enabled, its separate secret is also required to contain at least 32 characters.
 
-The detailed runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md).
+The base deployment runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md); the P1 service boundary is in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
 
 Before routing traffic to a new release:
 
