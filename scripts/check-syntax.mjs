@@ -2,7 +2,7 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const roots = ['server.mjs', 'src', 'scripts', 'site/app/app.js'];
+const roots = ['server.mjs', 'src', 'scripts', 'site/app'];
 const files = [];
 async function walk(path) {
   if (path.endsWith('.mjs') || path.endsWith('.js')) { files.push(path); return; }

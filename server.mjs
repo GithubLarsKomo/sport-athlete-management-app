@@ -3,10 +3,11 @@ import { createApplication } from './src/app.mjs';
 import { loadConfig } from './src/config.mjs';
 import { createDatabase } from './src/persistence/db.mjs';
 import { createRepository } from './src/persistence/repository.mjs';
+import { createP1Repository } from './src/persistence/p1-repository.mjs';
 
 const config = loadConfig();
 const db = createDatabase(config);
-const repository = createRepository(db);
+const repository = Object.assign(createRepository(db), createP1Repository(db));
 const handler = createApplication({ config, repository });
 
 const server = createServer(handler);

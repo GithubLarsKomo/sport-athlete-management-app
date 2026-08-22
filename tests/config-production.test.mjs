@@ -34,3 +34,9 @@ test('production configuration rejects insecure origins and weak proxy secrets',
   assert.notEqual(runConfig({ PUBLIC_ORIGIN: 'http://training.example.com' }).status, 0);
   assert.notEqual(runConfig({ AUTH_PROXY_SHARED_SECRET: 'too-short' }).status, 0);
 });
+
+test('P1 ingest may remain disabled but rejects weak secrets when enabled', () => {
+  assert.equal(runConfig({ P1_INGEST_SHARED_SECRET: '' }).status, 0);
+  assert.notEqual(runConfig({ P1_INGEST_SHARED_SECRET: 'too-short' }).status, 0);
+  assert.equal(runConfig({ P1_INGEST_SHARED_SECRET: 'abcdef0123456789abcdef0123456789' }).status, 0);
+});

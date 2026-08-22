@@ -87,6 +87,14 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .mini-state.completed,.mini-state.applied{background:#dff4e7;color:#175b34}
 .mini-state.cancelled{background:#ececec;color:#666}
 .empty-week{grid-column:1/-1}
+.specialist-card{margin-bottom:20px;background:linear-gradient(135deg,#fff 0%,#f7faf9 100%)}
+.specialist-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+.specialist-tile{border:1px solid #dfe7e3;border-radius:16px;padding:15px;background:#fff;min-height:138px}
+.specialist-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.specialist-tile p{margin:.65rem 0 .35rem;font-size:.88rem}
+.specialist-meta{color:#66767d;font-size:.75rem!important}
+.safety-flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.safety-flags span{font-size:.68rem;font-weight:800;border-radius:999px;padding:.2rem .45rem;background:#fff2c7;color:#705500}
 .decision{border-radius:16px;background:#f3f6f5;padding:18px}
 .decision strong{display:block;font-size:1.15rem;margin-bottom:6px;text-transform:capitalize}
 .adaptation-card{margin-bottom:20px}
@@ -104,14 +112,15 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .message.error{color:#9a2323}
 @media(max-width:980px){
   .week-sessions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .specialist-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:760px){
   .topbar{padding:20px}.identity{display:none}.identity-wrap{justify-items:end}
   .shell{padding:18px 12px 44px}.grid.two{grid-template-columns:1fr}.hero{align-items:flex-start}
   .form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.card{padding:18px}
   .week-head{align-items:flex-start;flex-direction:column}.week-controls{width:100%}.week-controls .secondary:nth-child(2){flex:1}
-  .week-sessions{grid-template-columns:1fr}
-  .session-tile{min-height:auto}
+  .week-sessions,.specialist-grid{grid-template-columns:1fr}
+  .session-tile{min-height:auto}.specialist-tile{min-height:auto}
   .history-item{grid-template-columns:76px 70px 1fr}.history-item .mini-state{grid-column:3}
   .decision-actions{justify-content:stretch}.decision-actions .primary{width:100%}
 }
