@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS specialist_artifacts (
   id VARCHAR(36) PRIMARY KEY,
-  athlete_id VARCHAR(191) NOT NULL,
+  athlete_id VARCHAR(64) NOT NULL,
   artifact_type VARCHAR(64) NOT NULL,
   artifact_version INTEGER NOT NULL,
   generated_at TIMESTAMPTZ NOT NULL,
