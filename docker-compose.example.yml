@@ -1,15 +1,14 @@
 services:
   db:
-    image: mariadb:11.8
+    image: postgres:18.6-alpine
     environment:
-      MARIADB_DATABASE: sport_athlete
-      MARIADB_USER: sport_athlete
-      MARIADB_PASSWORD: change-me
-      MARIADB_ROOT_PASSWORD: change-root-too
+      POSTGRES_DB: sport_athlete
+      POSTGRES_USER: sport_athlete
+      POSTGRES_PASSWORD: change-me
     volumes:
-      - sport-athlete-db:/var/lib/mysql
+      - sport-athlete-db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD-SHELL", "pg_isready -U sport_athlete -d sport_athlete"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -20,11 +19,8 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_NAME: sport_athlete
-      DB_USER: sport_athlete
-      DB_PASSWORD: change-me
+      DATABASE_URL: postgresql://sport_athlete:change-me@db:5432/sport_athlete
+      DB_POOL_MAX: 5
       AUTH_MODE: dev
       DEV_USER_ID: demo-athlete
       DEV_USER_NAME: Demo Athlete
