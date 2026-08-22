@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Training Control</title>
+  <link rel="stylesheet" href="/app/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">SPORT ATHLETE MANAGEMENT</p>
+      <h1>Training Control</h1>
+    </div>
+    <div id="identity" class="identity">Lade Profil …</div>
+  </header>
+
+  <main class="shell">
+    <section class="hero card">
+      <div>
+        <p class="eyebrow">HEUTE</p>
+        <h2 id="sessionTitle">Training wird geladen</h2>
+        <p id="sessionMeta" class="muted"></p>
+      </div>
+      <div id="statusBadge" class="status neutral">Kein Entscheid</div>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-head"><div><p class="eyebrow">MORNING CHECK</p><h2>Wie ist der Start?</h2></div><span class="pill">20–40 s</span></div>
+        <form id="checkinForm" class="form-grid">
+          <label>Schlafdauer <input name="sleep_duration_min" type="number" min="0" step="15" placeholder="Minuten"></label>
+          <label>Schlafqualität <select name="sleep_quality_1_5" required><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label>Müdigkeit <select name="fatigue_1_5" required><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label>Muskelkater <select name="soreness_1_5" required><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label>Stress <select name="stress_1_5" required><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label>Motivation <select name="motivation_1_5" required><option value="">–</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label>Schmerz 0–10 <input name="pain_0_10" type="number" min="0" max="10" step="1" value="0"></label>
+          <label class="wide">Krankheitssymptome <input name="illness_symptoms" type="text" placeholder="leer lassen oder kommagetrennt"></label>
+          <button class="primary wide" type="submit">Morning Check speichern</button>
+        </form>
+        <p id="checkinMessage" class="message"></p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">TRAININGSKONTEXT</p>
+        <h2>Aktueller Block</h2>
+        <dl id="context" class="facts"></dl>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <p class="eyebrow">NACH DER EINHEIT</p>
+        <h2>Session abschließen</h2>
+        <form id="sessionForm" class="form-grid">
+          <label>Dauer <input name="duration_min" type="number" min="0" step="1" required placeholder="Minuten"></label>
+          <label>Session RPE <input name="session_rpe" type="number" min="0" max="10" step="0.5" required></label>
+          <label>Status <select name="completion_status"><option value="completed">wie geplant</option><option value="modified">modifiziert</option><option value="stopped">abgebrochen</option></select></label>
+          <label>Schmerz währenddessen <input name="pain_during" type="number" min="0" max="10" step="1"></label>
+          <button class="primary wide" type="submit">Session speichern & auswerten</button>
+        </form>
+        <p id="sessionMessage" class="message"></p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">ADAPTATION</p>
+        <h2>Letzte Entscheidung</h2>
+        <div id="decision" class="decision empty">Noch keine Entscheidung.</div>
+      </article>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">HISTORIE</p>
+      <h2>Adaptationsentscheidungen</h2>
+      <div id="history" class="history"></div>
+    </section>
+  </main>
+  <script type="module" src="/app/app.js"></script>
+</body>
+</html>

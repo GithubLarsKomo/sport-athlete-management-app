@@ -1,0 +1,35 @@
+services:
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: sport_athlete
+      MARIADB_USER: sport_athlete
+      MARIADB_PASSWORD: change-me
+      MARIADB_ROOT_PASSWORD: change-root-too
+    volumes:
+      - sport-athlete-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: sport_athlete
+      DB_USER: sport_athlete
+      DB_PASSWORD: change-me
+      AUTH_MODE: dev
+      DEV_USER_ID: demo-athlete
+      DEV_USER_NAME: Demo Athlete
+    ports:
+      - "3000:3000"
+
+volumes:
+  sport-athlete-db:
