@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, js] = await Promise.all([
+const [html, js, p1] = await Promise.all([
   readFile(new URL('../site/index.html', import.meta.url), 'utf8'),
-  readFile(new URL('../site/app/app.js', import.meta.url), 'utf8')
+  readFile(new URL('../site/app/app.js', import.meta.url), 'utf8'),
+  readFile(new URL('../site/app/p1.js', import.meta.url), 'utf8')
 ]);
 
 test('dashboard exposes the complete athlete-facing P0 controls', () => {
@@ -27,4 +28,14 @@ test('dynamic dashboard HTML goes through escaping helpers', () => {
   assert.match(js, /const esc =/);
   assert.match(js, /esc\(session\.objective\)/);
   assert.match(js, /esc\(decision\.rationale\)/);
+  assert.match(p1, /const esc =/);
+  assert.match(p1, /esc\(summary\(record\)\)/);
+});
+
+test('P1 specialist context is visible but not browser-writable', () => {
+  assert.match(html, /id="specialistArtifacts"/);
+  assert.match(html, /schreibgeschützt/);
+  assert.match(p1, /\/api\/v1\/p1\/artifacts\/latest/);
+  assert.doesNotMatch(p1, /method\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/);
+  assert.doesNotMatch(html, /p1.*<form/i);
 });
