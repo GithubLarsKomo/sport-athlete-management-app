@@ -34,7 +34,10 @@ export function createRepository(db) {
     async ensureAthlete(identity) {
       await db.query(`INSERT INTO athletes (id, auth_subject, email, display_name)
         VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE email=VALUES(email), display_name=VALUES(display_name), updated_at=CURRENT_TIMESTAMP(6)`,
+        ON CONFLICT (auth_subject) DO UPDATE SET
+          email=EXCLUDED.email,
+          display_name=EXCLUDED.display_name,
+          updated_at=CURRENT_TIMESTAMP`,
         [identity.athleteId, identity.subject, identity.email, identity.displayName]);
       return identity;
     },
@@ -57,7 +60,7 @@ export function createRepository(db) {
     },
 
     async getGoals(athleteId) {
-      return db.query('SELECT id, goal_type, description, target_value, target_unit, target_date, priority, status FROM goals WHERE athlete_id=? ORDER BY status="active" DESC, priority ASC, target_date ASC', [athleteId]);
+      return db.query("SELECT id, goal_type, description, target_value, target_unit, target_date, priority, status FROM goals WHERE athlete_id=? ORDER BY (status='active') DESC, priority ASC, target_date ASC", [athleteId]);
     },
 
     async createGoal(athleteId, input, actor) {
@@ -77,19 +80,40 @@ export function createRepository(db) {
         await assertOwnedVersion('seasons', plan.season.id, plan.season.version);
         await conn.query(`INSERT INTO seasons (id, athlete_id, name, start_date, end_date, status, version, payload_json)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE name=VALUES(name), start_date=VALUES(start_date), end_date=VALUES(end_date), status=VALUES(status), version=VALUES(version), payload_json=VALUES(payload_json)`,
+          ON CONFLICT (id) DO UPDATE SET
+            name=EXCLUDED.name,
+            start_date=EXCLUDED.start_date,
+            end_date=EXCLUDED.end_date,
+            status=EXCLUDED.status,
+            version=EXCLUDED.version,
+            payload_json=EXCLUDED.payload_json,
+            updated_at=CURRENT_TIMESTAMP`,
           [plan.season.id, athleteId, plan.season.name, plan.season.start_date, plan.season.end_date, plan.season.status, plan.season.version, JSON.stringify(plan.season)]);
 
         await assertOwnedVersion('mesocycles', plan.mesocycle.id, plan.mesocycle.version);
         await conn.query(`INSERT INTO mesocycles (id, athlete_id, season_id, start_date, end_date, primary_adaptation, version, payload_json)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE season_id=VALUES(season_id), start_date=VALUES(start_date), end_date=VALUES(end_date), primary_adaptation=VALUES(primary_adaptation), version=VALUES(version), payload_json=VALUES(payload_json)`,
+          ON CONFLICT (id) DO UPDATE SET
+            season_id=EXCLUDED.season_id,
+            start_date=EXCLUDED.start_date,
+            end_date=EXCLUDED.end_date,
+            primary_adaptation=EXCLUDED.primary_adaptation,
+            version=EXCLUDED.version,
+            payload_json=EXCLUDED.payload_json,
+            updated_at=CURRENT_TIMESTAMP`,
           [plan.mesocycle.id, athleteId, plan.season.id, plan.mesocycle.start_date, plan.mesocycle.end_date, plan.mesocycle.primary_adaptation, plan.mesocycle.version, JSON.stringify(plan.mesocycle)]);
 
         await assertOwnedVersion('microcycles', plan.microcycle.id, plan.microcycle.version);
         await conn.query(`INSERT INTO microcycles (id, athlete_id, mesocycle_id, start_date, end_date, focus, version, payload_json)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON DUPLICATE KEY UPDATE mesocycle_id=VALUES(mesocycle_id), start_date=VALUES(start_date), end_date=VALUES(end_date), focus=VALUES(focus), version=VALUES(version), payload_json=VALUES(payload_json)`,
+          ON CONFLICT (id) DO UPDATE SET
+            mesocycle_id=EXCLUDED.mesocycle_id,
+            start_date=EXCLUDED.start_date,
+            end_date=EXCLUDED.end_date,
+            focus=EXCLUDED.focus,
+            version=EXCLUDED.version,
+            payload_json=EXCLUDED.payload_json,
+            updated_at=CURRENT_TIMESTAMP`,
           [plan.microcycle.id, athleteId, plan.mesocycle.id, plan.microcycle.start_date, plan.microcycle.end_date, plan.microcycle.focus, plan.microcycle.version, JSON.stringify(plan.microcycle)]);
 
         for (const session of plan.sessions) {
@@ -100,7 +124,18 @@ export function createRepository(db) {
           const payload = plannedPayload(session);
           await conn.query(`INSERT INTO planned_sessions (id, athlete_id, microcycle_id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE microcycle_id=VALUES(microcycle_id), local_date=VALUES(local_date), planned_start=VALUES(planned_start), session_type=VALUES(session_type), objective=VALUES(objective), planned_duration_min=VALUES(planned_duration_min), planned_rpe=VALUES(planned_rpe), status=VALUES(status), version=VALUES(version), payload_json=VALUES(payload_json)`,
+            ON CONFLICT (id) DO UPDATE SET
+              microcycle_id=EXCLUDED.microcycle_id,
+              local_date=EXCLUDED.local_date,
+              planned_start=EXCLUDED.planned_start,
+              session_type=EXCLUDED.session_type,
+              objective=EXCLUDED.objective,
+              planned_duration_min=EXCLUDED.planned_duration_min,
+              planned_rpe=EXCLUDED.planned_rpe,
+              status=EXCLUDED.status,
+              version=EXCLUDED.version,
+              payload_json=EXCLUDED.payload_json,
+              updated_at=CURRENT_TIMESTAMP`,
             [session.id, athleteId, plan.microcycle.id, session.local_date, new Date(session.planned_start), session.session_type, session.objective, session.planned_duration_min, session.planned_rpe ?? null, session.status || 'planned', session.version, JSON.stringify(payload)]);
         }
         await conn.query('INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)', [athleteId, actor, 'plan.imported', 'microcycle', plan.microcycle.id, JSON.stringify({ season_id: plan.season.id, mesocycle_id: plan.mesocycle.id, session_count: plan.sessions.length, version: plan.microcycle.version })]);
@@ -123,9 +158,9 @@ export function createRepository(db) {
 
     async getContext(athleteId, localDate = isoDate()) {
       const [goals, comps, seasons, mesos, micros] = await Promise.all([
-        db.query('SELECT * FROM goals WHERE athlete_id=? AND status="active" ORDER BY priority ASC, target_date ASC LIMIT 1', [athleteId]),
+        db.query("SELECT * FROM goals WHERE athlete_id=? AND status='active' ORDER BY priority ASC, target_date ASC LIMIT 1", [athleteId]),
         db.query('SELECT * FROM competitions WHERE athlete_id=? AND competition_date>=? ORDER BY competition_date ASC LIMIT 1', [athleteId, localDate]),
-        db.query('SELECT id, name, start_date, end_date, status, version, payload_json FROM seasons WHERE athlete_id=? AND start_date<=? AND end_date>=? ORDER BY status="active" DESC LIMIT 1', [athleteId, localDate, localDate]),
+        db.query("SELECT id, name, start_date, end_date, status, version, payload_json FROM seasons WHERE athlete_id=? AND start_date<=? AND end_date>=? ORDER BY (status='active') DESC LIMIT 1", [athleteId, localDate, localDate]),
         db.query('SELECT id, season_id, start_date, end_date, primary_adaptation, version, payload_json FROM mesocycles WHERE athlete_id=? AND start_date<=? AND end_date>=? ORDER BY start_date DESC LIMIT 1', [athleteId, localDate, localDate]),
         db.query('SELECT id, mesocycle_id, start_date, end_date, focus, version, payload_json FROM microcycles WHERE athlete_id=? AND start_date<=? AND end_date>=? ORDER BY start_date DESC LIMIT 1', [athleteId, localDate, localDate])
       ]);
@@ -134,7 +169,7 @@ export function createRepository(db) {
     },
 
     async getTodaySession(athleteId, localDate = isoDate()) {
-      const rows = await db.query('SELECT id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json FROM planned_sessions WHERE athlete_id=? AND local_date=? AND status IN ("planned","modified") ORDER BY planned_start ASC LIMIT 1', [athleteId, localDate]);
+      const rows = await db.query("SELECT id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json FROM planned_sessions WHERE athlete_id=? AND local_date=? AND status IN ('planned','modified') ORDER BY planned_start ASC LIMIT 1", [athleteId, localDate]);
       if (!rows[0]) return null;
       return { ...rows[0], payload: parseJson(rows[0].payload_json) };
     },
@@ -147,7 +182,9 @@ export function createRepository(db) {
     async saveCheckin(athleteId, payload, actor) {
       const id = randomUUID();
       await db.query(`INSERT INTO daily_checkins (id, athlete_id, local_date, payload_json) VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE payload_json=VALUES(payload_json), updated_at=CURRENT_TIMESTAMP(6)`, [id, athleteId, payload.local_date, JSON.stringify(payload)]);
+        ON CONFLICT (athlete_id, local_date) DO UPDATE SET
+          payload_json=EXCLUDED.payload_json,
+          updated_at=CURRENT_TIMESTAMP`, [id, athleteId, payload.local_date, JSON.stringify(payload)]);
       await this.audit(athleteId, actor, 'checkin.saved', 'daily_checkin', payload.local_date, { local_date: payload.local_date });
       return payload;
     },
@@ -159,7 +196,7 @@ export function createRepository(db) {
         if (!new Set(['planned', 'modified']).has(owned[0].status)) throw Object.assign(new Error('planned_session_already_finalized'), { statusCode: 409 });
         await conn.query('INSERT INTO completed_sessions (id, athlete_id, planned_session_id, started_at, completed_at, duration_min, session_rpe, session_load, completion_status, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [payload.completed_session_id, athleteId, plannedSessionId, new Date(payload.started_at), new Date(payload.completed_at), payload.duration_min, payload.session_rpe, payload.session_load, payload.completion_status, JSON.stringify(payload)]);
         const finalStatus = payload.completion_status === 'not_started' ? 'cancelled' : 'completed';
-        await conn.query('UPDATE planned_sessions SET status=?, updated_at=CURRENT_TIMESTAMP(6) WHERE id=? AND athlete_id=?', [finalStatus, plannedSessionId, athleteId]);
+        await conn.query('UPDATE planned_sessions SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND athlete_id=?', [finalStatus, plannedSessionId, athleteId]);
         await conn.query('INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)', [athleteId, actor, 'session.completed', 'completed_session', payload.completed_session_id, JSON.stringify({ planned_session_id: plannedSessionId, session_load: payload.session_load })]);
         return payload;
       });
@@ -211,10 +248,10 @@ export function createRepository(db) {
           planned_rpe: rpe
         };
         const newVersion = Number(row.version) + 1;
-        await conn.query('UPDATE planned_sessions SET local_date=?, planned_start=?, objective=?, planned_duration_min=?, planned_rpe=?, status=?, version=?, payload_json=?, updated_at=CURRENT_TIMESTAMP(6) WHERE id=? AND athlete_id=?', [localDate, plannedStart, objective, duration, rpe, status, newVersion, JSON.stringify(payload), row.id, athleteId]);
+        await conn.query('UPDATE planned_sessions SET local_date=?, planned_start=?, objective=?, planned_duration_min=?, planned_rpe=?, status=?, version=?, payload_json=?, updated_at=CURRENT_TIMESTAMP WHERE id=? AND athlete_id=?', [localDate, plannedStart, objective, duration, rpe, status, newVersion, JSON.stringify(payload), row.id, athleteId]);
         const revisionId = randomUUID();
         await conn.query('INSERT INTO training_plan_revisions (id, athlete_id, affected_entity_type, affected_entity_id, prior_version, new_version, adaptation_decision_id, revision_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [revisionId, athleteId, 'planned_session', row.id, Number(row.version), newVersion, decisionId, JSON.stringify(command)]);
-        await conn.query('UPDATE adaptation_decisions SET applied_at=CURRENT_TIMESTAMP(6), applied_by_subject=? WHERE id=? AND athlete_id=?', [actor, decisionId, athleteId]);
+        await conn.query('UPDATE adaptation_decisions SET applied_at=CURRENT_TIMESTAMP, applied_by_subject=? WHERE id=? AND athlete_id=?', [actor, decisionId, athleteId]);
         await conn.query('INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)', [athleteId, actor, 'adaptation.applied', 'planned_session', row.id, JSON.stringify({ decision_id: decisionId, prior_version: Number(row.version), new_version: newVersion, revision_id: revisionId })]);
         return { revision_id: revisionId, session_id: row.id, prior_version: Number(row.version), new_version: newVersion, status, local_date: localDate, planned_start: plannedStart.toISOString(), objective, planned_duration_min: duration, planned_rpe: rpe };
       });
