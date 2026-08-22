@@ -189,8 +189,30 @@ export function createApplication({ config, repository }) {
         return sendJson(res, 200, { revision: await repository.applySessionRevision(athleteId, applyMatch[1], command, identity.subject) });
       }
 
-      if (req.method === 'GET' && url.pathname === '/api/v1/adaptation/latest') return sendJson(res, 200, { decision: await repository.getLatestAdaptation(athleteId) });
-      if (req.method === 'GET' && url.pathname === '/api/v1/adaptation/history') return sendJson(res, 200, { decisions: await repository.getAdaptationHistory(athleteId, url.searchParams.get('limit')) });
+      if (req.method === 'GET' && url.pathname === '/api/v1/adaptation/latest') {
+        const decision = await repository.getLatestAdaptation(athleteId);
+        if (!decision) return sendJson(res, 200, { decision: null });
+        const record = await repository.getAdaptationById(athleteId, decision.adaptation_decision_id);
+        return sendJson(res, 200, {
+          decision: {
+            ...decision,
+            applied_at: record?.applied_at || null,
+            applied_by_subject: record?.applied_by_subject || null
+          }
+        });
+      }
+      if (req.method === 'GET' && url.pathname === '/api/v1/adaptation/history') {
+        const decisions = await repository.getAdaptationHistory(athleteId, url.searchParams.get('limit'));
+        const enriched = await Promise.all(decisions.map(async decision => {
+          const record = await repository.getAdaptationById(athleteId, decision.adaptation_decision_id);
+          return {
+            ...decision,
+            applied_at: record?.applied_at || null,
+            applied_by_subject: record?.applied_by_subject || null
+          };
+        }));
+        return sendJson(res, 200, { decisions: enriched });
+      }
 
       return sendJson(res, 404, { error: 'not_found' });
     } catch (error) {

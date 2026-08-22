@@ -13,7 +13,10 @@
       <p class="eyebrow">SPORT ATHLETE MANAGEMENT</p>
       <h1>Training Control</h1>
     </div>
-    <div id="identity" class="identity">Lade Profil …</div>
+    <div class="identity-wrap">
+      <span id="profileStatus" class="profile-status">Profil wird geladen</span>
+      <div id="identity" class="identity">Lade Identität …</div>
+    </div>
   </header>
 
   <main class="shell">
@@ -24,6 +27,75 @@
         <p id="sessionMeta" class="muted"></p>
       </div>
       <div id="statusBadge" class="status neutral">Kein Entscheid</div>
+    </section>
+
+    <section class="grid two">
+      <article id="profileCard" class="card">
+        <div class="section-head">
+          <div><p class="eyebrow">ATHLETENPROFIL</p><h2>Trainingskontext</h2></div>
+          <span id="profileVersion" class="pill">Neu</span>
+        </div>
+        <p class="muted">Die Angaben steuern Planung und Interpretation. Geschlechtsspezifische Angaben sind freiwillig und werden nur als Kontext verwendet.</p>
+        <form id="profileForm" class="form-grid">
+          <label>Sportart <input name="sport" type="text" required placeholder="z. B. Rudern"></label>
+          <label>Disziplin <input name="discipline" type="text" required placeholder="z. B. 1x"></label>
+          <label>Altersgruppe
+            <select name="age_band" required>
+              <option value="">–</option>
+              <option value="20-30">20–30</option>
+              <option value="50+">50+</option>
+              <option value="other">Sonstige</option>
+              <option value="unknown">Nicht angegeben</option>
+            </select>
+          </label>
+          <label>Trainingsalter <input name="training_age_years" type="number" min="0" step="0.5" placeholder="Jahre"></label>
+          <label>Einheiten pro Woche <input name="sessions_per_week" type="number" min="1" max="14" step="1" required></label>
+          <label>Typische Zeit werktags <input name="weekday_minutes" type="number" min="0" step="15" placeholder="Minuten"></label>
+          <label>Biologisches Geschlecht, optional
+            <select name="sex_at_birth">
+              <option value="">Keine Angabe</option>
+              <option value="female">weiblich</option>
+              <option value="male">männlich</option>
+              <option value="intersex">intersex</option>
+              <option value="other">andere Angabe</option>
+            </select>
+          </label>
+          <label>Physiologischer Kontext, optional
+            <select name="physiology_context">
+              <option value="">Keine Angabe</option>
+              <option value="menstrual_cycle">Menstruationszyklus</option>
+              <option value="hormonal_contraception">Hormonelle Kontrazeption</option>
+              <option value="perimenopause">Perimenopause</option>
+              <option value="postmenopause">Postmenopause</option>
+            </select>
+          </label>
+          <label class="wide">Relevante Symptome, optional <input name="physiology_symptoms" type="text" placeholder="nur wenn für Training/Erholung relevant"></label>
+          <button class="primary wide" type="submit">Profil speichern</button>
+        </form>
+        <p id="profileMessage" class="message"></p>
+      </article>
+
+      <article class="card">
+        <p class="eyebrow">TRAININGSKONTEXT</p>
+        <h2>Aktueller Block</h2>
+        <dl id="context" class="facts"></dl>
+      </article>
+    </section>
+
+    <section class="card week-card">
+      <div class="section-head week-head">
+        <div>
+          <p class="eyebrow">MIKROZYKLUS</p>
+          <h2>Wochenplan</h2>
+          <p id="weekRange" class="muted"></p>
+        </div>
+        <div class="week-controls">
+          <button id="weekPrev" class="secondary" type="button" aria-label="Vorherige Woche">←</button>
+          <button id="weekToday" class="secondary" type="button">Diese Woche</button>
+          <button id="weekNext" class="secondary" type="button" aria-label="Nächste Woche">→</button>
+        </div>
+      </div>
+      <div id="weekSessions" class="week-sessions"></div>
     </section>
 
     <section class="grid two">
@@ -44,14 +116,6 @@
       </article>
 
       <article class="card">
-        <p class="eyebrow">TRAININGSKONTEXT</p>
-        <h2>Aktueller Block</h2>
-        <dl id="context" class="facts"></dl>
-      </article>
-    </section>
-
-    <section class="grid two">
-      <article class="card">
         <p class="eyebrow">NACH DER EINHEIT</p>
         <h2>Session abschließen</h2>
         <form id="sessionForm" class="form-grid">
@@ -63,12 +127,19 @@
         </form>
         <p id="sessionMessage" class="message"></p>
       </article>
+    </section>
 
-      <article class="card">
-        <p class="eyebrow">ADAPTATION</p>
-        <h2>Letzte Entscheidung</h2>
-        <div id="decision" class="decision empty">Noch keine Entscheidung.</div>
-      </article>
+    <section class="card adaptation-card">
+      <div class="section-head">
+        <div><p class="eyebrow">ADAPTATION</p><h2>Letzte Entscheidung</h2></div>
+        <span id="decisionState" class="pill">Nicht angewandt</span>
+      </div>
+      <div id="decision" class="decision empty">Noch keine Entscheidung.</div>
+      <div id="revisionPreview" class="revision-preview hidden"></div>
+      <div class="decision-actions">
+        <button id="applyDecision" class="primary hidden" type="button">Adaptation anwenden</button>
+      </div>
+      <p id="decisionMessage" class="message"></p>
     </section>
 
     <section class="card">

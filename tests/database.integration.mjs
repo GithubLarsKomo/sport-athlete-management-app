@@ -68,5 +68,8 @@ test('MariaDB persistence closes plan -> session -> revision lifecycle safely', 
   assert.equal(Number(revised.planned_duration_min),45);
   assert.equal(Number(revised.planned_rpe),5);
   assert.equal(revised.status,'modified');
+  const appliedRecord=await repository.getAdaptationById(athleteId,decisionId);
+  assert.ok(appliedRecord.applied_at);
+  assert.equal(appliedRecord.applied_by_subject,athleteId);
   await assert.rejects(() => repository.applySessionRevision(athleteId,decisionId,command,athleteId), error => error.statusCode === 409);
 });
