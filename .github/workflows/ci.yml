@@ -11,6 +11,29 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: sport_athlete
+          MARIADB_USER: sport_athlete
+          MARIADB_PASSWORD: test-password
+          MARIADB_ROOT_PASSWORD: test-root-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      NODE_ENV: development
+      AUTH_MODE: dev
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: sport_athlete
+      DB_USER: sport_athlete
+      DB_PASSWORD: test-password
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,3 +42,5 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run check
+      - run: npm run migrate
+      - run: npm run test:integration

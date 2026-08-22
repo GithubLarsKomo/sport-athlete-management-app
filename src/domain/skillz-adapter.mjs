@@ -8,10 +8,17 @@ export async function evaluateAdaptation({ athleteId, snapshot, config, fetchImp
     const response = await fetchImpl(config.skillz.adaptationUrl, {
       method: 'POST',
       headers,
+      signal: AbortSignal.timeout(config.skillz.timeoutMs || 5000),
       body: JSON.stringify({ athlete_id: athleteId, input_snapshot: snapshot, contract_version: 1 })
     });
     if (!response.ok) throw new Error(`Skillz adaptation service returned HTTP ${response.status}`);
-    const decision = await response.json();
+    const received = await response.json();
+    if (received.athlete_id !== athleteId) throw new Error('Skillz adaptation athlete_id mismatch');
+    const decision = {
+      ...received,
+      athlete_id: athleteId,
+      input_snapshot: snapshot
+    };
     const errors = validateAdaptationDecision(decision);
     if (errors.length) throw new Error(`Skillz adaptation contract violation: ${errors.join('; ')}`);
     return decision;

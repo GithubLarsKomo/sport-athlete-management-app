@@ -23,6 +23,7 @@ export function loadConfig() {
     nodeEnv,
     port: Number(env('PORT', '3000')),
     appStatus: env('APP_STATUS', runtime.APP_STATUS || 'active').toLowerCase(),
+    publicOrigin: env('PUBLIC_ORIGIN', ''),
     db: {
       host: env('DB_HOST', '127.0.0.1'),
       port: Number(env('DB_PORT', '3306')),
@@ -44,12 +45,14 @@ export function loadConfig() {
     },
     skillz: {
       adaptationUrl: env('SKILLZ_ADAPTATION_URL', ''),
-      token: env('SKILLZ_ADAPTATION_TOKEN', '')
+      token: env('SKILLZ_ADAPTATION_TOKEN', ''),
+      timeoutMs: Number(env('SKILLZ_ADAPTATION_TIMEOUT_MS', '5000'))
     }
   };
 
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) throw new Error('PORT must be a valid TCP port');
   if (nodeEnv === 'production' && authMode === 'dev') throw new Error('AUTH_MODE=dev is forbidden in production');
   if (nodeEnv === 'production' && authMode === 'proxy' && !config.auth.sharedSecret) throw new Error('AUTH_PROXY_SHARED_SECRET is required in production proxy mode');
+  if (!Number.isInteger(config.skillz.timeoutMs) || config.skillz.timeoutMs < 250 || config.skillz.timeoutMs > 30000) throw new Error('SKILLZ_ADAPTATION_TIMEOUT_MS must be 250..30000');
   return config;
 }

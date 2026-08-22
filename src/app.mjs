@@ -9,6 +9,30 @@ import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
+const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const CSP = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
+
+function firstHeader(value) {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+function expectedOrigin(req, config) {
+  if (config.publicOrigin) return new URL(config.publicOrigin).origin;
+  const proto = String(firstHeader(req.headers['x-forwarded-proto']) || 'http').split(',')[0].trim();
+  const host = String(firstHeader(req.headers.host) || '').trim();
+  return host ? `${proto}://${host}` : null;
+}
+
+function writeOriginAllowed(req, config) {
+  if (!MUTATING.has(req.method || '')) return true;
+  if (String(firstHeader(req.headers['sec-fetch-site']) || '').toLowerCase() === 'cross-site') return false;
+  const origin = firstHeader(req.headers.origin);
+  if (!origin) return true;
+  const expected = expectedOrigin(req, config);
+  if (!expected) return false;
+  try { return new URL(origin).origin === expected; } catch { return false; }
+}
 
 function localDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -37,7 +61,9 @@ async function serveAsset(req, res, pathname) {
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'no-referrer',
-      'X-Frame-Options': 'DENY'
+      'X-Frame-Options': 'DENY',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+      'Content-Security-Policy': CSP
     });
     if (req.method === 'HEAD') return res.end(), true;
     createReadStream(path).pipe(res);
@@ -57,6 +83,8 @@ export function createApplication({ config, repository }) {
         return sendText(res, 404, 'Not Found');
       }
 
+      if (!writeOriginAllowed(req, config)) return sendJson(res, 403, { error: 'cross_site_write_rejected' });
+
       const identity = resolveIdentity(req, config);
       if (!identity) return sendJson(res, 401, { error: 'unauthorized' });
       await repository.ensureAthlete(identity);
@@ -67,10 +95,8 @@ export function createApplication({ config, repository }) {
       if (req.method === 'PUT' && url.pathname === '/api/v1/athlete/profile') {
         const body = await readJson(req);
         const profile = {
-          ...commonEnvelope(athleteId),
           ...body,
-          athlete_id: athleteId,
-          schema_version: 1,
+          ...commonEnvelope(athleteId),
           profile_version: Number(body.profile_version || 1),
           valid_from: new Date().toISOString()
         };
@@ -91,7 +117,7 @@ export function createApplication({ config, repository }) {
 
       if (req.method === 'POST' && url.pathname === '/api/v1/checkins') {
         const body = await readJson(req);
-        const checkin = { ...commonEnvelope(athleteId), ...body, athlete_id: athleteId, schema_version: 1, local_date: body.local_date || localDate() };
+        const checkin = { ...body, ...commonEnvelope(athleteId), local_date: localDate() };
         for (const field of ['sleep_quality_1_5','fatigue_1_5','soreness_1_5','stress_1_5','motivation_1_5']) if (!(field in checkin)) checkin[field] = null;
         checkin.pain_locations ||= [];
         checkin.illness_symptoms ||= [];
@@ -106,10 +132,8 @@ export function createApplication({ config, repository }) {
         const plannedSessionId = completionMatch[1];
         const body = await readJson(req);
         const completed = {
-          ...commonEnvelope(athleteId),
           ...body,
-          athlete_id: athleteId,
-          schema_version: 1,
+          ...commonEnvelope(athleteId),
           completed_session_id: body.completed_session_id || randomUUID(),
           planned_session_id: plannedSessionId,
           session_load: Number(body.duration_min) * Number(body.session_rpe)

@@ -81,10 +81,12 @@ export function createRepository(db) {
 
     async completeSession(athleteId, plannedSessionId, payload, actor) {
       return db.transaction(async conn => {
-        const owned = await conn.query('SELECT id FROM planned_sessions WHERE id=? AND athlete_id=? FOR UPDATE', [plannedSessionId, athleteId]);
+        const owned = await conn.query('SELECT id, status FROM planned_sessions WHERE id=? AND athlete_id=? FOR UPDATE', [plannedSessionId, athleteId]);
         if (!owned[0]) throw Object.assign(new Error('planned_session_not_found'), { statusCode: 404 });
+        if (!new Set(['planned', 'modified']).has(owned[0].status)) throw Object.assign(new Error('planned_session_already_finalized'), { statusCode: 409 });
         await conn.query('INSERT INTO completed_sessions (id, athlete_id, planned_session_id, started_at, completed_at, duration_min, session_rpe, session_load, completion_status, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [payload.completed_session_id, athleteId, plannedSessionId, new Date(payload.started_at), new Date(payload.completed_at), payload.duration_min, payload.session_rpe, payload.session_load, payload.completion_status, JSON.stringify(payload)]);
-        await conn.query('UPDATE planned_sessions SET status=?, updated_at=CURRENT_TIMESTAMP(6) WHERE id=? AND athlete_id=?', [payload.completion_status === 'completed' ? 'completed' : 'modified', plannedSessionId, athleteId]);
+        const finalStatus = payload.completion_status === 'not_started' ? 'cancelled' : 'completed';
+        await conn.query('UPDATE planned_sessions SET status=?, updated_at=CURRENT_TIMESTAMP(6) WHERE id=? AND athlete_id=?', [finalStatus, plannedSessionId, athleteId]);
         await conn.query('INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)', [athleteId, actor, 'session.completed', 'completed_session', payload.completed_session_id, JSON.stringify({ planned_session_id: plannedSessionId, session_load: payload.session_load })]);
         return payload;
       });
