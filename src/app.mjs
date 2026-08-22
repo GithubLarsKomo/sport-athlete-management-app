@@ -7,6 +7,7 @@ import { readJson, sendJson, sendText } from './http.mjs';
 import { commonEnvelope, validateCheckin, validateCompletedSession } from './domain/contracts.mjs';
 import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
 import { validatePlanPackage, validateSessionRevisionCommand } from './domain/planning.mjs';
+import { SPECIALIST_ARTIFACT_TYPES, normalizeSpecialistArtifact, specialistIngestAuthorized, specialistTypeInfo } from './domain/p1-artifacts.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
@@ -86,6 +87,22 @@ export function createApplication({ config, repository }) {
 
       if (!writeOriginAllowed(req, config)) return sendJson(res, 403, { error: 'cross_site_write_rejected' });
 
+      const ingestMatch = url.pathname.match(/^\/api\/v1\/internal\/p1\/artifacts\/([^/]+)$/);
+      if (req.method === 'POST' && ingestMatch) {
+        if (!config.p1?.ingestSecret) return sendJson(res, 503, { error: 'p1_ingest_disabled' });
+        if (!specialistIngestAuthorized(req, config)) return sendJson(res, 401, { error: 'unauthorized_p1_ingest' });
+        const artifactType = decodeURIComponent(ingestMatch[1]);
+        if (!specialistTypeInfo(artifactType)) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
+        const body = await readJson(req, 512 * 1024);
+        const targetAthleteId = String(body.athlete_id || '').trim();
+        if (!targetAthleteId) return sendJson(res, 400, { error: 'athlete_id_required' });
+        if (!await repository.athleteExists(targetAthleteId)) return sendJson(res, 404, { error: 'athlete_not_found' });
+        const { artifact, errors, definition } = normalizeSpecialistArtifact(artifactType, targetAthleteId, body.artifact);
+        if (errors.length) return sendJson(res, 400, { error: 'invalid_specialist_artifact', details: errors });
+        const record = await repository.saveSpecialistArtifact(targetAthleteId, artifactType, artifact, 'service:skillz');
+        return sendJson(res, 201, { record: { ...record, definition } });
+      }
+
       const identity = resolveIdentity(req, config);
       if (!identity) return sendJson(res, 401, { error: 'unauthorized' });
       await repository.ensureAthlete(identity);
@@ -128,6 +145,21 @@ export function createApplication({ config, repository }) {
       if (req.method === 'GET' && url.pathname === '/api/v1/training/today') return sendJson(res, 200, { session: await repository.getTodaySession(athleteId) });
       if (req.method === 'GET' && url.pathname === '/api/v1/checkins/today') return sendJson(res, 200, { checkin: await repository.getTodayCheckin(athleteId) });
 
+      if (req.method === 'GET' && url.pathname === '/api/v1/p1/types') return sendJson(res, 200, { types: SPECIALIST_ARTIFACT_TYPES });
+      if (req.method === 'GET' && url.pathname === '/api/v1/p1/artifacts/latest') return sendJson(res, 200, { artifacts: await repository.getLatestSpecialistArtifacts(athleteId) });
+      const p1HistoryMatch = url.pathname.match(/^\/api\/v1\/p1\/artifacts\/([^/]+)\/history$/);
+      if (req.method === 'GET' && p1HistoryMatch) {
+        const artifactType = decodeURIComponent(p1HistoryMatch[1]);
+        if (!specialistTypeInfo(artifactType)) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
+        return sendJson(res, 200, { artifacts: await repository.getSpecialistArtifactHistory(athleteId, artifactType, url.searchParams.get('limit')) });
+      }
+      const p1ArtifactMatch = url.pathname.match(/^\/api\/v1\/p1\/artifacts\/([^/]+)$/);
+      if (req.method === 'GET' && p1ArtifactMatch) {
+        const artifactType = decodeURIComponent(p1ArtifactMatch[1]);
+        if (!specialistTypeInfo(artifactType)) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
+        return sendJson(res, 200, { artifact: await repository.getLatestSpecialistArtifact(athleteId, artifactType) });
+      }
+
       if (req.method === 'POST' && url.pathname === '/api/v1/checkins') {
         const body = await readJson(req);
         const checkin = { ...body, ...commonEnvelope(athleteId), local_date: localDate() };
@@ -165,7 +197,8 @@ export function createApplication({ config, repository }) {
           context: await repository.getContext(athleteId),
           planned_session: activePlanned || completedPrescription,
           daily_checkin: await repository.getTodayCheckin(athleteId),
-          latest_completed_session: latestCompleted
+          latest_completed_session: latestCompleted,
+          specialist_artifacts: repository.getLatestSpecialistArtifacts ? await repository.getLatestSpecialistArtifacts(athleteId) : []
         };
         let decision;
         try {
