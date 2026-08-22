@@ -10,11 +10,13 @@ Internet
   -> Authentik authentication / forward-auth decision
   -> trusted proxy hop that strips and re-injects identity headers
   -> sport-athlete-management-app:3000
-       -> MariaDB 11.8 on the private Coolify network
+       -> PostgreSQL 18.x on the private Coolify/Hetzner network
        -> optional Skillz adaptation service on a trusted endpoint
 ```
 
 The application container must not have a second unauthenticated public route. Client-supplied `x-authentik-*` or `x-sam-proxy-secret` headers must be removed at the public edge before the trusted values are inserted.
+
+PostgreSQL port `5432` must not be published publicly. External administration is performed only through SSH/private-network access or an SSH tunnel to the private PostgreSQL endpoint.
 
 ## 2. Coolify application
 
@@ -22,7 +24,14 @@ Create a new application from `GithubLarsKomo/sport-athlete-management-app` and 
 
 Runtime port: `3000`.
 
-Create or attach a MariaDB **11.8** resource on the same private Coolify network. Use a dedicated database and user. Do not publish the database port to the Internet.
+Create or attach the shared PostgreSQL **18.x** service on the same private Coolify/Hetzner network. The documented baseline is PostgreSQL 18.6. Give Sport its own database and least-privilege application role; do not reuse credentials from another application.
+
+Recommended logical boundary:
+
+```text
+database: sport_athlete
+runtime role: sport_athlete_app
+```
 
 Set production variables in Coolify, not in Git:
 
@@ -31,12 +40,8 @@ NODE_ENV=production
 APP_STATUS=active
 PUBLIC_ORIGIN=https://<training-domain>
 
-DB_HOST=<private-mariadb-service-name>
-DB_PORT=3306
-DB_NAME=sport_athlete
-DB_USER=<dedicated-user>
-DB_PASSWORD=<random-database-password>
-DB_CONNECTION_LIMIT=5
+DATABASE_URL=postgresql://sport_athlete_app:<random-database-password>@<private-postgres-service-name>:5432/sport_athlete
+DB_POOL_MAX=5
 
 AUTH_MODE=proxy
 AUTH_PROXY_SHARED_SECRET=<at-least-32-random-characters>
@@ -50,9 +55,15 @@ SKILLZ_ADAPTATION_TOKEN=<optional-token>
 SKILLZ_ADAPTATION_TIMEOUT_MS=5000
 ```
 
-Production startup intentionally fails when `PUBLIC_ORIGIN`, `DB_PASSWORD`, or a sufficiently long proxy shared secret is missing.
+Production startup intentionally fails when `PUBLIC_ORIGIN`, a credentialed PostgreSQL `DATABASE_URL`, or a sufficiently long proxy shared secret is missing.
 
-## 3. Database migrations
+## 3. Database privileges
+
+The runtime role should own or have only the privileges required on the Sport database/schema. It must not have privileges on Masters Diagnostics, Grilling or other application databases and must not be a PostgreSQL superuser.
+
+For production environments that separate runtime and migration privileges, execute `npm run migrate` through a dedicated migration/operator role and run the application through `sport_athlete_app`. Keep both credentials in the deployment secret store.
+
+## 4. Database migrations
 
 Run migrations after the database is reachable and before production traffic reaches a new application version:
 
@@ -60,7 +71,9 @@ Run migrations after the database is reachable and before production traffic rea
 npm run migrate
 ```
 
-Use the Coolify pre-deploy/one-off command mechanism available in the installed version. Do not run multiple concurrent migration jobs. Applied migrations are SHA-256 tracked in `schema_migrations`; a changed historical migration fails rather than silently drifting production state.
+Use the Coolify pre-deploy/one-off command mechanism available in the installed version. Applied PostgreSQL migrations are SHA-256 tracked in `schema_migrations`; a changed historical migration fails rather than silently drifting production state. A PostgreSQL advisory transaction lock prevents two migration jobs from racing each other.
+
+The active migration stream is `migrations/postgresql/`. Legacy MariaDB migration files in the parent `migrations/` directory are retained as historical provenance only and are not executed.
 
 After migration, verify:
 
@@ -70,7 +83,9 @@ npm run ready
 
 The Docker health check performs the same database-readiness probe.
 
-## 4. Authentik boundary
+Existing installations with MariaDB data must follow [`MARIADB-TO-POSTGRESQL.md`](MARIADB-TO-POSTGRESQL.md) before switching production traffic.
+
+## 5. Authentik boundary
 
 Create an Authentik application/provider for the training application and require authentication before traffic is forwarded to the app.
 
@@ -85,7 +100,7 @@ The final trusted proxy hop must:
 
 The application verifies the shared secret with a timing-safe comparison. The Authentik subject becomes the stable `athlete_id`; changing the subject mapping later would create a new athlete identity.
 
-## 5. Public origin and CSRF boundary
+## 6. Public origin and CSRF boundary
 
 `PUBLIC_ORIGIN` must be the exact HTTPS origin, without path, query or fragment. Browser writes with a foreign `Origin` or `Sec-Fetch-Site: cross-site` are rejected before authentication or persistence.
 
@@ -97,7 +112,7 @@ PUBLIC_ORIGIN=https://training.example.com
 
 Do not set `PUBLIC_ORIGIN` to an internal container URL.
 
-## 6. Skillz reasoning service
+## 7. Skillz reasoning service
 
 The WebApp does not reproduce sport-science reasoning. If `SKILLZ_ADAPTATION_URL` is configured, the application sends the authoritative snapshot to that service and stores the returned decision. The product layer preserves athlete identity and audit input; the remote service cannot replace them.
 
@@ -105,7 +120,7 @@ If the reasoning service is missing or fails, the application records a conserva
 
 Keep the reasoning service private where possible. If it is reached over a network boundary, use HTTPS and a separate token.
 
-## 7. Deployment verification
+## 8. Deployment verification
 
 Before exposing the route to athletes:
 
@@ -125,18 +140,23 @@ Then verify through the authenticated public route:
 - a second application attempt is rejected;
 - direct access to the application container without the trusted proxy secret is impossible.
 
-## 8. Backup and privacy baseline
+## 9. Backup and privacy baseline
 
 Before real longitudinal athlete data is stored:
 
-- enable encrypted MariaDB backups and test restoration;
+- enable encrypted PostgreSQL backups;
+- verify an independent logical backup/restore for `sport_athlete`;
 - define retention/deletion rules;
-- restrict Coolify/DB access to administrators who need it;
+- restrict Coolify/PostgreSQL access to administrators who need it;
 - keep production secrets only in the deployment secret store;
 - review logs so identity/health payloads are not emitted unnecessarily;
 - document data export/deletion procedures for athletes;
 - complete the GDPR and software-boundary review before broader multi-user use.
 
-## 9. Rollback
+A manual logical verification copy can be created with `pg_dump --format=custom`, but it does not replace the infrastructure backup policy or an isolated restore drill.
 
-Application releases are stateless apart from MariaDB. Roll back the application image/commit independently, but **do not** edit or reverse historical migration files. If a schema rollback is required, add a new forward migration that restores compatibility deliberately.
+## 10. Rollback
+
+Application releases are stateless apart from PostgreSQL. Roll back an application image/commit independently only when the target database schema remains compatible. Do **not** edit or reverse historical migration files; add a new forward migration if a schema compatibility correction is required.
+
+A provider rollback after a MariaDB -> PostgreSQL cutover has additional data-consistency requirements and must follow the explicit rollback boundary in `MARIADB-TO-POSTGRESQL.md`.
