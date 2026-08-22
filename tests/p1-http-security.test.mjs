@@ -11,7 +11,8 @@ function config() {
     appStatus: 'active',
     publicOrigin: 'https://training.example.com',
     auth: { mode: 'dev', devUserId: 'athlete', devEmail: null, devName: 'Athlete' },
-    skillz: { adaptationUrl: '', token: '', timeoutMs: 5000 },
+    skillz: { adaptationUrl: '', token: '', timeoutMs: 5000, specialistUrl: '', specialistToken: '', specialistTimeoutMs: 15000 },
+    specialist: { serviceSecret: SECRET, serviceHeader: 'x-sam-p1-ingest-secret' },
     p1: { ingestSecret: SECRET, ingestHeader: 'x-sam-p1-ingest-secret' }
   };
 }
@@ -42,7 +43,7 @@ async function withServer(repository, fn) {
   try { await fn(port); } finally { await new Promise(resolve => server.close(resolve)); }
 }
 
-test('wrong P1 service secret is rejected before persistence', async () => {
+test('wrong legacy P1 service secret is rejected before persistence', async () => {
   let touched = false;
   const repository = {
     async athleteExists() { touched = true; return true; },
@@ -55,12 +56,12 @@ test('wrong P1 service secret is rejected before persistence', async () => {
       body: JSON.stringify({ athlete_id: 'athlete-1', artifact: artifact() })
     });
     assert.equal(response.status, 401);
-    assert.equal((await response.json()).error, 'unauthorized_p1_ingest');
+    assert.equal((await response.json()).error, 'unauthorized_specialist_service');
     assert.equal(touched, false);
   });
 });
 
-test('trusted P1 ingest forces target athlete into canonical artifact', async () => {
+test('trusted legacy P1 ingest forces target athlete into canonical artifact', async () => {
   let saved;
   const repository = {
     async athleteExists(id) { return id === 'athlete-1'; },
