@@ -28,6 +28,10 @@ export function loadConfig() {
   const runtime = readRuntimeConfig();
   const nodeEnv = env('NODE_ENV', 'development');
   const authMode = env('AUTH_MODE', nodeEnv === 'production' ? 'proxy' : 'dev').toLowerCase();
+  const legacyP1Secret = env('P1_INGEST_SHARED_SECRET', '');
+  const legacyP1Header = env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase();
+  const specialistSecret = env('SPECIALIST_SERVICE_SHARED_SECRET', legacyP1Secret);
+  const specialistHeader = env('SPECIALIST_SERVICE_SECRET_HEADER', legacyP1Header).toLowerCase();
   const config = {
     nodeEnv,
     port: Number(env('PORT', '3000')),
@@ -55,11 +59,19 @@ export function loadConfig() {
     skillz: {
       adaptationUrl: env('SKILLZ_ADAPTATION_URL', ''),
       token: env('SKILLZ_ADAPTATION_TOKEN', ''),
-      timeoutMs: Number(env('SKILLZ_ADAPTATION_TIMEOUT_MS', '5000'))
+      timeoutMs: Number(env('SKILLZ_ADAPTATION_TIMEOUT_MS', '5000')),
+      specialistUrl: env('SKILLZ_SPECIALIST_URL', ''),
+      specialistToken: env('SKILLZ_SPECIALIST_TOKEN', ''),
+      specialistTimeoutMs: Number(env('SKILLZ_SPECIALIST_TIMEOUT_MS', '15000')),
+      specialistRevision: env('SKILLZ_SOURCE_REVISION', '')
+    },
+    specialist: {
+      serviceSecret: specialistSecret,
+      serviceHeader: specialistHeader
     },
     p1: {
-      ingestSecret: env('P1_INGEST_SHARED_SECRET', ''),
-      ingestHeader: env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase()
+      ingestSecret: specialistSecret,
+      ingestHeader: specialistHeader
     }
   };
 
@@ -68,8 +80,9 @@ export function loadConfig() {
   if (!Number.isInteger(config.db.connectionLimit) || config.db.connectionLimit < 1 || config.db.connectionLimit > 50) throw new Error('DB_CONNECTION_LIMIT must be 1..50');
   if (!['dev', 'proxy'].includes(authMode)) throw new Error('AUTH_MODE must be dev or proxy');
   if (!Number.isInteger(config.skillz.timeoutMs) || config.skillz.timeoutMs < 250 || config.skillz.timeoutMs > 30000) throw new Error('SKILLZ_ADAPTATION_TIMEOUT_MS must be 250..30000');
-  if (config.p1.ingestSecret && config.p1.ingestSecret.length < 32) throw new Error('P1_INGEST_SHARED_SECRET must contain at least 32 characters when enabled');
-  if (!/^[a-z0-9-]+$/.test(config.p1.ingestHeader)) throw new Error('P1_INGEST_SECRET_HEADER must be a valid lowercase HTTP header name');
+  if (!Number.isInteger(config.skillz.specialistTimeoutMs) || config.skillz.specialistTimeoutMs < 250 || config.skillz.specialistTimeoutMs > 60000) throw new Error('SKILLZ_SPECIALIST_TIMEOUT_MS must be 250..60000');
+  if (config.specialist.serviceSecret && config.specialist.serviceSecret.length < 32) throw new Error('SPECIALIST_SERVICE_SHARED_SECRET must contain at least 32 characters when enabled');
+  if (!/^[a-z0-9-]+$/.test(config.specialist.serviceHeader)) throw new Error('SPECIALIST_SERVICE_SECRET_HEADER must be a valid lowercase HTTP header name');
 
   if (nodeEnv === 'production') {
     config.publicOrigin = validateProductionOrigin(config.publicOrigin);
