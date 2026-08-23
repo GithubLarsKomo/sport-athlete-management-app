@@ -91,6 +91,28 @@ async function plannedSessionMatch(conn, athleteId, incoming) {
   return null;
 }
 
+async function completedSessionMatch(conn, athleteId, activity) {
+  const rows = await conn.query(`SELECT id, planned_session_id, started_at, completed_at, duration_min
+    FROM completed_sessions
+    WHERE athlete_id=?
+      AND started_at BETWEEN (?::timestamptz - INTERVAL '15 minutes') AND (?::timestamptz + INTERVAL '15 minutes')
+    ORDER BY ABS(EXTRACT(EPOCH FROM (started_at - ?::timestamptz))) ASC
+    LIMIT 5`, [athleteId, activity.started_at, activity.started_at, activity.started_at]);
+  const activityStart = new Date(activity.started_at).getTime();
+  const activityDurationMin = Number(activity.duration_s || 0) / 60;
+  for (const row of rows) {
+    const startDiffS = Math.abs(new Date(row.started_at).getTime() - activityStart) / 1000;
+    if (startDiffS > 5 * 60) continue;
+    const completedDurationMin = Number(row.duration_min || 0);
+    if (activityDurationMin && completedDurationMin) {
+      const relativeDiff = Math.abs(activityDurationMin - completedDurationMin) / Math.max(activityDurationMin, completedDurationMin);
+      if (relativeDiff > 0.2) continue;
+    }
+    return row;
+  }
+  return null;
+}
+
 export function createActivityRepository(db) {
   return {
     async ingestActivity(athleteId, incoming, actor) {
@@ -214,12 +236,19 @@ export function createActivityRepository(db) {
 
         let completedSessionId = activity.completed_session_id;
         if (finalize && !completedSessionId) {
-          let existing = [];
+          let existing = null;
           if (activity.planned_session_id) {
-            existing = await conn.query('SELECT id FROM completed_sessions WHERE athlete_id=? AND planned_session_id=? ORDER BY created_at DESC LIMIT 1', [athleteId, activity.planned_session_id]);
+            const rowsByPlan = await conn.query('SELECT id, planned_session_id FROM completed_sessions WHERE athlete_id=? AND planned_session_id=? ORDER BY created_at DESC LIMIT 1', [athleteId, activity.planned_session_id]);
+            existing = rowsByPlan[0] || null;
           }
-          if (existing[0]) completedSessionId = existing[0].id;
-          else {
+          if (!existing) existing = await completedSessionMatch(conn, athleteId, activity);
+          if (existing) {
+            completedSessionId = existing.id;
+            if (!activity.planned_session_id && existing.planned_session_id) {
+              activity.planned_session_id = existing.planned_session_id;
+              await conn.query('UPDATE activities SET planned_session_id=?, updated_at=CURRENT_TIMESTAMP WHERE id=?', [existing.planned_session_id, activityId]);
+            }
+          } else {
             completedSessionId = randomUUID();
             const payload = completionPayload(athleteId, activity, { ...input, session_rpe: sessionRpe, pain_0_10: pain, deviations }, completedSessionId);
             await conn.query(`INSERT INTO completed_sessions
