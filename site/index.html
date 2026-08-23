@@ -98,6 +98,31 @@
       <div id="weekSessions" class="week-sessions"></div>
     </section>
 
+    <section class="card journal-card">
+      <div class="section-head journal-head">
+        <div>
+          <p class="eyebrow">JOURNAL · DATENIMPORT</p>
+          <h2>Eine Einheit, mehrere Quellen</h2>
+          <p class="muted">Garmin, Concept2 und RP3 werden als Provenienzen derselben Aktivität gespeichert. Re-Imports erzeugen keine zweite Einheit.</p>
+        </div>
+        <button id="concept2Sync" class="secondary" type="button">Concept2 synchronisieren</button>
+      </div>
+      <form id="activityImportForm" class="import-strip">
+        <label>Quelle
+          <select name="provider">
+            <option value="garmin">Garmin</option>
+            <option value="rp3">RP3</option>
+          </select>
+        </label>
+        <label class="import-file">Datei
+          <input name="file" type="file" accept=".fit,.tcx,.json,.csv" required>
+        </label>
+        <button class="primary" type="submit">Importieren</button>
+      </form>
+      <p id="journalMessage" class="message"></p>
+      <div id="journalActivities" class="journal-list"><p class="muted">Journal wird geladen …</p></div>
+    </section>
+
     <section class="card specialist-card">
       <div class="section-head">
         <div>
@@ -162,5 +187,6 @@
   </main>
   <script type="module" src="/app/app.js"></script>
   <script type="module" src="/app/p1.js"></script>
+  <script type="module" src="/app/journal.js"></script>
 </body>
 </html>
