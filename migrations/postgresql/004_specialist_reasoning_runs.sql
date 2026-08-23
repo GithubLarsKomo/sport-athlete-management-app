@@ -18,12 +18,6 @@ CREATE INDEX IF NOT EXISTS idx_specialist_reasoning_run_status ON specialist_rea
 ALTER TABLE specialist_artifacts ADD COLUMN IF NOT EXISTS reasoning_run_id VARCHAR(36) NULL;
 ALTER TABLE specialist_artifacts ADD COLUMN IF NOT EXISTS provenance_json JSONB NULL;
 CREATE INDEX IF NOT EXISTS idx_specialist_artifact_reasoning_run ON specialist_artifacts (reasoning_run_id);
-
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_specialist_artifact_reasoning_run') THEN
-    ALTER TABLE specialist_artifacts
-      ADD CONSTRAINT fk_specialist_artifact_reasoning_run
-      FOREIGN KEY (reasoning_run_id) REFERENCES specialist_reasoning_runs(id) ON DELETE SET NULL;
-  END IF;
-END $$;
+ALTER TABLE specialist_artifacts
+  ADD CONSTRAINT fk_specialist_artifact_reasoning_run
+  FOREIGN KEY (reasoning_run_id) REFERENCES specialist_reasoning_runs(id) ON DELETE SET NULL;
