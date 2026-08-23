@@ -213,8 +213,11 @@ export function createActivityRepository(db) {
         ]);
 
         let completedSessionId = activity.completed_session_id;
-        if (finalize && activity.planned_session_id && !completedSessionId) {
-          const existing = await conn.query('SELECT id FROM completed_sessions WHERE athlete_id=? AND planned_session_id=? ORDER BY created_at DESC LIMIT 1', [athleteId, activity.planned_session_id]);
+        if (finalize && !completedSessionId) {
+          let existing = [];
+          if (activity.planned_session_id) {
+            existing = await conn.query('SELECT id FROM completed_sessions WHERE athlete_id=? AND planned_session_id=? ORDER BY created_at DESC LIMIT 1', [athleteId, activity.planned_session_id]);
+          }
           if (existing[0]) completedSessionId = existing[0].id;
           else {
             completedSessionId = randomUUID();
@@ -222,9 +225,11 @@ export function createActivityRepository(db) {
             await conn.query(`INSERT INTO completed_sessions
               (id, athlete_id, planned_session_id, started_at, completed_at, duration_min, session_rpe, session_load, completion_status, payload_json)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?)`, [
-              completedSessionId, athleteId, activity.planned_session_id, new Date(payload.started_at), new Date(payload.completed_at),
+              completedSessionId, athleteId, activity.planned_session_id || null, new Date(payload.started_at), new Date(payload.completed_at),
               payload.duration_min, sessionRpe, payload.session_load, JSON.stringify(payload)
             ]);
+          }
+          if (activity.planned_session_id) {
             await conn.query(`UPDATE planned_sessions SET status='completed', updated_at=CURRENT_TIMESTAMP
               WHERE id=? AND athlete_id=? AND status IN ('planned','modified')`, [activity.planned_session_id, athleteId]);
           }
