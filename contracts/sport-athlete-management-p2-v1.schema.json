@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GithubLarsKomo/skillz/schemas/sport-athlete-management-p2-v1.schema.json",
+  "title": "Sport Athlete Management P2 v1 Contracts",
+  "type": "object",
+  "$defs": {
+    "commonEnvelope": {
+      "type": "object",
+      "required": ["schema_version", "athlete_id", "generated_at", "source_refs", "uncertainties", "safety_flags"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "athlete_id": {"type": "string", "minLength": 1},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "source_refs": {"type": "array", "items": {"type": "string"}},
+        "uncertainties": {"type": "array", "items": {"type": "string"}},
+        "safety_flags": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "performancePsychologyPlan": {
+      "allOf": [
+        {"$ref": "#/$defs/commonEnvelope"},
+        {
+          "type": "object",
+          "required": ["plan_version", "performance_question", "target_behavior", "skills", "practice_blocks", "cues", "transfer_situations", "monitoring", "re_evaluation"],
+          "properties": {
+            "plan_version": {"type": "integer", "minimum": 1},
+            "performance_question": {"type": "string", "minLength": 1},
+            "target_behavior": {"type": "string", "minLength": 1},
+            "skills": {"type": "array", "items": {"type": "object"}},
+            "practice_blocks": {"type": "array", "items": {"type": "object"}},
+            "cues": {"type": "array", "items": {"type": "object"}},
+            "transfer_situations": {"type": "array", "items": {"type": "object"}},
+            "monitoring": {"type": "object"},
+            "re_evaluation": {"type": "object"},
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      ]
+    },
+    "mentalHealthRouting": {
+      "allOf": [
+        {"$ref": "#/$defs/commonEnvelope"},
+        {
+          "type": "object",
+          "required": ["routing_version", "concern_summary", "observed_signals", "functioning_course", "routing_level", "training_boundaries", "support_path", "privacy_minimization", "confidence"],
+          "properties": {
+            "routing_version": {"type": "integer", "minimum": 1},
+            "concern_summary": {"type": "string"},
+            "observed_signals": {"type": "array", "items": {"type": "object"}},
+            "functioning_course": {"type": "object"},
+            "routing_level": {"enum": ["performance_support", "monitor", "professional_review", "urgent"]},
+            "training_boundaries": {"type": "object"},
+            "support_path": {"type": "object"},
+            "privacy_minimization": {"type": "object"},
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      ]
+    },
+    "trainingMusicProfile": {
+      "allOf": [
+        {"$ref": "#/$defs/commonEnvelope"},
+        {
+          "type": "object",
+          "required": ["profile_version", "preferences", "exclusions", "session_goals", "activation_target", "timing", "selection_rules", "safety_constraints", "feedback_fields"],
+          "properties": {
+            "profile_version": {"type": "integer", "minimum": 1},
+            "preferences": {"type": "object"},
+            "exclusions": {"type": "array", "items": {"type": "string"}},
+            "session_goals": {"type": "array", "items": {"type": "object"}},
+            "activation_target": {"type": "object"},
+            "timing": {"type": "array", "items": {"type": "object"}},
+            "selection_rules": {"type": "array", "items": {"type": "string"}},
+            "bpm_context": {
+              "type": "object",
+              "required": ["descriptive_only"],
+              "properties": {"descriptive_only": {"const": true}}
+            },
+            "safety_constraints": {"type": "array", "items": {"type": "string"}},
+            "feedback_fields": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      ]
+    },
+    "environmentAdjustment": {
+      "allOf": [
+        {"$ref": "#/$defs/commonEnvelope"},
+        {
+          "type": "object",
+          "required": ["adjustment_version", "exposures", "environment_travel_data", "target_event", "acclimation_strategy", "circadian_strategy", "microcycle_adjustments", "hydration_cooling_context", "monitoring", "next_re_evaluation"],
+          "properties": {
+            "adjustment_version": {"type": "integer", "minimum": 1},
+            "exposures": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"enum": ["heat", "cold", "altitude_hypoxia", "travel_fatigue", "jet_lag"]},
+              "uniqueItems": true
+            },
+            "environment_travel_data": {"type": "object"},
+            "target_event": {"type": "object"},
+            "acclimation_strategy": {"type": "object"},
+            "circadian_strategy": {"type": "object"},
+            "microcycle_adjustments": {"type": "array", "items": {"type": "object"}},
+            "hydration_cooling_context": {"type": "object"},
+            "monitoring": {"type": "object"},
+            "next_re_evaluation": {"type": "string", "format": "date-time"},
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      ]
+    }
+  }
+}

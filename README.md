@@ -4,59 +4,61 @@ Small Node.js WebApp for the operational side of the Sport Athlete Management sy
 
 ## Architectural boundary
 
-`GithubLarsKomo/skillz` owns sport-science reasoning, versioned contracts, safety rules and evaluation. This repository owns UI, authentication, API, **PostgreSQL persistence**, audit history and deployment. Canonical P0 and P1 contracts are copied into `contracts/` with provenance in `contracts/PROVENANCE.md`.
+`GithubLarsKomo/skillz` owns sport-science reasoning, versioned contracts, safety rules and evaluation. This repository owns UI, authentication, API, **PostgreSQL persistence**, audit history and deployment. Canonical P0, P1 and P2 contracts are copied into `contracts/` with provenance in `contracts/PROVENANCE.md`.
 
-The WebApp does **not** reimplement the sport-training adaptation engine or the P1 specialist skills. `POST /api/v1/adaptation/evaluate` sends the current input snapshot to `SKILLZ_ADAPTATION_URL` when configured. Without that service, the application records a conservative `YELLOW / review_required` decision and makes no automatic plan change.
+The WebApp does **not** reimplement the sport-training adaptation engine or P1/P2 specialist logic. `POST /api/v1/adaptation/evaluate` sends the current input snapshot to `SKILLZ_ADAPTATION_URL` when configured. Without that service, the application records a conservative `YELLOW / review_required` decision and makes no automatic plan change.
 
-## Current P0 workflow
+A separate specialist producer can call `SKILLZ_SPECIALIST_URL`. The product selects the relevant specialist from a deterministic event route, constructs the authoritative athlete snapshot internally, minimizes the snapshot for that specialist, validates the returned canonical artifact, and stores it append-only with runtime/model/Skillz-revision provenance. If the specialist runtime is unavailable or returns an invalid artifact, the reasoning run is recorded as failed or partial and **no replacement advice is invented**.
+
+## Current closed-loop workflow
 
 1. authenticated athlete identity and profile onboarding
 2. active goal / competition / season / mesocycle / microcycle context
 3. versioned seven-day training view and today's planned session
 4. 20–40 second morning check-in
 5. completed session with duration and session RPE
-6. external Skillz adaptation evaluation or safe review-required fallback
-7. visible revision proposal with explicit athlete confirmation
-8. version-bound plan revision and adaptation/audit history
+6. event/checkpoint-driven P1/P2 specialist generation where relevant
+7. external Skillz adaptation evaluation or safe review-required fallback
+8. visible revision proposal with explicit athlete confirmation
+9. version-bound plan revision and adaptation/audit history
 
-## P1 specialist artifacts
+## P1/P2 specialist artifacts
 
-The merged Skillz P1 layer is consumed separately from P0. Supported artifact types are:
+P1 supports strength/power, endurance, recovery, fueling, energy-availability risk, rehabilitation, return after illness, testing and longitudinal adaptation analysis. P2 supports performance psychology, mental-health routing, training music and environment/travel adjustment.
 
-- `strength_power_plan`
-- `endurance_plan`
-- `recovery_state`
-- `fueling_plan`
-- `energy_availability_risk`
-- `rehab_progression`
-- `return_after_illness_plan`
-- `testing_plan`
-- `adaptation_analysis`
+P1 and P2 use the same generic `specialist_artifacts` table. Artifacts are append-only and receive a product-side `artifact_version`. Athlete-facing APIs are read-only. P2 artifacts cannot contain direct plan patches; urgent mental-health routing leaves the performance-optimization loop rather than inventing performance advice.
 
-P1 artifacts are append-only in the product database. The application assigns a product-side `artifact_version` for each athlete/type pair while preserving the canonical Skillz payload and its own plan/domain version. Athlete-facing endpoints are read-only.
+## Specialist reasoning producer
 
-P1 writes use a distinct service-to-service endpoint and secret. Set `P1_INGEST_SHARED_SECRET` to at least 32 random characters to enable it; leaving it blank disables P1 ingest. The Skillz service must send the configured `P1_INGEST_SECRET_HEADER` and a body containing the target `athlete_id` plus the canonical `artifact`. The app overwrites any athlete ID inside the payload with the authenticated target, validates the P1 contract subset, appends a new version and writes an audit event.
+Generation is server-to-server only. Configure:
 
-The internal ingest route must be reachable only through the private application/service network where possible. It is not a browser authoring API. Operational details and verification steps are in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
+```text
+SPECIALIST_SERVICE_SHARED_SECRET=<at least 32 random characters>
+SPECIALIST_SERVICE_SECRET_HEADER=x-sam-specialist-secret
+SKILLZ_SPECIALIST_URL=<trusted Skillz runtime endpoint>
+SKILLZ_SPECIALIST_TOKEN=<runtime bearer token if required>
+SKILLZ_SPECIALIST_TIMEOUT_MS=15000
+SKILLZ_SOURCE_REVISION=<deployed skillz commit>
+```
+
+`POST /api/v1/internal/specialists/generate` accepts only `athlete_id`, a known trigger and optionally validated requested types. The product rebuilds the authoritative athlete snapshot from PostgreSQL and sends only the specialist-specific minimized snapshot. Each attempt creates a `specialist_reasoning_runs` record and retains runtime/model/Skillz-revision provenance. Details are in [`deploy/SPECIALIST-REASONING-RUNTIME.md`](deploy/SPECIALIST-REASONING-RUNTIME.md).
+
+The previous `P1_INGEST_*` configuration and `/api/v1/internal/p1/artifacts/{type}` route remain supported for compatibility. New integrations should use `SPECIALIST_SERVICE_*` and `/api/v1/internal/specialists/artifacts/{type}`.
 
 ## Database platform
 
-Hosted and local persistent deployments use PostgreSQL 18.x. The baseline documented for the shared Hetzner/Coolify platform is PostgreSQL 18.6.
-
-The canonical application connection contract is:
+Hosted and local persistent deployments use PostgreSQL 18.x. The shared Hetzner/Coolify baseline is PostgreSQL 18.6.
 
 ```text
 DATABASE_URL=postgresql://<dedicated-user>:<secret>@<private-postgres-host>:5432/sport_athlete
 DB_POOL_MAX=5
 ```
 
-Production PostgreSQL is private infrastructure. Do not expose port 5432 publicly; external administration is through SSH/private-network paths or an SSH tunnel. The app owns the `sport_athlete` database and does not read sibling application databases.
+PostgreSQL is private infrastructure. Port 5432 is never exposed publicly; external administration uses SSH/private networking or an SSH tunnel. The Sport app owns its `sport_athlete` database and does not read sibling application databases.
 
-The active PostgreSQL migrations live under `migrations/postgresql/`. The older SQL files directly under `migrations/` are frozen MariaDB migration provenance and are not executed by the PostgreSQL migration runner.
+Active migrations live under `migrations/postgresql/`. The SQL files directly under `migrations/` are frozen MariaDB provenance and are not executed by the PostgreSQL migration runner. Applied PostgreSQL migrations are SHA-256 tracked and serialized with a PostgreSQL advisory transaction lock.
 
 ## Local start
-
-A quick local PostgreSQL stack is provided by `docker-compose.example.yml`.
 
 ```bash
 docker compose -f docker-compose.example.yml up -d db
@@ -71,11 +73,9 @@ Open `http://localhost:3000`.
 
 ## Production on Hetzner / Coolify
 
-Use the `Dockerfile`, attach the application to the private PostgreSQL 18.x service and put the application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, a credentialed PostgreSQL `DATABASE_URL`, or a proxy shared secret of at least 32 characters is missing. If P1 ingest is enabled, its separate secret is also required to contain at least 32 characters.
+Use the `Dockerfile`, attach the application to the private PostgreSQL 18.x service and put the athlete-facing application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, a credentialed PostgreSQL `DATABASE_URL`, or a proxy shared secret of at least 32 characters is missing. The specialist service secret is independent from the browser/Auth proxy secret and must never be exposed to frontend code.
 
-The base deployment runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md); the P1 service boundary is in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
-
-Existing MariaDB installations must use the controlled cutover in [`deploy/MARIADB-TO-POSTGRESQL.md`](deploy/MARIADB-TO-POSTGRESQL.md). There is no dual-write compatibility mode.
+Prefer private service networking for PostgreSQL, the specialist runtime and internal producer/ingest endpoints. The base deployment runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md); specialist runtime details are in [`deploy/SPECIALIST-REASONING-RUNTIME.md`](deploy/SPECIALIST-REASONING-RUNTIME.md).
 
 Before routing traffic to a new release:
 
@@ -88,46 +88,31 @@ The Docker health check executes the same database-readiness probe.
 
 ## API
 
-- `GET /healthz` — process/application liveness only
-- `GET /api/v1/me`
-- `GET|PUT /api/v1/athlete/profile`
-- `GET|POST /api/v1/goals`
-- `GET /api/v1/context`
-- `PUT /api/v1/planning/active` — idempotent, version-aware active season/meso/micro/session import
-- `GET /api/v1/training/today`
-- `GET /api/v1/training/week?from=YYYY-MM-DD`
-- `GET /api/v1/checkins/today`
-- `POST /api/v1/checkins`
-- `POST /api/v1/sessions/:id/complete`
-- `POST /api/v1/adaptation/evaluate`
-- `POST /api/v1/adaptation/{id}/apply` — explicitly apply a supported version-bound next-session revision
-- `GET /api/v1/adaptation/latest`
-- `GET /api/v1/adaptation/history`
-- `GET /api/v1/p1/types`
-- `GET /api/v1/p1/artifacts/latest`
-- `GET /api/v1/p1/artifacts/{type}`
-- `GET /api/v1/p1/artifacts/{type}/history?limit=20`
-- `POST /api/v1/internal/p1/artifacts/{type}` — private service-to-service ingest, requires the separate P1 secret
+Athlete-facing endpoints include identity/profile, goals/context, versioned planning, weekly/today training, check-ins, completed sessions, adaptation history/apply, and read-only P1/P2 specialist artifacts.
+
+Private service-to-service endpoints:
+
+- `POST /api/v1/internal/specialists/generate`
+- `POST /api/v1/internal/specialists/artifacts/{type}`
+- `POST /api/v1/internal/p1/artifacts/{type}` — legacy P1-compatible alias
 
 ## Plan lifecycle
 
 The app accepts a versioned active planning package through `PUT /api/v1/planning/active`; see `examples/plan-package.example.json`. IDs and versions are preserved so stale imports cannot silently overwrite newer local session revisions or finalized sessions.
 
-An external Skillz decision may propose a `revised_plan` command for a `planned_session`. The proposal is stored first and only changes the plan through the explicit `/api/v1/adaptation/{id}/apply` endpoint. Applying it checks athlete ownership and `expected_version`, increments the session version, writes `training_plan_revisions`, marks the decision as applied and records an audit event.
-
-Current P1 specialist artifacts are also included in the adaptation input snapshot when available. They provide specialist context; they do not bypass the central adaptation engine or cause automatic plan mutation by themselves.
-
-Database migrations are ordered, transactional where supported and SHA-256 tracked in `schema_migrations`; editing an already applied PostgreSQL migration causes deployment to fail instead of silently drifting the schema. A PostgreSQL advisory transaction lock prevents concurrent migration runners from racing each other.
+An external Skillz adaptation decision may propose a `revised_plan` command for a `planned_session`. The proposal is stored first and only changes the plan through explicit apply. Current specialist artifacts may inform the adaptation snapshot, but they do not bypass the central adaptation engine or mutate the plan by themselves.
 
 ## Safety and privacy
 
 - No opaque readiness score controls training.
 - No automatic medical diagnosis or clearance is implemented in the product layer.
-- Missing external reasoning produces `review_required`, not invented training advice.
-- P1 athlete-facing APIs are read-only; specialist artifacts require the independent internal ingest secret.
-- Every mutation is written to `audit_log`.
-- Adaptation decisions retain the authoritative input snapshot and rationale.
-- Optional sex-specific and physiology context is voluntary and does not create rigid menstrual-phase prescriptions.
+- Missing P0 adaptation reasoning produces `review_required`; missing specialist reasoning produces a failed run and no invented artifact.
+- P1/P2 athlete-facing APIs are read-only; specialist writes/generation require the independent internal service secret.
+- The product, not the caller/runtime, is authoritative for athlete identity.
+- Specialist snapshots are minimized by artifact type before transmission.
+- Mental-health routing is non-diagnostic and can leave the performance loop on urgent safety concerns.
+- P2 artifacts cannot mutate a training plan directly.
+- Every mutation and reasoning run is audit-traceable.
 - Production browser writes are bound to the configured HTTPS origin.
 - Before multi-user production use, complete GDPR/privacy, retention/deletion, backup/restore and software-boundary review.
 
@@ -143,4 +128,4 @@ npm run test:integration
 npm run reconcile
 ```
 
-CI repeats the tests and migration lifecycle against PostgreSQL 18.6 and builds the production Docker image.
+CI repeats these checks against PostgreSQL 18.6 and builds the production Docker image.
