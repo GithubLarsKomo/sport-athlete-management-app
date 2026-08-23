@@ -1,62 +1,66 @@
 # Sport Athlete Management App
 
-Small Node.js WebApp for the operational side of the Sport Athlete Management system. It follows the product-separation pattern of `GithubLarsKomo/grilling`: a dedicated product repository, static responsive frontend, small Node server, Docker/Coolify deployment and explicit runtime status. Unlike Grilling, this application stores longitudinal health-adjacent athlete data and therefore requires a real trusted authentication boundary.
+Small Node.js WebApp for the operational side of the Sport Athlete Management system. It stores longitudinal health-adjacent athlete data behind a trusted authentication boundary and uses PostgreSQL for durable persistence.
 
 ## Architectural boundary
 
-`GithubLarsKomo/skillz` owns sport-science reasoning, versioned contracts, safety rules and evaluation. This repository owns UI, authentication, API, **PostgreSQL persistence**, audit history and deployment. Canonical P0, P1 and P2 contracts are copied into `contracts/` with provenance in `contracts/PROVENANCE.md`.
+`GithubLarsKomo/skillz` owns sport-science reasoning, versioned contracts, safety rules and evaluation. This repository owns UI, authentication, API, PostgreSQL persistence, journal ingestion, audit history and deployment. Canonical P0, P1 and P2 contracts are copied into `contracts/` with provenance in `contracts/PROVENANCE.md`.
 
-The WebApp does **not** reimplement the sport-training adaptation engine or P1/P2 specialist logic. `POST /api/v1/adaptation/evaluate` sends the current input snapshot to `SKILLZ_ADAPTATION_URL` when configured. Without that service, the application records a conservative `YELLOW / review_required` decision and makes no automatic plan change.
+The WebApp does not reimplement the adaptation engine or P1/P2 specialist logic. P0 adaptation can use `SKILLZ_ADAPTATION_URL`; P1/P2 specialist generation can use `SKILLZ_SPECIALIST_URL`. Missing or invalid reasoning fails closed without inventing advice.
 
-A separate specialist producer can call `SKILLZ_SPECIALIST_URL`. The product selects the relevant specialist from a deterministic event route, constructs the authoritative athlete snapshot internally, minimizes the snapshot for that specialist, validates the returned canonical artifact, and stores it append-only with runtime/model/Skillz-revision provenance. If the specialist runtime is unavailable or returns an invalid artifact, the reasoning run is recorded as failed or partial and **no replacement advice is invented**.
+## Closed-loop workflow
 
-## Current closed-loop workflow
+1. authenticated athlete identity and profile
+2. goals and versioned season/meso/micro/session planning
+3. morning check-in
+4. device/service activity ingestion and cross-provider deduplication
+5. one canonical journal activity with Garmin, Concept2 and/or RP3 source provenance
+6. athlete RPE, pain, deviations and comment
+7. journal finalization into exactly one `completed_session`
+8. event/checkpoint-driven P1/P2 specialist generation where relevant
+9. adaptation evaluation and explicit athlete-confirmed plan revision
 
-1. authenticated athlete identity and profile onboarding
-2. active goal / competition / season / mesocycle / microcycle context
-3. versioned seven-day training view and today's planned session
-4. 20–40 second morning check-in
-5. completed session with duration and session RPE
-6. event/checkpoint-driven P1/P2 specialist generation where relevant
-7. external Skillz adaptation evaluation or safe review-required fallback
-8. visible revision proposal with explicit athlete confirmation
-9. version-bound plan revision and adaptation/audit history
+## Journal and activity ingestion
+
+A real training session is represented once in `activities`; provider observations are retained separately in `activity_sources`. Re-imports are idempotent by external provider ID and SHA-256, while cross-provider matching uses activity type, time overlap, duration and distance. Garmin plus Concept2/RP3 indoor-rowing recordings are treated as complementary sources. Ambiguous matches remain reviewable instead of being silently merged.
+
+Supported v1 inputs:
+
+- Garmin FIT via the official `@garmin/fitsdk`, plus Garmin TCX
+- Concept2 Logbook incremental result sync
+- RP3 JSON, CSV and TCX
+
+Imported activities are linked to a compatible planned session where possible. Finalization requires athlete RPE. Unplanned sessions also become completed sessions, while a later device import can attach to an already manually completed session instead of creating a duplicate. The detailed precedence and dedupe contract is in [`docs/activity-journal-ingestion.md`](docs/activity-journal-ingestion.md).
+
+For a personal Concept2 connection configure a read-only token and bind it to exactly one stable athlete identity:
+
+```text
+CONCEPT2_ACCESS_TOKEN=<secret>
+CONCEPT2_ATHLETE_ID=<stable-athlete-id>
+```
+
+A future per-athlete OAuth flow can replace this without changing the journal data model.
 
 ## P1/P2 specialist artifacts
 
-P1 supports strength/power, endurance, recovery, fueling, energy-availability risk, rehabilitation, return after illness, testing and longitudinal adaptation analysis. P2 supports performance psychology, mental-health routing, training music and environment/travel adjustment.
-
-P1 and P2 use the same generic `specialist_artifacts` table. Artifacts are append-only and receive a product-side `artifact_version`. Athlete-facing APIs are read-only. P2 artifacts cannot contain direct plan patches; urgent mental-health routing leaves the performance-optimization loop rather than inventing performance advice.
+P1 supports strength/power, endurance, recovery, fueling, energy-availability risk, rehabilitation, return after illness, testing and longitudinal adaptation analysis. P2 supports performance psychology, mental-health routing, training music and environment/travel adjustment. Both use append-only `specialist_artifacts`; athlete-facing APIs are read-only. P2 cannot patch a training plan directly.
 
 ## Specialist reasoning producer
 
-Generation is server-to-server only. Configure:
+Generation is server-to-server only. Configure `SPECIALIST_SERVICE_SHARED_SECRET`, `SKILLZ_SPECIALIST_URL` and the optional runtime token/revision settings. `POST /api/v1/internal/specialists/generate` rebuilds the authoritative athlete snapshot from PostgreSQL, minimizes it by specialist, validates the canonical response and stores reasoning-run provenance. Details are in [`deploy/SPECIALIST-REASONING-RUNTIME.md`](deploy/SPECIALIST-REASONING-RUNTIME.md).
 
-```text
-SPECIALIST_SERVICE_SHARED_SECRET=<at least 32 random characters>
-SPECIALIST_SERVICE_SECRET_HEADER=x-sam-specialist-secret
-SKILLZ_SPECIALIST_URL=<trusted Skillz runtime endpoint>
-SKILLZ_SPECIALIST_TOKEN=<runtime bearer token if required>
-SKILLZ_SPECIALIST_TIMEOUT_MS=15000
-SKILLZ_SOURCE_REVISION=<deployed skillz commit>
-```
-
-`POST /api/v1/internal/specialists/generate` accepts only `athlete_id`, a known trigger and optionally validated requested types. The product rebuilds the authoritative athlete snapshot from PostgreSQL and sends only the specialist-specific minimized snapshot. Each attempt creates a `specialist_reasoning_runs` record and retains runtime/model/Skillz-revision provenance. Details are in [`deploy/SPECIALIST-REASONING-RUNTIME.md`](deploy/SPECIALIST-REASONING-RUNTIME.md).
-
-The previous `P1_INGEST_*` configuration and `/api/v1/internal/p1/artifacts/{type}` route remain supported for compatibility. New integrations should use `SPECIALIST_SERVICE_*` and `/api/v1/internal/specialists/artifacts/{type}`.
+Legacy `P1_INGEST_*` configuration and `/api/v1/internal/p1/artifacts/{type}` remain supported for compatibility.
 
 ## Database platform
 
-Hosted and local persistent deployments use PostgreSQL 18.x. The shared Hetzner/Coolify baseline is PostgreSQL 18.6.
+Hosted and local persistent deployments use PostgreSQL 18.x; the shared Hetzner/Coolify baseline is PostgreSQL 18.6.
 
 ```text
 DATABASE_URL=postgresql://<dedicated-user>:<secret>@<private-postgres-host>:5432/sport_athlete
 DB_POOL_MAX=5
 ```
 
-PostgreSQL is private infrastructure. Port 5432 is never exposed publicly; external administration uses SSH/private networking or an SSH tunnel. The Sport app owns its `sport_athlete` database and does not read sibling application databases.
-
-Active migrations live under `migrations/postgresql/`. The SQL files directly under `migrations/` are frozen MariaDB provenance and are not executed by the PostgreSQL migration runner. Applied PostgreSQL migrations are SHA-256 tracked and serialized with a PostgreSQL advisory transaction lock.
+PostgreSQL remains private infrastructure. Port 5432 is never exposed publicly. Active migrations live under `migrations/postgresql/`; legacy MariaDB SQL in the parent migration directory is frozen provenance. The active sequence currently includes specialist reasoning as migration 004 and journal/activity ingestion as migration 005. Migrations are SHA-256 tracked, transactional where supported and serialized by a PostgreSQL advisory transaction lock.
 
 ## Local start
 
@@ -73,45 +77,38 @@ Open `http://localhost:3000`.
 
 ## Production on Hetzner / Coolify
 
-Use the `Dockerfile`, attach the application to the private PostgreSQL 18.x service and put the athlete-facing application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, a credentialed PostgreSQL `DATABASE_URL`, or a proxy shared secret of at least 32 characters is missing. The specialist service secret is independent from the browser/Auth proxy secret and must never be exposed to frontend code.
+Use the repository Dockerfile, a private PostgreSQL 18.x service and Authentik or an equivalent trusted proxy. Production fails closed when HTTPS `PUBLIC_ORIGIN`, a credentialed `DATABASE_URL`, or a sufficiently strong proxy secret is missing. Specialist and Concept2 credentials stay in the deployment secret store and are never exposed to frontend code.
 
-Prefer private service networking for PostgreSQL, the specialist runtime and internal producer/ingest endpoints. The base deployment runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md); specialist runtime details are in [`deploy/SPECIALIST-REASONING-RUNTIME.md`](deploy/SPECIALIST-REASONING-RUNTIME.md).
-
-Before routing traffic to a new release:
+Before routing traffic to a release:
 
 ```bash
 npm run migrate
 npm run ready
 ```
 
-The Docker health check executes the same database-readiness probe.
+## API additions for journal ingestion
 
-## API
+```text
+GET  /api/v1/import/status
+POST /api/v1/import/file
+POST /api/v1/import/concept2/result
+POST /api/v1/import/concept2/sync
+GET  /api/v1/journal
+PUT  /api/v1/journal/{activity_id}
+POST /api/v1/journal/{target_activity_id}/merge
+```
 
-Athlete-facing endpoints include identity/profile, goals/context, versioned planning, weekly/today training, check-ins, completed sessions, adaptation history/apply, and read-only P1/P2 specialist artifacts.
-
-Private service-to-service endpoints:
-
-- `POST /api/v1/internal/specialists/generate`
-- `POST /api/v1/internal/specialists/artifacts/{type}`
-- `POST /api/v1/internal/p1/artifacts/{type}` — legacy P1-compatible alias
-
-## Plan lifecycle
-
-The app accepts a versioned active planning package through `PUT /api/v1/planning/active`; see `examples/plan-package.example.json`. IDs and versions are preserved so stale imports cannot silently overwrite newer local session revisions or finalized sessions.
-
-An external Skillz adaptation decision may propose a `revised_plan` command for a `planned_session`. The proposal is stored first and only changes the plan through explicit apply. Current specialist artifacts may inform the adaptation snapshot, but they do not bypass the central adaptation engine or mutate the plan by themselves.
+The application also exposes identity/profile, goals/context, planning, check-ins, manual session completion, adaptation history/apply, read-only P1/P2 artifacts and private specialist producer/ingest endpoints.
 
 ## Safety and privacy
 
 - No opaque readiness score controls training.
 - No automatic medical diagnosis or clearance is implemented in the product layer.
-- Missing P0 adaptation reasoning produces `review_required`; missing specialist reasoning produces a failed run and no invented artifact.
-- P1/P2 athlete-facing APIs are read-only; specialist writes/generation require the independent internal service secret.
-- The product, not the caller/runtime, is authoritative for athlete identity.
-- Specialist snapshots are minimized by artifact type before transmission.
-- Mental-health routing is non-diagnostic and can leave the performance loop on urgent safety concerns.
-- P2 artifacts cannot mutate a training plan directly.
+- Missing external reasoning does not invent advice.
+- Device imports never invent subjective RPE.
+- Raw provider provenance is retained after deduplication.
+- Concept2 personal tokens are athlete-scoped; a different authenticated athlete cannot invoke or discover that connection.
+- P1/P2 athlete APIs are read-only and specialist writes use an independent service secret.
 - Every mutation and reasoning run is audit-traceable.
 - Production browser writes are bound to the configured HTTPS origin.
 - Before multi-user production use, complete GDPR/privacy, retention/deletion, backup/restore and software-boundary review.
@@ -128,4 +125,4 @@ npm run test:integration
 npm run reconcile
 ```
 
-CI repeats these checks against PostgreSQL 18.6 and builds the production Docker image.
+CI runs these checks against PostgreSQL 18.6 and builds the production Docker image.

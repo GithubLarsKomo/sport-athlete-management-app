@@ -18,6 +18,7 @@
     "node": ">=22 <23"
   },
   "dependencies": {
+    "@garmin/fitsdk": "21.213.0",
     "postgres": "^3.4.9"
   }
 }

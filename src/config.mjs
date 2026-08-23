@@ -36,11 +36,20 @@ function validateDatabaseUrl(value, { production = false } = {}) {
   return value;
 }
 
+function validateHttpsBaseUrl(value, name) {
+  if (!value) return '';
+  let parsed;
+  try { parsed = new URL(value); } catch { throw new Error(`${name} must be a valid URL`); }
+  if (parsed.protocol !== 'https:') throw new Error(`${name} must use https`);
+  return parsed.toString().replace(/\/$/, '');
+}
+
 export function loadConfig() {
   const runtime = readRuntimeConfig();
   const nodeEnv = env('NODE_ENV', 'development');
   const authMode = env('AUTH_MODE', nodeEnv === 'production' ? 'proxy' : 'dev').toLowerCase();
   const defaultDatabaseUrl = 'postgresql://sport_athlete:sport_athlete@127.0.0.1:5432/sport_athlete';
+  const devUserId = env('DEV_USER_ID', 'demo-athlete');
   const legacyP1Secret = env('P1_INGEST_SHARED_SECRET', '');
   const legacyP1Header = env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase();
   const specialistSecret = env('SPECIALIST_SERVICE_SHARED_SECRET', legacyP1Secret);
@@ -61,7 +70,7 @@ export function loadConfig() {
       subjectHeader: env('AUTH_SUBJECT_HEADER', 'x-authentik-uid').toLowerCase(),
       emailHeader: env('AUTH_EMAIL_HEADER', 'x-authentik-email').toLowerCase(),
       nameHeader: env('AUTH_NAME_HEADER', 'x-authentik-name').toLowerCase(),
-      devUserId: env('DEV_USER_ID', 'demo-athlete'),
+      devUserId,
       devEmail: env('DEV_USER_EMAIL', 'demo@example.invalid'),
       devName: env('DEV_USER_NAME', 'Demo Athlete')
     },
@@ -81,6 +90,12 @@ export function loadConfig() {
     p1: {
       ingestSecret: specialistSecret,
       ingestHeader: specialistHeader
+    },
+    concept2: {
+      baseUrl: env('CONCEPT2_BASE_URL', 'https://log.concept2.com'),
+      accessToken: env('CONCEPT2_ACCESS_TOKEN', ''),
+      athleteId: env('CONCEPT2_ATHLETE_ID', nodeEnv === 'production' ? '' : devUserId),
+      timeoutMs: Number(env('CONCEPT2_TIMEOUT_MS', '10000'))
     }
   };
 
@@ -91,8 +106,11 @@ export function loadConfig() {
   if (!Number.isInteger(config.skillz.specialistTimeoutMs) || config.skillz.specialistTimeoutMs < 250 || config.skillz.specialistTimeoutMs > 60000) throw new Error('SKILLZ_SPECIALIST_TIMEOUT_MS must be 250..60000');
   if (config.specialist.serviceSecret && config.specialist.serviceSecret.length < 32) throw new Error('SPECIALIST_SERVICE_SHARED_SECRET must contain at least 32 characters when enabled');
   if (!/^[a-z0-9-]+$/.test(config.specialist.serviceHeader)) throw new Error('SPECIALIST_SERVICE_SECRET_HEADER must be a valid lowercase HTTP header name');
+  if (!Number.isInteger(config.concept2.timeoutMs) || config.concept2.timeoutMs < 1000 || config.concept2.timeoutMs > 60000) throw new Error('CONCEPT2_TIMEOUT_MS must be 1000..60000');
+  if (config.concept2.accessToken && !config.concept2.athleteId) throw new Error('CONCEPT2_ATHLETE_ID is required when CONCEPT2_ACCESS_TOKEN is configured');
 
   config.db.url = validateDatabaseUrl(config.db.url, { production: nodeEnv === 'production' });
+  config.concept2.baseUrl = validateHttpsBaseUrl(config.concept2.baseUrl, 'CONCEPT2_BASE_URL');
 
   if (nodeEnv === 'production') {
     config.publicOrigin = validateProductionOrigin(config.publicOrigin);

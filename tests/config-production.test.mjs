@@ -58,3 +58,9 @@ test('specialist runtime timeout is bounded', () => {
   assert.notEqual(runConfig({ SKILLZ_SPECIALIST_TIMEOUT_MS: '60001' }).status, 0);
   assert.equal(runConfig({ SKILLZ_SPECIALIST_TIMEOUT_MS: '15000' }).status, 0);
 });
+
+test('Concept2 personal token must be bound to one athlete in production', () => {
+  assert.equal(runConfig({ CONCEPT2_ACCESS_TOKEN: '' }).status, 0);
+  assert.notEqual(runConfig({ CONCEPT2_ACCESS_TOKEN: 'read-token' }, ['CONCEPT2_ATHLETE_ID']).status, 0);
+  assert.equal(runConfig({ CONCEPT2_ACCESS_TOKEN: 'read-token', CONCEPT2_ATHLETE_ID: 'athlete-123' }).status, 0);
+});
