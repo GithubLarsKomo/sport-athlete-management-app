@@ -7,7 +7,10 @@ import { readJson, sendJson, sendText } from './http.mjs';
 import { commonEnvelope, validateCheckin, validateCompletedSession } from './domain/contracts.mjs';
 import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
 import { validatePlanPackage, validateSessionRevisionCommand } from './domain/planning.mjs';
-import { SPECIALIST_ARTIFACT_TYPES, normalizeSpecialistArtifact, specialistIngestAuthorized, specialistTypeInfo } from './domain/p1-artifacts.mjs';
+import { specialistIngestAuthorized } from './domain/p1-artifacts.mjs';
+import { buildAthleteSnapshot } from './domain/athlete-snapshot.mjs';
+import { produceSpecialistArtifacts } from './domain/specialist-producer.mjs';
+import { normalizeAnySpecialistArtifact, specialistDescriptor, specialistTypesForLayer } from './domain/specialist-registry.mjs';
 import { normalizeConcept2Result, normalizeFileImport } from './domain/activity-import.mjs';
 import { fetchConcept2Results } from './domain/concept2-client.mjs';
 
@@ -83,6 +86,11 @@ async function serveAsset(req, res, pathname) {
   } catch { return false; }
 }
 
+function artifactsForLayer(records, layer) {
+  const allowed = new Set(specialistTypesForLayer(layer));
+  return (records || []).filter(record => allowed.has(record.artifact_type));
+}
+
 export function createApplication({ config, repository }) {
   return async function handler(req, res) {
     try {
@@ -97,20 +105,45 @@ export function createApplication({ config, repository }) {
 
       if (!writeOriginAllowed(req, config)) return sendJson(res, 403, { error: 'cross_site_write_rejected' });
 
-      const ingestMatch = url.pathname.match(/^\/api\/v1\/internal\/p1\/artifacts\/([^/]+)$/);
+      const legacyP1IngestMatch = url.pathname.match(/^\/api\/v1\/internal\/p1\/artifacts\/([^/]+)$/);
+      const genericIngestMatch = url.pathname.match(/^\/api\/v1\/internal\/specialists\/artifacts\/([^/]+)$/);
+      const ingestMatch = genericIngestMatch || legacyP1IngestMatch;
       if (req.method === 'POST' && ingestMatch) {
-        if (!config.p1?.ingestSecret) return sendJson(res, 503, { error: 'p1_ingest_disabled' });
-        if (!specialistIngestAuthorized(req, config)) return sendJson(res, 401, { error: 'unauthorized_p1_ingest' });
+        if (!config.specialist?.serviceSecret) return sendJson(res, 503, { error: 'specialist_service_disabled' });
+        if (!specialistIngestAuthorized(req, config)) return sendJson(res, 401, { error: 'unauthorized_specialist_service' });
         const artifactType = decodeURIComponent(ingestMatch[1]);
-        if (!specialistTypeInfo(artifactType)) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
+        const descriptor = specialistDescriptor(artifactType);
+        if (!descriptor || (legacyP1IngestMatch && descriptor.layer !== 'p1')) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
         const body = await readJson(req, 512 * 1024);
         const targetAthleteId = String(body.athlete_id || '').trim();
         if (!targetAthleteId) return sendJson(res, 400, { error: 'athlete_id_required' });
         if (!await repository.athleteExists(targetAthleteId)) return sendJson(res, 404, { error: 'athlete_not_found' });
-        const { artifact, errors, definition } = normalizeSpecialistArtifact(artifactType, targetAthleteId, body.artifact);
+        const { artifact, errors, definition, layer, skill } = normalizeAnySpecialistArtifact(artifactType, targetAthleteId, body.artifact);
         if (errors.length) return sendJson(res, 400, { error: 'invalid_specialist_artifact', details: errors });
         const record = await repository.saveSpecialistArtifact(targetAthleteId, artifactType, artifact, 'service:skillz');
-        return sendJson(res, 201, { record: { ...record, definition } });
+        return sendJson(res, 201, { record: { ...record, definition, layer, skill } });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/v1/internal/specialists/generate') {
+        if (!config.specialist?.serviceSecret) return sendJson(res, 503, { error: 'specialist_service_disabled' });
+        if (!specialistIngestAuthorized(req, config)) return sendJson(res, 401, { error: 'unauthorized_specialist_service' });
+        const body = await readJson(req, 128 * 1024);
+        const targetAthleteId = String(body.athlete_id || '').trim();
+        if (!targetAthleteId) return sendJson(res, 400, { error: 'athlete_id_required' });
+        if (!await repository.athleteExists(targetAthleteId)) return sendJson(res, 404, { error: 'athlete_not_found' });
+        const snapshot = await buildAthleteSnapshot(repository, targetAthleteId);
+        const result = await produceSpecialistArtifacts({
+          athleteId: targetAthleteId,
+          trigger: String(body.trigger || ''),
+          requestedTypes: Array.isArray(body.requested_types) ? body.requested_types : [],
+          snapshot,
+          config,
+          repository
+        });
+        if (result.status === 'rejected') return sendJson(res, 400, result);
+        if (result.status === 'failed') return sendJson(res, 502, result);
+        if (result.status === 'partial') return sendJson(res, 207, result);
+        return sendJson(res, 201, result);
       }
 
       const identity = resolveIdentity(req, config);
@@ -223,19 +256,26 @@ export function createApplication({ config, repository }) {
         return sendJson(res, 200, { activity });
       }
 
-      if (req.method === 'GET' && url.pathname === '/api/v1/p1/types') return sendJson(res, 200, { types: SPECIALIST_ARTIFACT_TYPES });
-      if (req.method === 'GET' && url.pathname === '/api/v1/p1/artifacts/latest') return sendJson(res, 200, { artifacts: await repository.getLatestSpecialistArtifacts(athleteId) });
-      const p1HistoryMatch = url.pathname.match(/^\/api\/v1\/p1\/artifacts\/([^/]+)\/history$/);
-      if (req.method === 'GET' && p1HistoryMatch) {
-        const artifactType = decodeURIComponent(p1HistoryMatch[1]);
-        if (!specialistTypeInfo(artifactType)) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
-        return sendJson(res, 200, { artifacts: await repository.getSpecialistArtifactHistory(athleteId, artifactType, url.searchParams.get('limit')) });
-      }
-      const p1ArtifactMatch = url.pathname.match(/^\/api\/v1\/p1\/artifacts\/([^/]+)$/);
-      if (req.method === 'GET' && p1ArtifactMatch) {
-        const artifactType = decodeURIComponent(p1ArtifactMatch[1]);
-        if (!specialistTypeInfo(artifactType)) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
-        return sendJson(res, 200, { artifact: await repository.getLatestSpecialistArtifact(athleteId, artifactType) });
+      for (const layer of ['p1', 'p2']) {
+        if (req.method === 'GET' && url.pathname === `/api/v1/${layer}/types`) return sendJson(res, 200, { types: specialistTypesForLayer(layer) });
+        if (req.method === 'GET' && url.pathname === `/api/v1/${layer}/artifacts/latest`) {
+          const records = await repository.getLatestSpecialistArtifacts(athleteId);
+          return sendJson(res, 200, { artifacts: artifactsForLayer(records, layer) });
+        }
+        const historyMatch = url.pathname.match(new RegExp(`^/api/v1/${layer}/artifacts/([^/]+)/history$`));
+        if (req.method === 'GET' && historyMatch) {
+          const artifactType = decodeURIComponent(historyMatch[1]);
+          const descriptor = specialistDescriptor(artifactType);
+          if (!descriptor || descriptor.layer !== layer) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
+          return sendJson(res, 200, { artifacts: await repository.getSpecialistArtifactHistory(athleteId, artifactType, url.searchParams.get('limit')) });
+        }
+        const artifactMatch = url.pathname.match(new RegExp(`^/api/v1/${layer}/artifacts/([^/]+)$`));
+        if (req.method === 'GET' && artifactMatch) {
+          const artifactType = decodeURIComponent(artifactMatch[1]);
+          const descriptor = specialistDescriptor(artifactType);
+          if (!descriptor || descriptor.layer !== layer) return sendJson(res, 404, { error: 'unsupported_specialist_artifact_type' });
+          return sendJson(res, 200, { artifact: await repository.getLatestSpecialistArtifact(athleteId, artifactType) });
+        }
       }
 
       if (req.method === 'POST' && url.pathname === '/api/v1/checkins') {
@@ -267,17 +307,7 @@ export function createApplication({ config, repository }) {
       }
 
       if (req.method === 'POST' && url.pathname === '/api/v1/adaptation/evaluate') {
-        const latestCompleted = await repository.getLatestCompletedSession(athleteId);
-        const activePlanned = await repository.getTodaySession(athleteId);
-        const completedPrescription = !activePlanned && latestCompleted?.planned_session_id ? await repository.getPlannedSessionById(athleteId, latestCompleted.planned_session_id) : null;
-        const snapshot = {
-          profile: await repository.getProfile(athleteId),
-          context: await repository.getContext(athleteId),
-          planned_session: activePlanned || completedPrescription,
-          daily_checkin: await repository.getTodayCheckin(athleteId),
-          latest_completed_session: latestCompleted,
-          specialist_artifacts: repository.getLatestSpecialistArtifacts ? await repository.getLatestSpecialistArtifacts(athleteId) : []
-        };
+        const snapshot = await buildAthleteSnapshot(repository, athleteId);
         let decision;
         try {
           decision = await evaluateAdaptation({ athleteId, snapshot, config });

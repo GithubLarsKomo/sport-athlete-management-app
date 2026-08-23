@@ -50,6 +50,10 @@ export function loadConfig() {
   const authMode = env('AUTH_MODE', nodeEnv === 'production' ? 'proxy' : 'dev').toLowerCase();
   const defaultDatabaseUrl = 'postgresql://sport_athlete:sport_athlete@127.0.0.1:5432/sport_athlete';
   const devUserId = env('DEV_USER_ID', 'demo-athlete');
+  const legacyP1Secret = env('P1_INGEST_SHARED_SECRET', '');
+  const legacyP1Header = env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase();
+  const specialistSecret = env('SPECIALIST_SERVICE_SHARED_SECRET', legacyP1Secret);
+  const specialistHeader = env('SPECIALIST_SERVICE_SECRET_HEADER', legacyP1Header).toLowerCase();
   const config = {
     nodeEnv,
     port: Number(env('PORT', '3000')),
@@ -73,11 +77,19 @@ export function loadConfig() {
     skillz: {
       adaptationUrl: env('SKILLZ_ADAPTATION_URL', ''),
       token: env('SKILLZ_ADAPTATION_TOKEN', ''),
-      timeoutMs: Number(env('SKILLZ_ADAPTATION_TIMEOUT_MS', '5000'))
+      timeoutMs: Number(env('SKILLZ_ADAPTATION_TIMEOUT_MS', '5000')),
+      specialistUrl: env('SKILLZ_SPECIALIST_URL', ''),
+      specialistToken: env('SKILLZ_SPECIALIST_TOKEN', ''),
+      specialistTimeoutMs: Number(env('SKILLZ_SPECIALIST_TIMEOUT_MS', '15000')),
+      specialistRevision: env('SKILLZ_SOURCE_REVISION', '')
+    },
+    specialist: {
+      serviceSecret: specialistSecret,
+      serviceHeader: specialistHeader
     },
     p1: {
-      ingestSecret: env('P1_INGEST_SHARED_SECRET', ''),
-      ingestHeader: env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase()
+      ingestSecret: specialistSecret,
+      ingestHeader: specialistHeader
     },
     concept2: {
       baseUrl: env('CONCEPT2_BASE_URL', 'https://log.concept2.com'),
@@ -91,8 +103,9 @@ export function loadConfig() {
   if (!Number.isInteger(config.db.poolMax) || config.db.poolMax < 1 || config.db.poolMax > 50) throw new Error('DB_POOL_MAX must be 1..50');
   if (!['dev', 'proxy'].includes(authMode)) throw new Error('AUTH_MODE must be dev or proxy');
   if (!Number.isInteger(config.skillz.timeoutMs) || config.skillz.timeoutMs < 250 || config.skillz.timeoutMs > 30000) throw new Error('SKILLZ_ADAPTATION_TIMEOUT_MS must be 250..30000');
-  if (config.p1.ingestSecret && config.p1.ingestSecret.length < 32) throw new Error('P1_INGEST_SHARED_SECRET must contain at least 32 characters when enabled');
-  if (!/^[a-z0-9-]+$/.test(config.p1.ingestHeader)) throw new Error('P1_INGEST_SECRET_HEADER must be a valid lowercase HTTP header name');
+  if (!Number.isInteger(config.skillz.specialistTimeoutMs) || config.skillz.specialistTimeoutMs < 250 || config.skillz.specialistTimeoutMs > 60000) throw new Error('SKILLZ_SPECIALIST_TIMEOUT_MS must be 250..60000');
+  if (config.specialist.serviceSecret && config.specialist.serviceSecret.length < 32) throw new Error('SPECIALIST_SERVICE_SHARED_SECRET must contain at least 32 characters when enabled');
+  if (!/^[a-z0-9-]+$/.test(config.specialist.serviceHeader)) throw new Error('SPECIALIST_SERVICE_SECRET_HEADER must be a valid lowercase HTTP header name');
   if (!Number.isInteger(config.concept2.timeoutMs) || config.concept2.timeoutMs < 1000 || config.concept2.timeoutMs > 60000) throw new Error('CONCEPT2_TIMEOUT_MS must be 1000..60000');
   if (config.concept2.accessToken && !config.concept2.athleteId) throw new Error('CONCEPT2_ATHLETE_ID is required when CONCEPT2_ACCESS_TOKEN is configured');
 
