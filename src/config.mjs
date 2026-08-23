@@ -49,6 +49,7 @@ export function loadConfig() {
   const nodeEnv = env('NODE_ENV', 'development');
   const authMode = env('AUTH_MODE', nodeEnv === 'production' ? 'proxy' : 'dev').toLowerCase();
   const defaultDatabaseUrl = 'postgresql://sport_athlete:sport_athlete@127.0.0.1:5432/sport_athlete';
+  const devUserId = env('DEV_USER_ID', 'demo-athlete');
   const config = {
     nodeEnv,
     port: Number(env('PORT', '3000')),
@@ -65,7 +66,7 @@ export function loadConfig() {
       subjectHeader: env('AUTH_SUBJECT_HEADER', 'x-authentik-uid').toLowerCase(),
       emailHeader: env('AUTH_EMAIL_HEADER', 'x-authentik-email').toLowerCase(),
       nameHeader: env('AUTH_NAME_HEADER', 'x-authentik-name').toLowerCase(),
-      devUserId: env('DEV_USER_ID', 'demo-athlete'),
+      devUserId,
       devEmail: env('DEV_USER_EMAIL', 'demo@example.invalid'),
       devName: env('DEV_USER_NAME', 'Demo Athlete')
     },
@@ -81,6 +82,7 @@ export function loadConfig() {
     concept2: {
       baseUrl: env('CONCEPT2_BASE_URL', 'https://log.concept2.com'),
       accessToken: env('CONCEPT2_ACCESS_TOKEN', ''),
+      athleteId: env('CONCEPT2_ATHLETE_ID', nodeEnv === 'production' ? '' : devUserId),
       timeoutMs: Number(env('CONCEPT2_TIMEOUT_MS', '10000'))
     }
   };
@@ -92,6 +94,7 @@ export function loadConfig() {
   if (config.p1.ingestSecret && config.p1.ingestSecret.length < 32) throw new Error('P1_INGEST_SHARED_SECRET must contain at least 32 characters when enabled');
   if (!/^[a-z0-9-]+$/.test(config.p1.ingestHeader)) throw new Error('P1_INGEST_SECRET_HEADER must be a valid lowercase HTTP header name');
   if (!Number.isInteger(config.concept2.timeoutMs) || config.concept2.timeoutMs < 1000 || config.concept2.timeoutMs > 60000) throw new Error('CONCEPT2_TIMEOUT_MS must be 1000..60000');
+  if (config.concept2.accessToken && !config.concept2.athleteId) throw new Error('CONCEPT2_ATHLETE_ID is required when CONCEPT2_ACCESS_TOKEN is configured');
 
   config.db.url = validateDatabaseUrl(config.db.url, { production: nodeEnv === 'production' });
   config.concept2.baseUrl = validateHttpsBaseUrl(config.concept2.baseUrl, 'CONCEPT2_BASE_URL');
