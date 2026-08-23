@@ -36,21 +36,23 @@ Journal/Ingestion v1 supports:
 - manual review/merge for ambiguous matches;
 - canonical metric precedence while retaining every provider value and provenance;
 - automatic matching to a compatible unfinished `planned_session` when possible;
-- journal finalization with RPE, pain/comment and deviations before training history is considered complete.
+- journal finalization with RPE, pain/comment and deviations before training history is considered complete;
+- matching against an already completed manual session so a later device import does not create a second `completed_session`.
 
 A finalized imported activity creates exactly one `completed_session`. Planned activities close the matching plan item; spontaneous/unplanned activities are retained with `planned_session_id = NULL` and still enter later training adaptation. Device data never invents subjective RPE automatically.
 
 The detailed matching, precedence and provenance contract is in [`docs/activity-journal-ingestion.md`](docs/activity-journal-ingestion.md).
 
-For a personal Concept2 deployment, configure the read token only as a deployment secret:
+For a personal Concept2 deployment, configure the read token only as a deployment secret and bind it to the stable athlete/AuthentiK subject that owns the Concept2 account:
 
 ```text
 CONCEPT2_BASE_URL=https://log.concept2.com
 CONCEPT2_ACCESS_TOKEN=<read-only-logbook-token>
+CONCEPT2_ATHLETE_ID=<stable-athlete-id>
 CONCEPT2_TIMEOUT_MS=10000
 ```
 
-The current token configuration is intentionally single-deployment/personal. A future per-athlete OAuth implementation can replace credential storage without changing the activity/journal model.
+The current token configuration is intentionally single-athlete. Requests from any other authenticated athlete are denied before the token is used. A future per-athlete OAuth implementation can replace credential storage without changing the activity/journal model.
 
 ## P1 specialist artifacts
 
@@ -106,7 +108,7 @@ Open `http://localhost:3000`.
 
 Use the `Dockerfile`, attach the application to the private PostgreSQL 18.x service and put the application behind Authentik or an equivalent trusted proxy. Production configuration fails closed when HTTPS `PUBLIC_ORIGIN`, a credentialed PostgreSQL `DATABASE_URL`, or a proxy shared secret of at least 32 characters is missing. If P1 ingest is enabled, its separate secret is also required to contain at least 32 characters.
 
-If Concept2 synchronization is enabled, store `CONCEPT2_ACCESS_TOKEN` only in the deployment secret store. Garmin/RP3 browser uploads remain behind the same authenticated same-origin boundary as the rest of the athlete application.
+If Concept2 synchronization is enabled, store `CONCEPT2_ACCESS_TOKEN` only in the deployment secret store and set `CONCEPT2_ATHLETE_ID` to the stable athlete/AuthentiK subject that owns that token. Garmin/RP3 browser uploads remain behind the same authenticated same-origin boundary as the rest of the athlete application.
 
 The base deployment runbook is in [`deploy/COOLIFY-AUTHENTIK.md`](deploy/COOLIFY-AUTHENTIK.md); the P1 service boundary is in [`deploy/P1-SPECIALIST-INGEST.md`](deploy/P1-SPECIALIST-INGEST.md).
 
@@ -155,7 +157,7 @@ The Docker health check executes the same database-readiness probe.
 
 The app accepts a versioned active planning package through `PUT /api/v1/planning/active`; see `examples/plan-package.example.json`. IDs and versions are preserved so stale imports cannot silently overwrite newer local session revisions or finalized sessions.
 
-Imported activity data may be matched to an unfinished planned session but does not close it by itself. Journal finalization is the human-control boundary that turns the canonical activity into a completed training record. This keeps device metrics and subjective load context in one lifecycle.
+Imported activity data may be matched to an unfinished planned session but does not close it by itself. Journal finalization is the human-control boundary that turns the canonical activity into a completed training record. If a manual completion already represents the same time/duration window, the activity links to that completion instead of creating another one. This keeps device metrics and subjective load context in one lifecycle.
 
 An external Skillz decision may propose a `revised_plan` command for a `planned_session`. The proposal is stored first and only changes the plan through the explicit `/api/v1/adaptation/{id}/apply` endpoint. Applying it checks athlete ownership and `expected_version`, increments the session version, writes `training_plan_revisions`, marks the decision as applied and records an audit event.
 
@@ -170,6 +172,7 @@ Database migrations are ordered, transactional where supported and SHA-256 track
 - Missing external reasoning produces `review_required`, not invented training advice.
 - Device/service raw payloads remain provenance and are not silently overwritten by canonical values.
 - Imported device data does not fabricate subjective RPE or automatically finalize training.
+- A personal Concept2 token is bound to one athlete identity and cannot be used by another authenticated athlete.
 - P1 athlete-facing APIs are read-only; specialist artifacts require the independent internal ingest secret.
 - Every mutation is written to `audit_log`.
 - Adaptation decisions retain the authoritative input snapshot and rationale.
