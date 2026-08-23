@@ -50,7 +50,6 @@ export function createP1Repository(db) {
       return db.transaction(async conn => {
         const athlete = await conn.query('SELECT id FROM athletes WHERE id=? FOR UPDATE', [athleteId]);
         if (!athlete[0]) throw Object.assign(new Error('athlete_not_found'), { statusCode: 404 });
-
         const latest = await conn.query('SELECT artifact_version FROM specialist_artifacts WHERE athlete_id=? AND artifact_type=? ORDER BY artifact_version DESC LIMIT 1', [athleteId, artifactType]);
         const artifactVersion = Number(latest[0]?.artifact_version || 0) + 1;
         const id = randomUUID();
@@ -69,10 +68,7 @@ export function createP1Repository(db) {
     },
 
     async getLatestSpecialistArtifacts(athleteId) {
-      const rows = await db.query(
-        `${ARTIFACT_SELECT} WHERE athlete_id=? ORDER BY artifact_type ASC, artifact_version DESC`,
-        [athleteId]
-      );
+      const rows = await db.query(`${ARTIFACT_SELECT} WHERE athlete_id=? ORDER BY artifact_type ASC, artifact_version DESC`, [athleteId]);
       const seen = new Set();
       const latest = [];
       for (const row of rows) {
@@ -84,19 +80,13 @@ export function createP1Repository(db) {
     },
 
     async getLatestSpecialistArtifact(athleteId, artifactType) {
-      const rows = await db.query(
-        `${ARTIFACT_SELECT} WHERE athlete_id=? AND artifact_type=? ORDER BY artifact_version DESC LIMIT 1`,
-        [athleteId, artifactType]
-      );
+      const rows = await db.query(`${ARTIFACT_SELECT} WHERE athlete_id=? AND artifact_type=? ORDER BY artifact_version DESC LIMIT 1`, [athleteId, artifactType]);
       return mapRow(rows[0]);
     },
 
     async getSpecialistArtifactHistory(athleteId, artifactType, limit = 20) {
       const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
-      const rows = await db.query(
-        `${ARTIFACT_SELECT} WHERE athlete_id=? AND artifact_type=? ORDER BY artifact_version DESC LIMIT ${safeLimit}`,
-        [athleteId, artifactType]
-      );
+      const rows = await db.query(`${ARTIFACT_SELECT} WHERE athlete_id=? AND artifact_type=? ORDER BY artifact_version DESC LIMIT ${safeLimit}`, [athleteId, artifactType]);
       return rows.map(mapRow);
     },
 
@@ -115,7 +105,7 @@ export function createP1Repository(db) {
 
     async completeReasoningRun(athleteId, runId, status, result = [], errorText = null) {
       await db.query(
-        'UPDATE specialist_reasoning_runs SET status=?, result_json=?, error_text=?, completed_at=CURRENT_TIMESTAMP(6) WHERE id=? AND athlete_id=?',
+        'UPDATE specialist_reasoning_runs SET status=?, result_json=?, error_text=?, completed_at=CURRENT_TIMESTAMP WHERE id=? AND athlete_id=?',
         [status, JSON.stringify(result || []), errorText, runId, athleteId]
       );
       await db.query(

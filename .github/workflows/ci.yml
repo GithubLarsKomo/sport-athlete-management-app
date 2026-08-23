@@ -12,28 +12,24 @@ jobs:
   test:
     runs-on: ubuntu-latest
     services:
-      mariadb:
-        image: mariadb:11.8
+      postgres:
+        image: postgres:18.6-alpine
         env:
-          MARIADB_DATABASE: sport_athlete
-          MARIADB_USER: sport_athlete
-          MARIADB_PASSWORD: test-password
-          MARIADB_ROOT_PASSWORD: test-root-password
+          POSTGRES_DB: sport_athlete
+          POSTGRES_USER: sport_athlete
+          POSTGRES_PASSWORD: test-password
         ports:
-          - 3306:3306
+          - 5432:5432
         options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-cmd="pg_isready -U sport_athlete -d sport_athlete"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
     env:
       NODE_ENV: development
       AUTH_MODE: dev
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_NAME: sport_athlete
-      DB_USER: sport_athlete
-      DB_PASSWORD: test-password
+      DATABASE_URL: postgresql://sport_athlete:test-password@127.0.0.1:5432/sport_athlete
+      DB_POOL_MAX: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,4 +42,5 @@ jobs:
       - run: npm run migrate
       - run: npm run ready
       - run: npm run test:integration
+      - run: npm run reconcile
       - run: docker build -t sport-athlete-management-app:ci .

@@ -55,9 +55,9 @@ Maintains deployment, trusted authentication, migrations, backup and privacy con
 
 ## Shared platform boundary
 
-The hosted platform standard is the private PostgreSQL 18.x infrastructure defined in `docs/shared-db-infrastructure.md`. The current MariaDB 11.8 persistence layer is an explicitly transitional implementation and remains the tested runtime until a dedicated PostgreSQL provider migration passes integration, data-reconciliation and restore gates. This alignment change does not pretend that PostgreSQL runtime support already exists.
+The hosted platform standard is the private PostgreSQL 18.x infrastructure defined in `docs/shared-db-infrastructure.md`. The Sport runtime is now implemented on PostgreSQL and uses the canonical `DATABASE_URL` plus `DB_POOL_MAX` connection contract.
 
-At convergence, the Sport app owns a dedicated `sport_athlete` PostgreSQL database and least-privilege runtime role and never reads Masters Diagnostics, Grilling or other product databases directly.
+The Sport app owns a dedicated `sport_athlete` PostgreSQL database and least-privilege runtime role. It never reads Masters Diagnostics, Grilling or other product databases directly. Existing MariaDB production data, if present, is moved only through the controlled reconciliation and backup/restore process in `deploy/MARIADB-TO-POSTGRESQL.md`; there is no long-term dual-provider mode.
 
 ## Frontend authority
 

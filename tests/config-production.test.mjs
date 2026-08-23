@@ -8,29 +8,36 @@ function runConfig(overrides = {}, remove = []) {
     NODE_ENV: 'production',
     AUTH_MODE: 'proxy',
     PUBLIC_ORIGIN: 'https://training.example.com',
-    DB_PASSWORD: 'database-secret',
+    DATABASE_URL: 'postgresql://sport_athlete_app:database-secret@postgres:5432/sport_athlete',
+    DB_POOL_MAX: '5',
     AUTH_PROXY_SHARED_SECRET: '12345678901234567890123456789012',
     ...overrides
   };
   for (const key of remove) delete env[key];
   return spawnSync(process.execPath, ['--input-type=module', '-e', "import('./src/config.mjs').then(({loadConfig})=>loadConfig())"], {
-    cwd: process.cwd(),
-    env,
-    encoding: 'utf8'
+    cwd: process.cwd(), env, encoding: 'utf8'
   });
 }
 
-test('production configuration accepts an HTTPS origin and strong proxy secret', () => {
+test('production configuration accepts HTTPS and a credentialed PostgreSQL URL', () => {
   const result = runConfig();
   assert.equal(result.status, 0, result.stderr);
 });
 
-test('production configuration requires PUBLIC_ORIGIN and DB_PASSWORD', () => {
+test('production configuration requires PUBLIC_ORIGIN and DATABASE_URL', () => {
   assert.notEqual(runConfig({}, ['PUBLIC_ORIGIN']).status, 0);
-  assert.notEqual(runConfig({}, ['DB_PASSWORD']).status, 0);
+  assert.notEqual(runConfig({}, ['DATABASE_URL']).status, 0);
 });
 
-test('production configuration rejects insecure origins and weak proxy secrets', () => {
+test('production configuration rejects non-PostgreSQL or credential-less database URLs', () => {
+  assert.notEqual(runConfig({ DATABASE_URL: 'mysql://user:secret@db/sport_athlete' }).status, 0);
+  assert.notEqual(runConfig({ DATABASE_URL: 'postgresql://postgres:5432/sport_athlete' }).status, 0);
+  assert.notEqual(runConfig({ DATABASE_URL: 'postgresql://sport_athlete_app@postgres:5432/sport_athlete' }).status, 0);
+});
+
+test('production configuration rejects invalid pool sizes, insecure origins and weak proxy secrets', () => {
+  assert.notEqual(runConfig({ DB_POOL_MAX: '0' }).status, 0);
+  assert.notEqual(runConfig({ DB_POOL_MAX: '51' }).status, 0);
   assert.notEqual(runConfig({ PUBLIC_ORIGIN: 'http://training.example.com' }).status, 0);
   assert.notEqual(runConfig({ AUTH_PROXY_SHARED_SECRET: 'too-short' }).status, 0);
 });
