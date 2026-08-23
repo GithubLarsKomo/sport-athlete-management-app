@@ -8,6 +8,8 @@ import { commonEnvelope, validateCheckin, validateCompletedSession } from './dom
 import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
 import { validatePlanPackage, validateSessionRevisionCommand } from './domain/planning.mjs';
 import { SPECIALIST_ARTIFACT_TYPES, normalizeSpecialistArtifact, specialistIngestAuthorized, specialistTypeInfo } from './domain/p1-artifacts.mjs';
+import { normalizeConcept2Result, normalizeFileImport } from './domain/activity-import.mjs';
+import { fetchConcept2Results } from './domain/concept2-client.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
@@ -38,6 +40,10 @@ function writeOriginAllowed(req, config) {
 
 function localDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+function concept2CursorTime(date) {
+  return new Date(date).toISOString().slice(0, 19).replace('T', ' ');
 }
 
 function safeAsset(pathname) {
@@ -144,6 +150,73 @@ export function createApplication({ config, repository }) {
       if (req.method === 'GET' && url.pathname === '/api/v1/context') return sendJson(res, 200, await repository.getContext(athleteId));
       if (req.method === 'GET' && url.pathname === '/api/v1/training/today') return sendJson(res, 200, { session: await repository.getTodaySession(athleteId) });
       if (req.method === 'GET' && url.pathname === '/api/v1/checkins/today') return sendJson(res, 200, { checkin: await repository.getTodayCheckin(athleteId) });
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/import/status') {
+        return sendJson(res, 200, {
+          concept2_configured: Boolean(config.concept2?.accessToken),
+          file_imports: { garmin: ['fit','tcx'], rp3: ['json','csv','tcx'] }
+        });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/v1/import/file') {
+        const body = await readJson(req, 18 * 1024 * 1024);
+        const normalized = await normalizeFileImport(body);
+        const result = await repository.ingestActivity(athleteId, normalized, identity.subject);
+        return sendJson(res, result.disposition === 'created' ? 201 : 200, result);
+      }
+      if (req.method === 'POST' && url.pathname === '/api/v1/import/concept2/result') {
+        const body = await readJson(req, 2 * 1024 * 1024);
+        const normalized = normalizeConcept2Result(body.result || body);
+        const result = await repository.ingestActivity(athleteId, normalized, identity.subject);
+        return sendJson(res, result.disposition === 'created' ? 201 : 200, result);
+      }
+      if (req.method === 'POST' && url.pathname === '/api/v1/import/concept2/sync') {
+        if (!config.concept2?.accessToken) return sendJson(res, 503, { error: 'concept2_not_configured' });
+        const syncStarted = new Date();
+        const explicitFrom = url.searchParams.get('from');
+        const storedCursor = await repository.getImportCursor(athleteId, 'concept2');
+        const updatedAfter = explicitFrom || storedCursor || null;
+        const results = await fetchConcept2Results({
+          baseUrl: config.concept2.baseUrl,
+          accessToken: config.concept2.accessToken,
+          updatedAfter,
+          timeoutMs: config.concept2.timeoutMs
+        });
+        const dispositions = { created: 0, auto_merged: 0, exact_duplicate: 0, review: 0 };
+        const failures = [];
+        for (const result of results) {
+          try {
+            const imported = await repository.ingestActivity(athleteId, normalizeConcept2Result(result), identity.subject);
+            dispositions[imported.disposition] = (dispositions[imported.disposition] || 0) + 1;
+          } catch (error) {
+            failures.push({ id: result?.id ?? null, error: error.message });
+          }
+        }
+        if (!failures.length) {
+          const overlapCursor = concept2CursorTime(new Date(syncStarted.getTime() - 120000));
+          await repository.setImportCursor(athleteId, 'concept2', overlapCursor);
+        }
+        return sendJson(res, failures.length ? 207 : 200, { fetched: results.length, dispositions, failures, cursor_advanced: !failures.length });
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/journal') {
+        const from = url.searchParams.get('from');
+        const to = url.searchParams.get('to');
+        return sendJson(res, 200, { activities: await repository.listJournal(athleteId, { from, to, limit: url.searchParams.get('limit') }) });
+      }
+      const journalMatch = url.pathname.match(/^\/api\/v1\/journal\/([^/]+)$/);
+      if (req.method === 'PUT' && journalMatch) {
+        const body = await readJson(req);
+        const activity = await repository.saveJournalEntry(athleteId, journalMatch[1], body, identity.subject);
+        return sendJson(res, 200, { activity });
+      }
+      const mergeMatch = url.pathname.match(/^\/api\/v1\/journal\/([^/]+)\/merge$/);
+      if (req.method === 'POST' && mergeMatch) {
+        const body = await readJson(req);
+        const duplicateId = String(body.duplicate_activity_id || '').trim();
+        if (!duplicateId) return sendJson(res, 400, { error: 'duplicate_activity_id_required' });
+        const activity = await repository.mergeActivities(athleteId, mergeMatch[1], duplicateId, identity.subject);
+        return sendJson(res, 200, { activity });
+      }
 
       if (req.method === 'GET' && url.pathname === '/api/v1/p1/types') return sendJson(res, 200, { types: SPECIALIST_ARTIFACT_TYPES });
       if (req.method === 'GET' && url.pathname === '/api/v1/p1/artifacts/latest') return sendJson(res, 200, { artifacts: await repository.getLatestSpecialistArtifacts(athleteId) });
