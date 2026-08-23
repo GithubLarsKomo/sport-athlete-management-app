@@ -46,6 +46,10 @@ function concept2CursorTime(date) {
   return new Date(date).toISOString().slice(0, 19).replace('T', ' ');
 }
 
+function concept2Linked(config, athleteId) {
+  return Boolean(config.concept2?.accessToken && config.concept2?.athleteId === athleteId);
+}
+
 function safeAsset(pathname) {
   let decoded;
   try { decoded = decodeURIComponent(pathname); } catch { return null; }
@@ -153,7 +157,7 @@ export function createApplication({ config, repository }) {
 
       if (req.method === 'GET' && url.pathname === '/api/v1/import/status') {
         return sendJson(res, 200, {
-          concept2_configured: Boolean(config.concept2?.accessToken),
+          concept2_configured: concept2Linked(config, athleteId),
           file_imports: { garmin: ['fit','tcx'], rp3: ['json','csv','tcx'] }
         });
       }
@@ -171,6 +175,7 @@ export function createApplication({ config, repository }) {
       }
       if (req.method === 'POST' && url.pathname === '/api/v1/import/concept2/sync') {
         if (!config.concept2?.accessToken) return sendJson(res, 503, { error: 'concept2_not_configured' });
+        if (!concept2Linked(config, athleteId)) return sendJson(res, 403, { error: 'concept2_not_linked_to_athlete' });
         const syncStarted = new Date();
         const explicitFrom = url.searchParams.get('from');
         const storedCursor = await repository.getImportCursor(athleteId, 'concept2');
