@@ -105,3 +105,31 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
   assert.equal(completed.import_activity_id, first.activity.id);
   assert.equal(Number(completed.session_rpe), 4.5);
 });
+
+test('an unplanned imported activity becomes training history after journal finalization', async () => {
+  const unplannedAthleteId = `activity-it-${randomUUID()}`;
+  await repository.ensureAthlete({ subject: unplannedAthleteId, athleteId: unplannedAthleteId, email: null, displayName: 'Unplanned Activity Athlete' });
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() + 12);
+  start.setUTCHours(5, 30, 0, 0);
+  const imported = await repository.ingestActivity(
+    unplannedAthleteId,
+    source('garmin', `garmin-${randomUUID()}`, start.toISOString(), 2700, 8500, 'c'),
+    unplannedAthleteId
+  );
+  assert.equal(imported.activity.planned_session_id, null);
+
+  const finalized = await repository.saveJournalEntry(unplannedAthleteId, imported.activity.id, {
+    session_rpe: 5,
+    pain_0_10: 1,
+    comment: 'spontane Einheit',
+    deviations: ['unplanned'],
+    finalize: true
+  }, unplannedAthleteId);
+  assert.ok(finalized.completed_session_id);
+
+  const completed = await repository.getLatestCompletedSession(unplannedAthleteId);
+  assert.equal(completed.planned_session_id, null);
+  assert.equal(completed.import_activity_id, imported.activity.id);
+  assert.equal(Number(completed.session_rpe), 5);
+});
