@@ -49,3 +49,9 @@ test('P1 ingest may remain disabled but rejects weak secrets when enabled', () =
   assert.notEqual(runConfig({ P1_INGEST_SHARED_SECRET: 'too-short' }).status, 0);
   assert.equal(runConfig({ P1_INGEST_SHARED_SECRET: 'abcdef0123456789abcdef0123456789' }).status, 0);
 });
+
+test('Concept2 personal token must be bound to one athlete in production', () => {
+  assert.equal(runConfig({ CONCEPT2_ACCESS_TOKEN: '' }).status, 0);
+  assert.notEqual(runConfig({ CONCEPT2_ACCESS_TOKEN: 'read-token' }, ['CONCEPT2_ATHLETE_ID']).status, 0);
+  assert.equal(runConfig({ CONCEPT2_ACCESS_TOKEN: 'read-token', CONCEPT2_ATHLETE_ID: 'athlete-123' }).status, 0);
+});
