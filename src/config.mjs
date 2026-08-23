@@ -36,6 +36,14 @@ function validateDatabaseUrl(value, { production = false } = {}) {
   return value;
 }
 
+function validateHttpsBaseUrl(value, name) {
+  if (!value) return '';
+  let parsed;
+  try { parsed = new URL(value); } catch { throw new Error(`${name} must be a valid URL`); }
+  if (parsed.protocol !== 'https:') throw new Error(`${name} must use https`);
+  return parsed.toString().replace(/\/$/, '');
+}
+
 export function loadConfig() {
   const runtime = readRuntimeConfig();
   const nodeEnv = env('NODE_ENV', 'development');
@@ -69,6 +77,11 @@ export function loadConfig() {
     p1: {
       ingestSecret: env('P1_INGEST_SHARED_SECRET', ''),
       ingestHeader: env('P1_INGEST_SECRET_HEADER', 'x-sam-p1-ingest-secret').toLowerCase()
+    },
+    concept2: {
+      baseUrl: env('CONCEPT2_BASE_URL', 'https://log.concept2.com'),
+      accessToken: env('CONCEPT2_ACCESS_TOKEN', ''),
+      timeoutMs: Number(env('CONCEPT2_TIMEOUT_MS', '10000'))
     }
   };
 
@@ -78,8 +91,10 @@ export function loadConfig() {
   if (!Number.isInteger(config.skillz.timeoutMs) || config.skillz.timeoutMs < 250 || config.skillz.timeoutMs > 30000) throw new Error('SKILLZ_ADAPTATION_TIMEOUT_MS must be 250..30000');
   if (config.p1.ingestSecret && config.p1.ingestSecret.length < 32) throw new Error('P1_INGEST_SHARED_SECRET must contain at least 32 characters when enabled');
   if (!/^[a-z0-9-]+$/.test(config.p1.ingestHeader)) throw new Error('P1_INGEST_SECRET_HEADER must be a valid lowercase HTTP header name');
+  if (!Number.isInteger(config.concept2.timeoutMs) || config.concept2.timeoutMs < 1000 || config.concept2.timeoutMs > 60000) throw new Error('CONCEPT2_TIMEOUT_MS must be 1000..60000');
 
   config.db.url = validateDatabaseUrl(config.db.url, { production: nodeEnv === 'production' });
+  config.concept2.baseUrl = validateHttpsBaseUrl(config.concept2.baseUrl, 'CONCEPT2_BASE_URL');
 
   if (nodeEnv === 'production') {
     config.publicOrigin = validateProductionOrigin(config.publicOrigin);
