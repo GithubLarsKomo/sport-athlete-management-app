@@ -1,0 +1,17 @@
+{
+  "name": "Training Control",
+  "short_name": "Training",
+  "description": "Athlete-facing closed-loop training management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EDF3F6",
+  "theme_color": "#173652",
+  "icons": [
+    {
+      "src": "/brand/training-control-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
