@@ -4,14 +4,14 @@
 
 **Training control console.** The UI should feel like a focused athlete dashboard rather than a generic wellness app: dark technical chrome, calm light work surfaces, compact hierarchy, strong day/week orientation and restrained semantic color.
 
-The existing green/pine visual language is retained and tightened rather than replaced.
+This project uses the canonical Skillz `sport-performance` profile as its visual default. The former local green/pine palette is superseded by this shared Sport Performance system.
 
 ## Shared family
 
-Sport Athlete Management and `master-diagnostics` share the same design grammar:
+Sport Athlete Management and `master-diagnostics` share the same design grammar and the same canonical Sport Performance palette:
 
-- deep pine/charcoal application chrome;
-- warm neutral work surface;
+- navy/dark technical application chrome;
+- calm light work surfaces;
 - system-first geometric sans typography;
 - compact spacing and high information density;
 - large radius only for major surfaces, smaller radius for controls;
@@ -19,35 +19,51 @@ Sport Athlete Management and `master-diagnostics` share the same design grammar:
 - subtle borders and shadows rather than glassmorphism;
 - minimal motion, limited to focus/hover/loading feedback.
 
-Product identity differs through hierarchy and accent emphasis.
+Product identity differs through hierarchy and emphasis, not through incompatible brand colors.
 
-## Sport identity
+## Sport Performance profile
 
-Sport uses a **green performance accent** and slightly warmer neutral surfaces than Masters Diagnostics.
+Source of truth: `Skillz / frontend-design-system-context / brand-profiles / sport-performance.json`.
 
-### Core tokens
+### Canonical brand tokens
 
 ```css
---sam-bg: #edf1ef;
---sam-surface: #ffffff;
---sam-surface-subtle: #f5f7f6;
---sam-chrome: #10231d;
---sam-chrome-2: #173128;
---sam-text: #12211c;
---sam-text-muted: #66746f;
---sam-border: #d7dfdb;
---sam-border-strong: #b8c6c0;
---sam-accent: #2f7f65;
---sam-accent-strong: #215f4c;
---sam-accent-soft: #dff1e9;
---sam-focus: #68b89b;
---sam-warning: #8a6500;
---sam-warning-soft: #fff2c7;
---sam-danger: #9f2c2c;
---sam-danger-soft: #ffdede;
---sam-success: #17603a;
---sam-success-soft: #ddf2e5;
+--sport-navy: #173652;
+--sport-dark: #1C2B3A;
+--sport-body: #24313E;
+--sport-teal: #246F6C;
+--sport-teal-bright: #2B8884;
+--sport-muted: #6B7785;
+--sport-energy: #B54708;
+--sport-success: #2E7D32;
+--sport-warning: #9A6500;
+--sport-critical: #B42318;
+--sport-recovery: #6D5BD0;
+--sport-border: #D6E0E6;
+--sport-surface: #EDF3F6;
+--sport-surface-subtle: #F6F8F9;
+--sport-warning-surface: #FFF4D6;
+--sport-white: #FFFFFF;
 ```
+
+These values are canonical and must not be silently replaced by framework or template defaults. Project/component aliases may reference them. Derived UI colors are allowed only when their base token and purpose are documented and traceable.
+
+### Semantic defaults
+
+- primary: Navy
+- secondary / info: Teal
+- accent: Energy
+- success: Success green
+- warning: Warning ochre
+- danger / stop: Critical red
+- recovery / readiness: Recovery violet
+- text: Body
+- muted text: Muted
+- background: White
+- surface: Surface
+- border: Border
+
+`teal_bright` is for charts, accents and focus rather than normal text on a filled background. `critical` is reserved for risk, injury, destructive or genuine stop states. `recovery` is reserved for recovery/readiness or an explicitly documented analytic dimension.
 
 ## Typography
 
@@ -120,6 +136,7 @@ Avoid forcing every section into an equal-weight card. Repeated operational item
 - A revision preview is visually distinct from the currently active plan.
 - `Adaptation anwenden` is available only when the proposal is valid and version-bound.
 - Never use a dramatic red full-screen treatment unless there is a genuine stop/safety condition.
+- Adaptation color is a secondary cue; the textual state and rationale are mandatory.
 
 ## Specialist context
 
@@ -136,10 +153,24 @@ Specialist artifacts are evidence/context, not a second dashboard. Group by rele
 
 ## Buttons
 
-- primary: filled performance green;
-- secondary: neutral surface + border;
-- destructive: red only for destructive/stop actions;
+- primary: filled Navy;
+- secondary: neutral surface + border, Navy text;
+- destructive/stop: Critical red only when semantically required;
+- Energy orange is an accent, not a default CTA color;
 - no more than one visually dominant action per local surface.
+
+## Data visualization
+
+Canonical series order:
+
+1. Navy
+2. Bright Teal
+3. Energy
+4. Critical
+5. Recovery
+6. Success
+
+Always combine color with labels, markers, line styles, symbols or shapes. Never encode a training/safety decision by color alone.
 
 ## Accessibility
 
@@ -149,6 +180,10 @@ Specialist artifacts are evidence/context, not a second dashboard. Group by rele
 - touch targets >= 44px;
 - reduced-motion preference respected;
 - native semantic controls preferred.
+
+## Brand assets
+
+Logo, favicon and app icon must form one coherent Sport Performance family and use the same canonical color system. Do not introduce unrelated framework/default-color branding. Dedicated brand assets can be added later without changing this palette contract.
 
 ## Motion
 
@@ -166,7 +201,8 @@ Reject:
 - opaque readiness scores;
 - excessive pills/badges;
 - modal-first repeated workflows;
-- decorative progress rings without a clear decision purpose.
+- decorative progress rings without a clear decision purpose;
+- local green/pine brand tokens that compete with the canonical Sport Performance profile.
 
 ## Review checklist
 
@@ -178,4 +214,7 @@ A surface is ready when:
 - cards are used only for meaningful object boundaries;
 - the UI does not look like a generic fitness dashboard;
 - keyboard focus, contrast and touch sizes are correct;
-- plan/version provenance is visible where it matters.
+- plan/version provenance is visible where it matters;
+- canonical Sport Performance token values remain intact;
+- derived colors are traceable;
+- charts and status states remain understandable without color.
