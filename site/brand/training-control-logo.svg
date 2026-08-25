@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 136" role="img" aria-labelledby="title desc">
+  <title id="title">Training Control</title>
+  <desc id="desc">Training Control Wort-Bild-Marke der Sport Performance Produktfamilie.</desc>
+  <g transform="translate(4 4)">
+    <rect width="128" height="128" rx="28" fill="#173652"/>
+    <path d="M28 91L61 38L92 91" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M43 75L62 70L78 62L98 46" fill="none" stroke="#2B8884" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="98" cy="46" r="6" fill="#B54708" stroke="#173652" stroke-width="3"/>
+  </g>
+  <text x="162" y="61" fill="#173652" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="43" font-weight="800" letter-spacing="-1.35">Training Control</text>
+  <text x="164" y="94" fill="#246F6C" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17" font-weight="750" letter-spacing="2.15">ATHLETE TRAINING MANAGEMENT</text>
+</svg>
