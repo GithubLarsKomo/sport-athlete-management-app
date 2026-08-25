@@ -183,7 +183,20 @@ Always combine color with labels, markers, line styles, symbols or shapes. Never
 
 ## Brand assets
 
-Logo, favicon and app icon must form one coherent Sport Performance family and use the same canonical color system. Do not introduce unrelated framework/default-color branding. Dedicated brand assets can be added later without changing this palette contract.
+Training Control and Masters Diagnostics use one shared Sport Performance mark grammar: Navy rounded-square field, white product monogram, one Bright Teal performance ribbon and a restrained Energy endpoint. Geometry, stroke character and corner treatment are shared; the marks remain distinct through product-specific monograms and ribbon paths.
+
+Training Control uses a geometric `A` for the athlete context. The Bright Teal ribbon runs through the monogram as a rising training-plan/progression trajectory and finishes at the Energy endpoint. This keeps the training loop, athlete focus and progression signal in one reduced mark rather than combining unrelated fitness pictograms.
+
+Canonical assets live in `site/brand/`:
+
+- `training-control-mark.svg` — vector master mark and source for browser/PWA icons
+- `training-control-logo.svg` — primary horizontal lockup for light surfaces
+- `training-control-logo-inverse.svg` — horizontal lockup for dark technical chrome
+- `brand.css` — product-lockup presentation for the application top bar
+
+`site/manifest.webmanifest` and the browser favicon reference the SVG master directly. Raster derivatives may be rendered for platform-specific distribution, but they must come from `training-control-mark.svg` without redrawing or recoloring it.
+
+Logo, favicon and app icon must remain one coherent Sport Performance family. Do not introduce unrelated framework/default-color branding.
 
 ## Motion
 
