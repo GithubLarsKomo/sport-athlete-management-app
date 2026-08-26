@@ -1,279 +1,126 @@
 # DESIGN.md — Sport Athlete Management
 
-## Direction
+## Status and source of truth
 
-**Training control console.** The UI should feel like a focused athlete dashboard rather than a generic wellness app: dark technical chrome, calm light work surfaces, compact hierarchy, strong day/week orientation and restrained semantic color.
+This document is normative for Sport Athlete Management.
 
-This project uses the canonical Skillz `sport-performance` profile as its binding visual color standard. The former local green/pine palette is superseded by this shared Sport Performance system.
+- Template family: `sport-performance`
+- Template type: `sport-athlete-management`
+- Canonical Skillz template: `frontend-design-system-context/references/design-templates/sport-performance-apps.md`
+- Canonical Skillz brand profile: `frontend-design-system-context/references/brand-profiles/sport-performance.json`
+- Product-specific template contract: `DESIGN-TEMPLATE.md`
 
-## Shared family
+The accepted **Impeccable UI/CSS is the binding layout template**. The confirmed 2026-08-26 Sport Performance proposal contributes **only the product logo family and the color spectrum**. Branding work must not replace or redesign the accepted layout.
 
-Sport Athlete Management and `master-diagnostics` share the same design grammar and the same canonical Sport Performance palette:
+## Binding layer separation
 
-- navy/dark technical application chrome;
-- calm light work surfaces;
-- system-first geometric sans typography;
-- compact spacing and high information density;
-- large radius only for major surfaces, smaller radius for controls;
-- semantic status colors with text labels, never color alone;
-- subtle borders and shadows rather than glassmorphism;
-- minimal motion, limited to focus/hover/loading feedback.
+### Layer A — Impeccable UI/CSS
 
-They are related products, not identical brands. The family rules are binding:
+The existing accepted implementation in `site/app/styles.css` owns and preserves:
 
-- same canonical `sport-performance` palette;
-- same visual weight, geometric discipline and line/stroke language;
-- same icon construction logic and corner/radius character;
-- logo, favicon and app icon are derived from one product mark, not designed independently;
-- product identity comes from the central symbol and emphasis, not from unrelated colors;
-- each product mark must remain clearly distinguishable at favicon size.
+- application shell and topbar structure;
+- content widths and breakpoints;
+- grids, cards, lists, week/session tiles and forms;
+- typography scale and hierarchy;
+- spacing and vertical rhythm;
+- radii, borders and component geometry;
+- information density and hierarchy;
+- responsive/mobile behavior;
+- focus, hover, loading, empty and error patterns;
+- motion rules.
 
-### Sport Athlete Management mark
+For branding-only work this layer is frozen. A palette, logo, favicon or app-icon task must not alter non-color CSS behavior.
 
-The Sport Athlete Management mark represents **athlete development, training control and adaptation over time**. The preferred concept combines:
+### Layer B — Sport Performance branding
 
-- a strong circular or partial-ring frame in Sport Navy as the shared family anchor;
-- a dynamic, abstract athlete/motion figure or training trajectory in Teal/Bright Teal;
-- forward/upward movement to express progression and adaptation;
-- simplified geometry that remains legible at 32 px.
+This layer owns only:
 
-The mark must communicate at least these project properties: **athlete focus**, **development/progression**, and **coaching/training control**. It must not reuse the Masters Diagnostics bars-and-measurement-curve symbol, and it must avoid generic stock-fitness silhouettes, medical imagery or framework logos.
+- canonical color tokens and semantic color roles;
+- the Sport Athlete Management mark and lockup;
+- favicon and PWA/app icons;
+- chart/status colors where the existing component already supports semantic color;
+- PWA/theme metadata.
 
-### Wordmark and lockup
+If a task says **"only logos and colors"**, treat it literally: layout, spacing, typography, component geometry, navigation, breakpoints and information hierarchy remain unchanged or behaviorally equivalent.
 
-- Product name: `Sport Athlete Management`.
-- Wordmark uses the shared Sport Performance typographic family and Navy/Dark text.
-- The symbol may be used alone for favicon/app-icon contexts.
-- Horizontal and stacked lockups must preserve the same symbol proportions.
+## Confirmed Sport Performance spectrum
 
-### Favicon
-
-The favicon is a simplified version of the same athlete/progression mark. It keeps the Navy family frame and only the minimum Teal movement geometry required for recognition. No independent favicon concept or unrelated monogram is allowed.
-
-### App icon
-
-The app icon uses the same mark centered on a high-contrast Sport Performance field, preferably Navy/Dark with light/Teal mark elements or a White/Surface field with the canonical Navy/Teal symbol. Platform-specific masking may alter the outer container, but not the internal brand geometry.
-
-## Sport Performance profile
-
-Source of truth: `Skillz / frontend-design-system-context / brand-profiles / sport-performance.json`.
-
-### Canonical brand tokens
+These exact values are binding:
 
 ```css
 --sport-navy: #173652;
---sport-dark: #1C2B3A;
---sport-body: #24313E;
 --sport-teal: #246F6C;
 --sport-teal-bright: #2B8884;
---sport-muted: #6B7785;
 --sport-energy: #B54708;
---sport-success: #2E7D32;
---sport-warning: #9A6500;
 --sport-critical: #B42318;
 --sport-recovery: #6D5BD0;
---sport-border: #D6E0E6;
---sport-surface: #EDF3F6;
---sport-surface-subtle: #F6F8F9;
---sport-warning-surface: #FFF4D6;
---sport-white: #FFFFFF;
+--sport-success: #2E7D32;
+--sport-surface-0: #FFFFFF;
+--sport-surface-1: #F5F7FA;
+--sport-surface-2: #EEF2F7;
+--sport-text-primary: #0F172A;
+--sport-text-secondary: #475569;
+--sport-border: #E2E8F0;
 ```
 
-These values are canonical and must not be silently replaced by framework, template or arbitrary project colors. Project/component aliases may reference them. Derived UI colors are allowed only when their base token and purpose are documented and traceable.
+Compatibility aliases in the application may map to these values, but must not introduce a competing palette. `Energy` is also the warning/emphasis base where needed; `Critical` is reserved for genuine risk/stop/destructive states.
 
-### Semantic defaults
+## Product direction
 
-- primary: Navy
-- secondary / info: Teal
-- accent: Energy
-- success: Success green
-- warning: Warning ochre
-- danger / stop: Critical red
-- recovery / readiness: Recovery violet
-- text: Body
-- muted text: Muted
-- background: White
-- surface: Surface
-- border: Border
+Sport Athlete Management is a focused training-control application, not a generic wellness dashboard. The accepted Impeccable implementation remains the design reference: compact technical chrome, calm work surfaces, strong today/week orientation, purposeful cards/lists and restrained motion.
 
-`teal_bright` is for charts, accents and focus rather than normal text on a filled background. `critical` is reserved for risk, injury, destructive or genuine stop states. `recovery` is reserved for recovery/readiness or an explicitly documented analytic dimension.
+## Product-specific mark
 
-## Typography
+The mark represents **athlete development, training control and adaptation over time**. It is the athlete/development/adaptation member of the Sport family and remains visually related to Masters Diagnostics through geometry, stroke character and palette while staying distinct at favicon size.
 
-Use a local/system font stack. No external font dependency is required for the core app.
+Logo, favicon and app icon are derived from one product-specific vector geometry. Do not reuse the Masters Diagnostics bars/measurement-curve symbol.
 
-```css
-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-```
+## Implemented brand assets
 
-- Page/product title: compact and heavy.
-- Current session title: strongest content heading.
-- Section titles: 1.05–1.4rem, 750–800 weight.
-- Eyebrows: 0.72rem, uppercase, 0.12–0.15em tracking.
-- Training numbers and version values: tabular numerals where useful.
-- Body: 0.9–1rem, line-height ~1.5.
+- `site/brand/mark.svg` — standalone athlete/adaptation mark.
+- `site/brand/app-icon.svg` — app-icon source.
+- `site/brand/logo-lockup.svg` / `logo-lockup.png` — horizontal lockup.
+- `site/favicon.svg` / `favicon-32.png` — browser identity.
+- `site/icons/app-icon-192.png`, `app-icon-512.png`, `app-icon-1024.png` — installable-app derivatives.
+- `site/manifest.webmanifest` — PWA registration using Sport Navy.
 
-## Layout
+Raster assets are derivatives of the SVG masters and must not be redrawn independently.
 
-### Application chrome
+## Semantic color rules
 
-The top bar carries product identity, athlete identity and compact profile/runtime state. It is not a marketing hero.
+- Primary: Navy.
+- Secondary / info: Teal.
+- Focus / chart accent: Bright Teal.
+- Accent / energy / warning emphasis: Energy.
+- Critical / stop: Critical.
+- Recovery / readiness: Recovery.
+- Success: Success.
+- Background: Surface 0.
+- Quiet surface: Surface 1.
+- Secondary surface: Surface 2.
+- Text: Text Primary.
+- Secondary text: Text Secondary.
+- Borders: Border.
 
-### Content shell
-
-- max width: 1180–1240px;
-- desktop horizontal padding: 24–32px;
-- mobile horizontal padding: 12–16px;
-- vertical rhythm: 16 / 20 / 28 / 40px.
-
-## Information hierarchy
-
-The default athlete flow is:
-
-1. Today's planned session and current adaptation state.
-2. Morning check if not yet completed.
-3. Weekly plan with today visually anchored.
-4. Post-session capture when a session is active/completable.
-5. Adaptation proposal and explicit apply action.
-6. Specialist context.
-7. History and detailed profile context.
-
-Avoid forcing every section into an equal-weight card. Repeated operational items should use lists, strips or compact tiles as appropriate.
-
-## Today surface
-
-- Today's session title is the strongest heading below the product header.
-- Show duration/intensity/type/version as concise facts rather than a paragraph.
-- Adaptation state sits next to today's plan only when it changes the athlete's decision.
-- If there is no actionable state, use visually quiet neutral text rather than a loud badge.
-
-## Morning check
-
-- Optimize for repeated completion in 20–40 seconds.
-- Keep labels short and input targets >= 44px.
-- Prefer compact 1–5 controls/selects that remain keyboard and touch accessible.
-- Pain and illness inputs receive more visual importance than routine comfort fields when non-zero/non-empty.
-- The save action is singular and obvious.
-
-## Week plan
-
-- Today must be visually anchored.
-- Completed, modified and cancelled sessions remain readable without relying on opacity alone.
-- Version state is secondary metadata, not a dominant badge.
-- On narrow screens, use a single-column chronological list rather than cramped mini-cards.
-
-## Adaptation
-
-- Present `GREEN / YELLOW / ORANGE / RED` with text meaning and rationale.
-- Avoid implying medical clearance.
-- A revision preview is visually distinct from the currently active plan.
-- `Adaptation anwenden` is available only when the proposal is valid and version-bound.
-- Never use a dramatic red full-screen treatment unless there is a genuine stop/safety condition.
-- Adaptation color is a secondary cue; the textual state and rationale are mandatory.
-
-## Specialist context
-
-Specialist artifacts are evidence/context, not a second dashboard. Group by relevance and recency. Avoid a generic 3-column card wall when a compact ordered list communicates priority better.
-
-## Forms
-
-- labels above controls;
-- min control height 44px;
-- helper text near the field;
-- two columns only where the relationship is obvious and the viewport supports it;
-- mobile collapses cleanly to one column;
-- error/success messages remain adjacent to the action.
-
-## Buttons
-
-- primary: filled Navy;
-- secondary: neutral surface + border, Navy text;
-- destructive/stop: Critical red only when semantically required;
-- Energy orange is an accent, not a default CTA color;
-- no more than one visually dominant action per local surface.
-
-## Data visualization
-
-Canonical series order:
-
-1. Navy
-2. Bright Teal
-3. Energy
-4. Critical
-5. Recovery
-6. Success
-
-Always combine color with labels, markers, line styles, symbols or shapes. Never encode a training/safety decision by color alone.
+Meaning must never be encoded by color alone; status requires text, labels, markers, icons, shapes or line styles as appropriate.
 
 ## Accessibility
 
-- WCAG AA contrast target for normal text;
-- visible `:focus-visible` on links, buttons and form controls;
-- status always includes text/meaning, not color alone;
-- touch targets >= 44px;
-- reduced-motion preference respected;
-- native semantic controls preferred.
+- WCAG AA is the minimum target for normal text.
+- Keyboard focus remains visible.
+- Touch targets stay at least 44 px where interaction requires it.
+- Reduced-motion preferences are respected.
+- Critical red is not decorative.
+- Charts and training/safety decisions remain understandable without color.
 
-## Brand assets
+## Change policy and review gate
 
-Logo, favicon and app icon must form one coherent Sport Performance family and use the same canonical color system. The Sport Athlete Management assets must implement the athlete/development/adaptation concept above and stay visibly related to, but distinct from, the Masters Diagnostics assets.
+A branding-only change is accepted only if:
 
-Required asset set when branding is implemented:
+1. the exact Sport Performance spectrum remains intact;
+2. current logo/favicon/app icons remain one coherent product-specific family;
+3. no unintended non-color change appears in the accepted Impeccable CSS/layout;
+4. header/topbar proportions, grids/cards, typography, spacing and responsive behavior remain equivalent;
+5. WCAG AA and no-color-only semantics remain satisfied.
 
-- primary logo/lockup;
-- standalone product mark;
-- favicon at browser-relevant sizes;
-- installable-app/PWA icon set;
-- source vector artwork where practical;
-- raster exports derived from the same source geometry.
-
-No unrelated framework/default-color branding is allowed.
-
-## Motion
-
-Use only short functional transitions (roughly 120–180ms). No entrance choreography, parallax or ambient animation.
-
-## Anti-patterns
-
-Reject:
-
-- equal-weight generic card grids;
-- giant marketing heroes;
-- gradient text;
-- decorative glassmorphism;
-- arbitrary stock/generated fitness imagery;
-- opaque readiness scores;
-- excessive pills/badges;
-- modal-first repeated workflows;
-- decorative progress rings without a clear decision purpose;
-- local green/pine brand tokens that compete with the canonical Sport Performance profile.
-
-## Review checklist
-
-A surface is ready when:
-
-- today's action is obvious within seconds;
-- routine capture is fast on phone and tablet;
-- status and rationale are clear without opening a second surface;
-- cards are used only for meaningful object boundaries;
-- the UI does not look like a generic fitness dashboard;
-- keyboard focus, contrast and touch sizes are correct;
-- plan/version provenance is visible where it matters;
-- canonical Sport Performance token values remain intact;
-- derived colors are traceable;
-- charts and status states remain understandable without color;
-- logo, favicon and app icon remain one coherent, product-specific member of the shared Sport family.
-
-
-## Implemented brand asset registry
-
-The product-specific Sport Athlete Management identity is implemented and derived from one canonical vector geometry.
-
-- `site/brand/mark.svg` — standalone source mark; abstract athlete + adaptation trajectory.
-- `site/brand/app-icon.svg` — high-contrast app-icon source.
-- `site/brand/logo-lockup.svg` / `logo-lockup.png` — primary horizontal lockup.
-- `site/favicon.svg` / `favicon-32.png` — browser identity.
-- `site/icons/app-icon-192.png`, `app-icon-512.png`, `app-icon-1024.png` — installable-app derivatives.
-- `site/manifest.webmanifest` — canonical PWA registration using Sport Navy `#173652`.
-
-All raster files are derivatives of the SVG masters. Do not redraw favicon or app icons independently; regenerate them from these sources.
+Any change to Layer A requires an explicit redesign request or a separately confirmed DESIGN grilling decision. Branding work alone is not authorization for a UI redesign.
