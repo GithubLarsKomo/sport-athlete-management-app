@@ -4,7 +4,7 @@
 
 **Training control console.** The UI should feel like a focused athlete dashboard rather than a generic wellness app: dark technical chrome, calm light work surfaces, compact hierarchy, strong day/week orientation and restrained semantic color.
 
-This project uses the canonical Skillz `sport-performance` profile as its visual default. The former local green/pine palette is superseded by this shared Sport Performance system.
+This project uses the canonical Skillz `sport-performance` profile as its binding visual color standard. The former local green/pine palette is superseded by this shared Sport Performance system.
 
 ## Shared family
 
@@ -19,7 +19,40 @@ Sport Athlete Management and `master-diagnostics` share the same design grammar 
 - subtle borders and shadows rather than glassmorphism;
 - minimal motion, limited to focus/hover/loading feedback.
 
-Product identity differs through hierarchy and emphasis, not through incompatible brand colors.
+They are related products, not identical brands. The family rules are binding:
+
+- same canonical `sport-performance` palette;
+- same visual weight, geometric discipline and line/stroke language;
+- same icon construction logic and corner/radius character;
+- logo, favicon and app icon are derived from one product mark, not designed independently;
+- product identity comes from the central symbol and emphasis, not from unrelated colors;
+- each product mark must remain clearly distinguishable at favicon size.
+
+### Sport Athlete Management mark
+
+The Sport Athlete Management mark represents **athlete development, training control and adaptation over time**. The preferred concept combines:
+
+- a strong circular or partial-ring frame in Sport Navy as the shared family anchor;
+- a dynamic, abstract athlete/motion figure or training trajectory in Teal/Bright Teal;
+- forward/upward movement to express progression and adaptation;
+- simplified geometry that remains legible at 32 px.
+
+The mark must communicate at least these project properties: **athlete focus**, **development/progression**, and **coaching/training control**. It must not reuse the Masters Diagnostics bars-and-measurement-curve symbol, and it must avoid generic stock-fitness silhouettes, medical imagery or framework logos.
+
+### Wordmark and lockup
+
+- Product name: `Sport Athlete Management`.
+- Wordmark uses the shared Sport Performance typographic family and Navy/Dark text.
+- The symbol may be used alone for favicon/app-icon contexts.
+- Horizontal and stacked lockups must preserve the same symbol proportions.
+
+### Favicon
+
+The favicon is a simplified version of the same athlete/progression mark. It keeps the Navy family frame and only the minimum Teal movement geometry required for recognition. No independent favicon concept or unrelated monogram is allowed.
+
+### App icon
+
+The app icon uses the same mark centered on a high-contrast Sport Performance field, preferably Navy/Dark with light/Teal mark elements or a White/Surface field with the canonical Navy/Teal symbol. Platform-specific masking may alter the outer container, but not the internal brand geometry.
 
 ## Sport Performance profile
 
@@ -46,7 +79,7 @@ Source of truth: `Skillz / frontend-design-system-context / brand-profiles / spo
 --sport-white: #FFFFFF;
 ```
 
-These values are canonical and must not be silently replaced by framework or template defaults. Project/component aliases may reference them. Derived UI colors are allowed only when their base token and purpose are documented and traceable.
+These values are canonical and must not be silently replaced by framework, template or arbitrary project colors. Project/component aliases may reference them. Derived UI colors are allowed only when their base token and purpose are documented and traceable.
 
 ### Semantic defaults
 
@@ -183,7 +216,18 @@ Always combine color with labels, markers, line styles, symbols or shapes. Never
 
 ## Brand assets
 
-Logo, favicon and app icon must form one coherent Sport Performance family and use the same canonical color system. Do not introduce unrelated framework/default-color branding. Dedicated brand assets can be added later without changing this palette contract.
+Logo, favicon and app icon must form one coherent Sport Performance family and use the same canonical color system. The Sport Athlete Management assets must implement the athlete/development/adaptation concept above and stay visibly related to, but distinct from, the Masters Diagnostics assets.
+
+Required asset set when branding is implemented:
+
+- primary logo/lockup;
+- standalone product mark;
+- favicon at browser-relevant sizes;
+- installable-app/PWA icon set;
+- source vector artwork where practical;
+- raster exports derived from the same source geometry.
+
+No unrelated framework/default-color branding is allowed.
 
 ## Motion
 
@@ -217,4 +261,5 @@ A surface is ready when:
 - plan/version provenance is visible where it matters;
 - canonical Sport Performance token values remain intact;
 - derived colors are traceable;
-- charts and status states remain understandable without color.
+- charts and status states remain understandable without color;
+- logo, favicon and app icon remain one coherent, product-specific member of the shared Sport family.
