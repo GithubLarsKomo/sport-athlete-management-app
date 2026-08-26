@@ -263,3 +263,17 @@ A surface is ready when:
 - derived colors are traceable;
 - charts and status states remain understandable without color;
 - logo, favicon and app icon remain one coherent, product-specific member of the shared Sport family.
+
+
+## Implemented brand asset registry
+
+The product-specific Sport Athlete Management identity is implemented and derived from one canonical vector geometry.
+
+- `site/brand/mark.svg` — standalone source mark; abstract athlete + adaptation trajectory.
+- `site/brand/app-icon.svg` — high-contrast app-icon source.
+- `site/brand/logo-lockup.svg` / `logo-lockup.png` — primary horizontal lockup.
+- `site/favicon.svg` / `favicon-32.png` — browser identity.
+- `site/icons/app-icon-192.png`, `app-icon-512.png`, `app-icon-1024.png` — installable-app derivatives.
+- `site/manifest.webmanifest` — canonical PWA registration using Sport Navy `#173652`.
+
+All raster files are derivatives of the SVG masters. Do not redraw favicon or app icons independently; regenerate them from these sources.
