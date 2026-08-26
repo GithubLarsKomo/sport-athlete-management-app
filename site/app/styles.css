@@ -4,20 +4,20 @@
 
   /* Canonical Skillz sport-performance tokens. */
   --sport-navy:#173652;
-  --sport-dark:#1C2B3A;
-  --sport-body:#24313E;
+  --sport-dark:#0F172A;
+  --sport-body:#0F172A;
   --sport-teal:#246F6C;
   --sport-teal-bright:#2B8884;
-  --sport-muted:#6B7785;
+  --sport-muted:#475569;
   --sport-energy:#B54708;
   --sport-success:#2E7D32;
-  --sport-warning:#9A6500;
+  --sport-warning:#B54708;
   --sport-critical:#B42318;
   --sport-recovery:#6D5BD0;
-  --sport-border:#D6E0E6;
-  --sport-surface:#EDF3F6;
-  --sport-surface-subtle:#F6F8F9;
-  --sport-warning-surface:#FFF4D6;
+  --sport-border:#E2E8F0;
+  --sport-surface:#EEF2F7;
+  --sport-surface-subtle:#F5F7FA;
+  --sport-warning-surface:#F5F7FA;
   --sport-white:#FFFFFF;
 
   /* Existing SAM names are semantic/component aliases, not independent brand colors. */
