@@ -1,0 +1,37 @@
+name: Integrate Brand Assets
+on:
+  push:
+    branches: [feat/sport-brand-assets]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/sport-brand-assets
+      - name: Integrate brand into UI and design contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('site/index.html'); s=p.read_text()
+          if 'rel="icon" href="/favicon.svg"' not in s:
+              s=s.replace('  <meta name="theme-color" content="#173652">', '  <meta name="theme-color" content="#173652">\n  <link rel="icon" href="/favicon.svg" type="image/svg+xml">\n  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">\n  <link rel="manifest" href="/manifest.webmanifest">\n  <link rel="apple-touch-icon" href="/icons/app-icon-192.png">')
+          old='''    <div>\n      <p class="eyebrow">SPORT ATHLETE MANAGEMENT</p>\n      <h1>Training Control</h1>\n    </div>'''
+          new='''    <div class="brand-heading">\n      <img class="brand-mark" src="/brand/mark.svg" width="58" height="58" alt="" aria-hidden="true">\n      <div>\n        <p class="eyebrow">SPORT ATHLETE MANAGEMENT</p>\n        <h1>Training Control</h1>\n      </div>\n    </div>'''
+          s=s.replace(old,new); p.write_text(s)
+          css=Path('site/app/styles.css'); c=css.read_text()
+          addon='''\n/* Shared Sport Performance product-family branding. */\n.brand-heading{display:flex;align-items:center;gap:14px;min-width:0}\n.brand-mark{display:block;width:58px;height:58px;flex:0 0 auto;filter:brightness(0) invert(1);opacity:.98}\n@media(max-width:760px){.brand-heading{gap:10px}.brand-mark{width:46px;height:46px}}\n'''
+          if '.brand-heading{' not in c: css.write_text(c+addon)
+          d=Path('DESIGN.md'); text=d.read_text()
+          block='''\n\n## Implemented brand asset registry\n\nThe product-specific Sport Athlete Management identity is implemented and derived from one canonical vector geometry.\n\n- `site/brand/mark.svg` — standalone source mark; abstract athlete + adaptation trajectory.\n- `site/brand/app-icon.svg` — high-contrast app-icon source.\n- `site/brand/logo-lockup.svg` / `logo-lockup.png` — primary horizontal lockup.\n- `site/favicon.svg` / `favicon-32.png` — browser identity.\n- `site/icons/app-icon-192.png`, `app-icon-512.png`, `app-icon-1024.png` — installable-app derivatives.\n- `site/manifest.webmanifest` — canonical PWA registration using Sport Navy `#173652`.\n\nAll raster files are derivatives of the SVG masters. Do not redraw favicon or app icons independently; regenerate them from these sources.\n'''
+          if '## Implemented brand asset registry' not in text: d.write_text(text+block)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add site/index.html site/app/styles.css DESIGN.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat(brand): integrate product identity into athlete app'
+            git push origin HEAD:feat/sport-brand-assets
+          fi
