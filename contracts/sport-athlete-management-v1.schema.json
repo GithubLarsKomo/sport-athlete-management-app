@@ -16,6 +16,85 @@
         "safety_flags": {"type": "array", "items": {"type": "string"}}
       }
     },
+    "objectiveMetric": {
+      "type": "object",
+      "required": ["metric_type", "measured_at", "value", "unit", "source", "metric_class", "decision_role", "quality_flag"],
+      "properties": {
+        "metric_type": {"type": "string", "minLength": 1},
+        "measured_at": {"type": "string", "format": "date-time"},
+        "value": {"type": ["number", "string", "boolean", "null"]},
+        "unit": {"type": "string"},
+        "source": {"type": "string", "minLength": 1},
+        "provider": {"type": ["string", "null"]},
+        "device": {"type": ["string", "null"]},
+        "method": {"type": ["string", "null"]},
+        "provider_metric_name": {"type": ["string", "null"]},
+        "provider_algorithm_version": {"type": ["string", "null"]},
+        "metric_class": {
+          "enum": ["direct_sensor", "provider_derived", "journal_derived", "reference_measurement", "manual_measurement"]
+        },
+        "decision_role": {
+          "enum": ["primary_evidence", "context_only", "display_only", "excluded_from_adaptation"]
+        },
+        "quality_flag": {"enum": ["valid", "questionable", "invalid", "unknown"]},
+        "baseline_eligible": {"type": "boolean"},
+        "comparable_series_id": {"type": ["string", "null"]},
+        "provenance": {"type": "object"}
+      }
+    },
+    "bodyMeasurement": {
+      "type": "object",
+      "required": ["metric_type", "measured_at", "value", "unit", "method", "source", "quality_class"],
+      "properties": {
+        "metric_type": {
+          "enum": ["body_mass", "waist_circumference", "waist_height_ratio", "body_fat", "fat_mass", "fat_free_mass", "lean_mass", "bone_mineral_density", "other"]
+        },
+        "measured_at": {"type": "string", "format": "date-time"},
+        "value": {"type": "number"},
+        "unit": {"type": "string", "minLength": 1},
+        "method": {"enum": ["scale", "bia", "dxa", "tape", "manual", "other"]},
+        "source": {"type": "string", "minLength": 1},
+        "device": {"type": ["string", "null"]},
+        "quality_class": {"enum": ["reference", "validated_consumer", "consumer_estimate", "manual_context", "unknown"]},
+        "comparable_series_id": {"type": ["string", "null"]},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
+    "biometricBaseline": {
+      "type": "object",
+      "required": ["metric_type", "window_start", "window_end", "method", "center", "lower", "upper", "n_observations", "data_quality"],
+      "properties": {
+        "metric_type": {"type": "string", "minLength": 1},
+        "window_start": {"type": "string", "format": "date"},
+        "window_end": {"type": "string", "format": "date"},
+        "method": {"type": "string", "minLength": 1},
+        "center": {"type": "number"},
+        "lower": {"type": "number"},
+        "upper": {"type": "number"},
+        "n_observations": {"type": "integer", "minimum": 0},
+        "source_classes": {"type": "array", "items": {"type": "string"}},
+        "data_quality": {"enum": ["high", "medium", "low", "insufficient"]},
+        "min_observations_met": {"type": "boolean"},
+        "comparable_series_id": {"type": ["string", "null"]}
+      }
+    },
+    "biometricAnomaly": {
+      "type": "object",
+      "required": ["metric_type", "detected_at", "direction", "severity", "status", "persistence_count", "baseline_ref"],
+      "properties": {
+        "metric_type": {"type": "string", "minLength": 1},
+        "detected_at": {"type": "string", "format": "date-time"},
+        "direction": {"enum": ["high", "low", "mixed", "unknown"]},
+        "severity": {"enum": ["mild", "moderate", "marked", "unknown"]},
+        "status": {"enum": ["new", "persistent", "resolving", "resolved", "unknown"]},
+        "persistence_count": {"type": "integer", "minimum": 1},
+        "deviation": {"type": ["number", "null"]},
+        "deviation_unit": {"type": ["string", "null"]},
+        "baseline_ref": {"type": "object"},
+        "decision_role": {"const": "context_only"},
+        "notes": {"type": ["string", "null"]}
+      }
+    },
     "athleteProfile": {
       "allOf": [
         {"$ref": "#/$defs/commonEnvelope"},
@@ -153,7 +232,11 @@
             "pain_0_10": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
             "pain_locations": {"type": "array", "items": {"type": "object"}},
             "illness_symptoms": {"type": "array", "items": {"type": "string"}},
-            "objective_metrics": {"type": "array", "items": {"type": "object"}}
+            "objective_metrics": {"type": "array", "items": {"$ref": "#/$defs/objectiveMetric"}},
+            "body_measurements": {"type": "array", "items": {"$ref": "#/$defs/bodyMeasurement"}},
+            "biometric_baselines": {"type": "array", "items": {"$ref": "#/$defs/biometricBaseline"}},
+            "biometric_anomalies": {"type": "array", "items": {"$ref": "#/$defs/biometricAnomaly"}},
+            "passive_data_sync_status": {"type": ["object", "null"]}
           }
         }
       ]
@@ -198,6 +281,8 @@
             "revised_plan": {"type": ["object", "null"]},
             "rationale": {"type": "string", "minLength": 1},
             "responsible_signals": {"type": "array", "items": {"type": "string"}},
+            "provider_score_context": {"type": "array", "items": {"$ref": "#/$defs/objectiveMetric"}},
+            "multi_signal_confirmation": {"type": ["boolean", "null"]},
             "confidence": {"type": "number", "minimum": 0, "maximum": 1},
             "human_override": {"type": "boolean"},
             "engine_version": {"type": "string"}

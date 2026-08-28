@@ -4,13 +4,17 @@
 
 Canonical source: `GithubLarsKomo/skillz/schemas/sport-athlete-management-v1.schema.json`
 
-Imported after Skillz PR #222 was squash-merged as commit `8b76e8a66eadae890a5b13678fc6b30b3664919e` on 2026-08-22.
+Initially imported after Skillz PR #222 was squash-merged as commit `8b76e8a66eadae890a5b13678fc6b30b3664919e` on 2026-08-22.
+
+Refreshed from the canonical Skillz source after Garmin health/baseline PR #272 was squash-merged as commit `fb708684b40d3c64ba57e0a0897536b099f6488a` on 2026-08-28.
 
 ## P1 specialist contract
 
 Canonical source: `GithubLarsKomo/skillz/schemas/sport-athlete-management-p1-v1.schema.json`
 
-Imported after Skillz PR #227 was squash-merged as commit `17417fd65527d5a2190c5d09715986a4f699943c` and the regular generated-metadata follow-up reached `b3c021b7cd3d08017077935ac3b1e30752e7b640` on 2026-08-22.
+Initially imported after Skillz PR #227 was squash-merged as commit `17417fd65527d5a2190c5d09715986a4f699943c` and the regular generated-metadata follow-up reached `b3c021b7cd3d08017077935ac3b1e30752e7b640` on 2026-08-22.
+
+Refreshed from the canonical Skillz source after Garmin health/baseline PR #272 was squash-merged as commit `fb708684b40d3c64ba57e0a0897536b099f6488a` on 2026-08-28.
 
 ## P2 context contract
 
