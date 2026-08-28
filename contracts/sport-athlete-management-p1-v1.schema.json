@@ -23,13 +23,33 @@
       "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["plan_version","objective","reference_model","sessions","progression","stop_rules"],"properties":{"plan_version":{"type":"integer","minimum":1},"objective":{"type":"string","minLength":1},"reference_model":{"type":"object"},"sessions":{"type":"array","items":{"type":"object"}},"progression":{"type":"object"},"stop_rules":{"type":"array","items":{"type":"string"}}}}]
     },
     "recoveryState": {
-      "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["window_start","window_end","baseline","current_signals","trend","interventions","next_re_evaluation"],"properties":{"window_start":{"type":"string","format":"date"},"window_end":{"type":"string","format":"date"},"baseline":{"type":"object"},"current_signals":{"type":"object"},"trend":{"type":"object"},"interventions":{"type":"array","items":{"type":"object"}},"next_re_evaluation":{"type":"string","format":"date-time"},"confidence":{"type":"number","minimum":0,"maximum":1}}}]
+      "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["window_start","window_end","baseline","current_signals","trend","interventions","next_re_evaluation"],"properties":{
+        "window_start":{"type":"string","format":"date"},
+        "window_end":{"type":"string","format":"date"},
+        "baseline":{"type":"object"},
+        "current_signals":{"type":"object"},
+        "trend":{"type":"object"},
+        "physiological_stability":{"type":"object"},
+        "baseline_deviations":{"type":"array","items":{"type":"object"}},
+        "health_drift":{"enum":["normal","elevated","persistent","resolving","unknown"]},
+        "health_drift_signals":{"type":"array","items":{"type":"object"}},
+        "provider_score_context":{"type":"array","items":{"type":"object"}},
+        "interventions":{"type":"array","items":{"type":"object"}},
+        "next_re_evaluation":{"type":"string","format":"date-time"},
+        "confidence":{"type":"number","minimum":0,"maximum":1}
+      }}]
     },
     "fuelingPlan": {
       "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["plan_version","load_context","session_fueling","hydration","protein_strategy","re_evaluation"],"properties":{"plan_version":{"type":"integer","minimum":1},"load_context":{"type":"object"},"session_fueling":{"type":"array","items":{"type":"object"}},"hydration":{"type":"object"},"protein_strategy":{"type":"object"},"re_evaluation":{"type":"object"}}}]
     },
     "energyAvailabilityRisk": {
-      "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["risk_state","signals","confidence","routing"],"properties":{"risk_state":{"enum":["no_signal","monitor","review","urgent_review","unknown"]},"signals":{"type":"array","items":{"type":"object"}},"confidence":{"type":"number","minimum":0,"maximum":1},"routing":{"type":"object"}}}]
+      "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["risk_state","signals","confidence","routing"],"properties":{
+        "risk_state":{"enum":["no_signal","monitor","review","urgent_review","unknown"]},
+        "signals":{"type":"array","items":{"type":"object"}},
+        "body_energy_context":{"type":"object"},
+        "confidence":{"type":"number","minimum":0,"maximum":1},
+        "routing":{"type":"object"}
+      }}]
     },
     "rehabProgression": {
       "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["restriction_source","current_phase","entry_criteria","exit_criteria","load_components","response_rules","next_re_evaluation"],"properties":{"restriction_source":{"type":"object"},"current_phase":{"enum":["protection","restore_load","force_capacity","power_elastic","sport_specific","return_participation","return_sport","return_performance"]},"entry_criteria":{"type":"array","items":{"type":"object"}},"exit_criteria":{"type":"array","items":{"type":"object"}},"load_components":{"type":"array","items":{"type":"object"}},"response_rules":{"type":"array","items":{"type":"object"}},"next_re_evaluation":{"type":"string","format":"date-time"}}}]
@@ -41,7 +61,31 @@
       "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["plan_version","decision_questions","tests","timing","standardization","retest_plan"],"properties":{"plan_version":{"type":"integer","minimum":1},"decision_questions":{"type":"array","items":{"type":"string"}},"tests":{"type":"array","items":{"type":"object"}},"timing":{"type":"object"},"standardization":{"type":"array","items":{"type":"string"}},"retest_plan":{"type":"object"}}}]
     },
     "adaptationAnalysis": {
-      "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["analysis_window","data_coverage","baseline_method","trends","interpretations","alternative_explanations","confidence","next_measurements"],"properties":{"analysis_window":{"type":"object"},"data_coverage":{"type":"object"},"baseline_method":{"type":"object"},"trends":{"type":"array","items":{"type":"object"}},"interpretations":{"type":"array","items":{"type":"object"}},"alternative_explanations":{"type":"array","items":{"type":"string"}},"confidence":{"type":"number","minimum":0,"maximum":1},"next_measurements":{"type":"array","items":{"type":"object"}}}}]
+      "allOf": [{"$ref":"#/$defs/commonEnvelope"},{"type":"object","required":["analysis_window","data_coverage","baseline_method","trends","interpretations","alternative_explanations","confidence","next_measurements"],"properties":{
+        "analysis_window":{"type":"object"},
+        "data_coverage":{"type":"object"},
+        "baseline_method":{"type":"object"},
+        "trends":{"type":"array","items":{"type":"object"}},
+        "domain_trends":{
+          "type":"object",
+          "properties":{
+            "recovery":{"type":"object"},
+            "training_tolerance":{"type":"object"},
+            "performance_capacity":{"type":"object"},
+            "physiological_stability":{"type":"object"},
+            "body_energy_context":{"type":"object"}
+          }
+        },
+        "biometric_baselines":{"type":"array","items":{"type":"object"}},
+        "health_drift":{"enum":["normal","elevated","persistent","resolving","unknown"]},
+        "health_drift_signals":{"type":"array","items":{"type":"object"}},
+        "body_composition_context":{"type":"object"},
+        "provider_score_context":{"type":"array","items":{"type":"object"}},
+        "interpretations":{"type":"array","items":{"type":"object"}},
+        "alternative_explanations":{"type":"array","items":{"type":"string"}},
+        "confidence":{"type":"number","minimum":0,"maximum":1},
+        "next_measurements":{"type":"array","items":{"type":"object"}}
+      }}]
     }
   }
 }
