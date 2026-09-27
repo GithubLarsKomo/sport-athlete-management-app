@@ -65,7 +65,16 @@
       "githubIssue": {
         "number": 21,
         "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/21",
-        "state": "open"
+        "state": "closed",
+        "stateReason": "completed"
+      },
+      "delivery": {
+        "pr": 29,
+        "reviewedHeadSha": "d6e498304a8f37eba336e12c30dd52aa90fc5a03",
+        "mergeSha": "a5915db7d7c2f67e6466f7079c01f0b3e90d0199",
+        "prCiRun": 36334394815,
+        "mainCiRun": 36334503326,
+        "status": "delivered"
       }
     },
     {
