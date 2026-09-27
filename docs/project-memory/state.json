@@ -3,8 +3,8 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-180200-rowing-sport-os-spec-approved.md",
-  "currentStage": "specification",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-181000-rowing-sport-os-backlog.md",
+  "currentStage": "backlog",
   "canonicalArtifacts": [
     {
       "type": "wayfinding",
@@ -35,6 +35,18 @@
       "path": "docs/spec/rowing-sport-os-journal-v1-consistency-report.md",
       "status": "pass-approved",
       "ref": "dd6efe957d93b49625f6e5ba3a9ac6d13cafa34f"
+    },
+    {
+      "type": "vertical-issues",
+      "path": "docs/backlog/rowing-sport-os-journal-v1-vertical-issues.json",
+      "status": "approved",
+      "ref": "f77e7dc06e95ae5eed50483f5b399505341efbd7"
+    },
+    {
+      "type": "dependency-order",
+      "path": "docs/backlog/rowing-sport-os-journal-v1-dependency-order.json",
+      "status": "approved",
+      "ref": "f77e7dc06e95ae5eed50483f5b399505341efbd7"
     }
   ],
   "decisions": [
@@ -49,13 +61,20 @@
       "state": "accepted"
     }
   ],
-  "openLoops": [],
+  "openLoops": [
+    {
+      "id": "OPEN-007",
+      "type": "pending",
+      "summary": "Implement VI-001 / GitHub #21.",
+      "nextAction": "Start the Coach↔Athlete authorization vertical slice."
+    }
+  ],
   "lastVerified": {
-    "headSha": "dd6efe957d93b49625f6e5ba3a9ac6d13cafa34f",
-    "at": "2026-09-27T18:02:00+02:00"
+    "headSha": "f77e7dc06e95ae5eed50483f5b399505341efbd7",
+    "at": "2026-09-27T18:10:00+02:00"
   },
   "nextAction": {
-    "description": "Run spec-to-vertical-issues against approved SPEC.md@0.1.0.",
-    "skill": "spec-to-vertical-issues"
+    "description": "Implement VI-001 / GitHub issue #21.",
+    "skill": "iterate-software-projects"
   }
 }
