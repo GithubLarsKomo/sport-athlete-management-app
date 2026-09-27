@@ -6,6 +6,8 @@ Status: ready
 
 ## VI-001 — Add Coach↔Athlete authorization end to end
 
+**GitHub:** #21 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/21
+
 **Outcome:** An Authentik-authenticated Coach can work only with explicitly assigned athletes, while Athlete self-service continues unchanged and every cross-athlete action is auditable.
 
 **Requirements:** `REQ-ROLE-001`, `REQ-ROLE-002`, `REQ-ROLE-003`, `REQ-ROLE-004`, `REQ-ROLE-005`
@@ -31,6 +33,8 @@ Status: ready
 
 ## VI-002 — Import canonical Skillz training plans with revision history
 
+**GitHub:** #22 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/22
+
 **Outcome:** An Athlete or assigned Coach can import a canonical Skillz plan bundle, re-import identical content idempotently, and retain explicit history for changed plans.
 
 **Requirements:** `REQ-PLAN-001`, `REQ-PLAN-002`, `REQ-PLAN-003`, `REQ-PLAN-004`, `REQ-PLAN-005`
@@ -55,6 +59,8 @@ Status: ready
 - Embedded LLM plan generation.
 
 ## VI-003 — Unify FIT/manual journal completion with plan-vs-actual views
+
+**GitHub:** #23 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/23
 
 **Outcome:** An Athlete can finalize a real session once—whether manual or FIT-backed—with RPE and subjective context, and Athlete/assigned Coach can inspect transparent session/week Soll-Ist.
 
@@ -82,6 +88,8 @@ Status: ready
 
 ## VI-004 — Add structured RowErg and bike performance testing
 
+**GitHub:** #24 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/24
+
 **Outcome:** Athlete or assigned Coach can plan, execute and review fixed RowErg and staged lactate tests while measured, derived and estimated values remain distinguishable.
 
 **Requirements:** `REQ-TST-001`, `REQ-TST-002`, `REQ-TST-003`, `REQ-TST-004`, `REQ-TST-005`, `REQ-TST-006`, `REQ-TST-007`
@@ -108,6 +116,8 @@ Status: ready
 - Medical test interpretation.
 
 ## VI-005 — Export deterministic adaptation handoff and apply validated proposals explicitly
+
+**GitHub:** #25 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/25
 
 **Outcome:** Athlete or assigned Coach can download an inspectable minimized adaptation JSON, import a validated proposal, and explicitly apply it once without any model directly mutating the plan.
 
@@ -137,6 +147,8 @@ Status: ready
 
 ## VI-006 — Provide athlete data export and privacy rollout gate
 
+**GitHub:** #26 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/26
+
 **Outcome:** Athletes can self-export their longitudinal data, assigned Coaches are authorization-bound, and the product has a verifiable retention/deletion/logging gate before broad multi-user rollout.
 
 **Requirements:** `REQ-DATA-001`, `REQ-DATA-002`, `REQ-DATA-003`, `REQ-DATA-004`
@@ -160,6 +172,8 @@ Status: ready
 - Cross-product data export.
 
 ## VI-007 — Deploy Rowing Sport OS v1 behind Authentik on Hetzner
+
+**GitHub:** #27 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/27
 
 **Outcome:** The approved v1 runs at sportjournal.ratzeburg-ai.de through Authentik with private PostgreSQL and passes the complete Athlete/Coach/FIT/plan/test/export/adaptation production smoke suite.
 
