@@ -165,3 +165,37 @@ test('canonical re-import removes open sessions omitted from the new microcycle 
   assert.equal(prior.files['sport-microcycle.json'].sessions.length, 2);
   assert.equal(current.files['sport-microcycle.json'].sessions.length, 1);
 });
+
+
+test('canonical revision advances operational version instead of rejecting an adapted open session as stale', async () => {
+  const athleteId = `plan-adapted-${randomUUID()}`;
+  await repository.ensureAthlete({ subject: athleteId, athleteId, email: null, displayName: 'Adapted Session Athlete' });
+
+  const bundleV1 = uniqueBundle(athleteId);
+  const first = await repository.importCanonicalPlanBundle(
+    athleteId,
+    normalizeCanonicalPlanImportBundle(bundleV1),
+    athleteId
+  );
+  assert.equal(first.revision, 1);
+
+  const sessionId = bundleV1.files['sport-microcycle.json'].sessions[0].planned_session_id;
+  await db.query(
+    "UPDATE planned_sessions SET version=2, status='modified', objective='Operational adaptation' WHERE id=? AND athlete_id=?",
+    [sessionId, athleteId]
+  );
+
+  const bundleV2 = structuredClone(bundleV1);
+  bundleV2.files['sport-microcycle.json'].sessions[0].objective = 'New canonical prescription';
+  const second = await repository.importCanonicalPlanBundle(
+    athleteId,
+    normalizeCanonicalPlanImportBundle(bundleV2),
+    athleteId
+  );
+
+  assert.equal(second.revision, 2);
+  const current = await repository.getPlannedSessionById(athleteId, sessionId);
+  assert.equal(Number(current.version), 3);
+  assert.equal(current.status, 'planned');
+  assert.equal(current.objective, 'New canonical prescription');
+});
