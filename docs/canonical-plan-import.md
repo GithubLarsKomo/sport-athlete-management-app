@@ -65,7 +65,7 @@ Projection rules are technical only:
 - canonical `season_id`, `mesocycle_id`, `microcycle_id`, and `planned_session_id` remain stable database IDs;
 - the canonical season name falls back to `season_id` when no display name exists;
 - the operational season status falls back to `planned` when the canonical artifact does not carry one;
-- session `local_date` is taken from the date component of canonical `planned_start`;
+- session `local_date` is derived from the canonical `planned_start` instant in the journal timezone `Europe/Berlin`, so UTC/offset timestamps are assigned to the correct local training day;
 - session `intensity_rule`, `stop_rule`, `flexibility` and `items` are preserved in the session payload;
 - complete canonical season/mesocycle/microcycle/session payloads remain stored unchanged in JSONB;
 - within the imported microcycle, the canonical session list is authoritative for **open** operational sessions: planned/modified sessions omitted by a changed canonical plan are removed from the current projection but remain recoverable in the immutable prior import revision.
