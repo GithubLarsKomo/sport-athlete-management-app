@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "projectId": "rowing-sport-os-journal",
+  "repository": "GithubLarsKomo/sport-athlete-management-app",
+  "memoryRoot": "docs/project-memory/INDEX.md",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-140300-rowing-sport-os-wayfinding.md",
+  "currentStage": "wayfinding",
+  "canonicalArtifacts": [
+    {
+      "type": "wayfinding",
+      "path": "docs/wayfinding/rowing-sport-os-journal-v1-gap-audit.md",
+      "status": "completed",
+      "ref": "b7d63b7c13e6e86b5ec43d84fa8009bdaf5e5005"
+    },
+    {
+      "type": "grilling-definition",
+      "path": "GithubLarsKomo/grilling/examples/rowing-sport-os-journal-v1.json",
+      "status": "prepared",
+      "ref": "rowing-sport-os-journal-v1@0.1.0"
+    }
+  ],
+  "decisions": [],
+  "openLoops": [
+    {
+      "id": "OPEN-001",
+      "type": "question",
+      "summary": "v1 user/role model",
+      "nextAction": "Answer Grilling R1 question sj-user-model."
+    },
+    {
+      "id": "OPEN-002",
+      "type": "question",
+      "summary": "post-session subjective fields",
+      "nextAction": "Answer Grilling R1 question sj-post-session-subjective."
+    },
+    {
+      "id": "OPEN-003",
+      "type": "question",
+      "summary": "v1 performance-test catalogue",
+      "nextAction": "Answer Grilling R1 question sj-testing-v1."
+    },
+    {
+      "id": "OPEN-004",
+      "type": "question",
+      "summary": "data export/deletion boundary",
+      "nextAction": "Answer Grilling R1 question sj-data-portability."
+    },
+    {
+      "id": "OPEN-005",
+      "type": "question",
+      "summary": "athlete Second-Brain preparation",
+      "nextAction": "Answer Grilling R1 question sj-second-brain."
+    }
+  ],
+  "lastVerified": {
+    "headSha": "b7d63b7c13e6e86b5ec43d84fa8009bdaf5e5005",
+    "at": "2026-09-27T14:03:00+02:00"
+  },
+  "nextAction": {
+    "description": "Complete rowing-sport-os-journal-v1 Grilling R1 and generate normative SPEC.md.",
+    "skill": "round-based-requirements-grilling"
+  }
+}
