@@ -119,3 +119,49 @@ test('canonical re-import preserves already finalized sessions while accepting t
   const history = await repository.listPlanImports(athleteId);
   assert.deepEqual(history.map(record => record.revision), [2, 1]);
 });
+
+
+test('canonical re-import removes open sessions omitted from the new microcycle but keeps history in prior revision', async () => {
+  const athleteId = `plan-remove-${randomUUID()}`;
+  await repository.ensureAthlete({ subject: athleteId, athleteId, email: null, displayName: 'Removed Session Athlete' });
+
+  const bundleV1 = uniqueBundle(athleteId);
+  const microV1 = bundleV1.files['sport-microcycle.json'];
+  const secondSessionId = `${microV1.sessions[0].planned_session_id}-removed`;
+  microV1.sessions.push({
+    ...structuredClone(microV1.sessions[0]),
+    planned_session_id: secondSessionId,
+    objective: 'Session that will be removed',
+    planned_start: '2026-09-27T10:00:00+02:00'
+  });
+
+  const first = await repository.importCanonicalPlanBundle(
+    athleteId,
+    normalizeCanonicalPlanImportBundle(bundleV1),
+    athleteId
+  );
+  assert.equal(first.revision, 1);
+  assert.ok(await repository.getPlannedSessionById(athleteId, secondSessionId));
+
+  const bundleV2 = structuredClone(bundleV1);
+  bundleV2.files['sport-microcycle.json'].sessions = bundleV2.files['sport-microcycle.json'].sessions
+    .filter(session => session.planned_session_id !== secondSessionId);
+
+  const second = await repository.importCanonicalPlanBundle(
+    athleteId,
+    normalizeCanonicalPlanImportBundle(bundleV2),
+    athleteId
+  );
+  assert.equal(second.revision, 2);
+  assert.deepEqual(second.applied.removed_open_session_ids, [secondSessionId]);
+  assert.equal(await repository.getPlannedSessionById(athleteId, secondSessionId), null);
+
+  const rows = await db.query(
+    'SELECT revision, bundle_json FROM training_plan_imports WHERE athlete_id=? ORDER BY revision',
+    [athleteId]
+  );
+  const prior = typeof rows[0].bundle_json === 'string' ? JSON.parse(rows[0].bundle_json) : rows[0].bundle_json;
+  const current = typeof rows[1].bundle_json === 'string' ? JSON.parse(rows[1].bundle_json) : rows[1].bundle_json;
+  assert.equal(prior.files['sport-microcycle.json'].sessions.length, 2);
+  assert.equal(current.files['sport-microcycle.json'].sessions.length, 1);
+});
