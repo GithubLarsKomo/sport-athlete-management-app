@@ -302,6 +302,18 @@ export function createActivityRepository(db) {
         const rows = await conn.query('SELECT * FROM activities WHERE athlete_id=? AND id=? FOR UPDATE', [athleteId, activityId]);
         const activity = rows[0];
         if (!activity) throw Object.assign(new Error('activity_not_found'), { statusCode: 404 });
+
+        const existingJournalRows = await conn.query(
+          'SELECT finalized_at FROM activity_journal_entries WHERE activity_id=? FOR UPDATE',
+          [activityId]
+        );
+        if (existingJournalRows[0]?.finalized_at) {
+          throw Object.assign(new Error('journal_already_finalized'), { statusCode: 409 });
+        }
+        if (activity.completed_session_id && !existingJournalRows[0]) {
+          throw Object.assign(new Error('session_already_finalized_elsewhere'), { statusCode: 409 });
+        }
+
         const sessionRpe = input.session_rpe == null || input.session_rpe === '' ? null : Number(input.session_rpe);
         const pain = input.pain_0_10 == null || input.pain_0_10 === '' ? null : Number(input.pain_0_10);
         const finalize = Boolean(input.finalize);
