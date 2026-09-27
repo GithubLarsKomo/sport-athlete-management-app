@@ -9,7 +9,7 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 is reviewed, merged and closed; main CI is green. VI-002/#22 is the active critical-path increment.
+Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 and VI-002/#22 are reviewed, merged and closed; main CI is green. VI-003/#23 is the active critical-path increment.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
@@ -23,7 +23,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260927-190000-vi-001-delivered.md)
+- [Latest event](events/EVT-20260927-200300-vi-002-delivered.md)
 
 ## Canonical project artifacts
 
@@ -40,7 +40,7 @@ Confirmed v1 additions include:
 - [Vertical issues](../backlog/rowing-sport-os-journal-v1-vertical-issues.md)
 - [Dependency order](../backlog/rowing-sport-os-journal-v1-dependency-order.json)
 - VI-001 → GitHub #21 — **delivered**
-- VI-002 → GitHub #22
+- VI-002 → GitHub #22 — **delivered**
 - VI-003 → GitHub #23
 - VI-004 → GitHub #24
 - VI-005 → GitHub #25
@@ -58,14 +58,25 @@ Confirmed v1 additions include:
 - review decision: PASS / PASS WITH NOTES
 - issue state: completed
 
+### VI-002 / GitHub #22
+
+- PR #31
+- reviewed head: `5f8bcb92383c259c4ae23656e03465b879172eff`
+- merge: `37e45c8298da64b9810e0b36147cc11449021470`
+- review-head CI: `36339091164` success
+- main CI: `36339192684` success
+- [Delivery status](../engineering/vi-002/engineering-delivery-status.json)
+- review decision: PASS / PASS WITH NOTES
+- issue state: completed
+
 ## Current engineering increment
 
-VI-002 / GitHub #22 — canonical Skillz training-plan import with provenance, idempotency and revision history.
+VI-003 / GitHub #23 — unify FIT/manual journal completion with plan-vs-actual views.
 
 ## Open loop
 
-Implement and review VI-002.
+Implement and review VI-003.
 
 ## Next step
 
-Start VI-002 from current main.
+Start VI-003 from current main.
