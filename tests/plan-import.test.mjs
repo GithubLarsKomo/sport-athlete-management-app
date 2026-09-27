@@ -4,6 +4,7 @@ import {
   canonicalJson,
   normalizeCanonicalPlanImportBundle,
   planContentHash,
+  planLocalDate,
   validateCanonicalPlanImportBundle
 } from '../src/domain/plan-import.mjs';
 import { canonicalPlanImportFixture } from './fixtures/canonical-plan-import.mjs';
@@ -27,6 +28,17 @@ test('canonical Skillz plan bundle validates and preserves prescription fields',
   assert.deepEqual(session.items, [{ type: 'steady', duration_min: 60 }]);
   assert.deepEqual(session.payload, bundle.files['sport-microcycle.json'].sessions[0]);
   assert.deepEqual(normalized.planPackage.microcycle.payload, bundle.files['sport-microcycle.json']);
+});
+
+test('planned start is projected to the Europe/Berlin journal date', () => {
+  assert.equal(planLocalDate('2026-09-27T23:30:00Z'), '2026-09-28');
+
+  const bundle = canonicalPlanImportFixture();
+  bundle.files['sport-microcycle.json'].end_date = '2026-09-28';
+  bundle.files['sport-microcycle.json'].sessions[0].planned_start = '2026-09-27T23:30:00Z';
+  const normalized = normalizeCanonicalPlanImportBundle(bundle);
+  assert.deepEqual(normalized.errors, []);
+  assert.equal(normalized.planPackage.sessions[0].local_date, '2026-09-28');
 });
 
 test('canonical content hash is stable across object key order and excludes transport producer metadata', () => {
