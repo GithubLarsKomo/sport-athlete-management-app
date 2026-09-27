@@ -3,7 +3,7 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-184000-vi-001-implemented.md",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-185000-vi-001-hardened.md",
   "currentStage": "implementation",
   "canonicalArtifacts": [
     {
@@ -51,8 +51,8 @@
     {
       "type": "implementation-evidence",
       "path": "docs/engineering/vi-001/implementation-evidence.json",
-      "status": "implemented-ci-verified",
-      "ref": "b0c4649b4f2879168c7dea8fb88e42e6536ed64a"
+      "status": "implemented-ci-verified-final-code-head",
+      "ref": "e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77"
     }
   ],
   "decisions": [
@@ -76,11 +76,11 @@
     }
   ],
   "lastVerified": {
-    "headSha": "b0c4649b4f2879168c7dea8fb88e42e6536ed64a",
-    "at": "2026-09-27T18:40:00+02:00"
+    "headSha": "e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77",
+    "at": "2026-09-27T18:50:00+02:00"
   },
   "nextAction": {
-    "description": "Run two-axis-code-review for VI-001 / PR #29.",
+    "description": "Run exact-head two-axis review for PR #29 after evidence-only commits pass CI.",
     "skill": "two-axis-code-review"
   }
 }
