@@ -67,9 +67,10 @@ Projection rules are technical only:
 - the operational season status falls back to `planned` when the canonical artifact does not carry one;
 - session `local_date` is taken from the date component of canonical `planned_start`;
 - session `intensity_rule`, `stop_rule`, `flexibility` and `items` are preserved in the session payload;
-- complete canonical season/mesocycle/microcycle/session payloads remain stored unchanged in JSONB.
+- complete canonical season/mesocycle/microcycle/session payloads remain stored unchanged in JSONB;
+- within the imported microcycle, the canonical session list is authoritative for **open** operational sessions: planned/modified sessions omitted by a changed canonical plan are removed from the current projection but remain recoverable in the immutable prior import revision.
 
-Existing finalized sessions are not overwritten. Existing higher operational session versions are not silently downgraded.
+Existing finalized sessions are never overwritten or removed by a later plan import. Existing higher operational session versions are not silently downgraded.
 
 ## Hashing and revisions
 
