@@ -8,3 +8,5 @@
 - 2026-09-27 18:10 +02:00 — [EVT-20260927-181000-rowing-sport-os-backlog](events/EVT-20260927-181000-rowing-sport-os-backlog.md) — Approved SPEC sliced into seven vertical GitHub issues (#21–#27); next implementation slice is VI-001/#21.
 
 - 2026-09-27 18:40 +02:00 — [EVT-20260927-184000-vi-001-implemented](events/EVT-20260927-184000-vi-001-implemented.md) — VI-001/#21 implemented on PR #29; Coach assignment/authorship boundary proven with GitHub-hosted PostgreSQL CI; review pending.
+
+- 2026-09-27 18:50 +02:00 — [EVT-20260927-185000-vi-001-hardened](events/EVT-20260927-185000-vi-001-hardened.md) — VI-001 Coach capability/authorship boundary hardened; final code head `e9f6693bc9cc` passed complete GitHub-hosted CI; exact-head review next.
