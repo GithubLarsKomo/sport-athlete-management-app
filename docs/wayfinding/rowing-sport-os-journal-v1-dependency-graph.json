@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    {
+      "id": "GRILL-R1",
+      "type": "decision-gate",
+      "label": "Confirm v1 product boundaries"
+    },
+    {
+      "id": "SPEC",
+      "type": "artifact",
+      "label": "Normative SPEC.md"
+    },
+    {
+      "id": "ISSUES",
+      "type": "artifact",
+      "label": "Vertical implementation issues"
+    },
+    {
+      "id": "DEPLOY",
+      "type": "vertical-slice",
+      "label": "Coolify + Authentik + domain"
+    },
+    {
+      "id": "PLAN",
+      "type": "vertical-slice",
+      "label": "Canonical Skillz plan import"
+    },
+    {
+      "id": "JOURNAL",
+      "type": "vertical-slice",
+      "label": "Soll/Ist journal"
+    },
+    {
+      "id": "TESTS",
+      "type": "vertical-slice",
+      "label": "Performance tests"
+    },
+    {
+      "id": "HANDOFF",
+      "type": "vertical-slice",
+      "label": "Manual adaptation handoff"
+    },
+    {
+      "id": "FIT",
+      "type": "vertical-slice",
+      "label": "FIT integrated UX"
+    },
+    {
+      "id": "GARMIN",
+      "type": "future",
+      "label": "Garmin cloud adapters"
+    },
+    {
+      "id": "LLM",
+      "type": "future",
+      "label": "Embedded LLM provider"
+    },
+    {
+      "id": "BRAIN",
+      "type": "future",
+      "label": "Athlete learning promotion"
+    }
+  ],
+  "edges": [
+    {
+      "from": "GRILL-R1",
+      "to": "SPEC",
+      "type": "blocks"
+    },
+    {
+      "from": "SPEC",
+      "to": "ISSUES",
+      "type": "blocks"
+    },
+    {
+      "from": "ISSUES",
+      "to": "DEPLOY",
+      "type": "informs"
+    },
+    {
+      "from": "ISSUES",
+      "to": "PLAN",
+      "type": "informs"
+    },
+    {
+      "from": "PLAN",
+      "to": "JOURNAL",
+      "type": "informs"
+    },
+    {
+      "from": "JOURNAL",
+      "to": "TESTS",
+      "type": "informs"
+    },
+    {
+      "from": "JOURNAL",
+      "to": "HANDOFF",
+      "type": "blocks"
+    },
+    {
+      "from": "TESTS",
+      "to": "HANDOFF",
+      "type": "blocks"
+    },
+    {
+      "from": "FIT",
+      "to": "JOURNAL",
+      "type": "informs"
+    },
+    {
+      "from": "HANDOFF",
+      "to": "LLM",
+      "type": "optional"
+    },
+    {
+      "from": "FIT",
+      "to": "GARMIN",
+      "type": "optional"
+    },
+    {
+      "from": "HANDOFF",
+      "to": "BRAIN",
+      "type": "optional"
+    }
+  ]
+}
