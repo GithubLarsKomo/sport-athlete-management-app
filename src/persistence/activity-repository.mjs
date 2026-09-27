@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { canonicalFromSources, matchActivity } from '../domain/activity-import.mjs';
+import { activityTypesCompatible, canonicalFromSources, matchActivity } from '../domain/activity-import.mjs';
 import { normalizeDeviationReasons, validateSessionSubjective } from '../domain/journal.mjs';
 
 function parseJson(value) {
@@ -151,6 +151,7 @@ async function plannedSessionMatch(conn, athleteId, incoming) {
     ORDER BY ABS(EXTRACT(EPOCH FROM (planned_start - ?::timestamptz))) ASC
     LIMIT 3`, [athleteId, incoming.startedAt, incoming.startedAt, incoming.startedAt]);
   for (const row of rows) {
+    if (!activityTypesCompatible(row.session_type, incoming.activityType)) continue;
     const diffH = Math.abs(new Date(row.planned_start).getTime() - new Date(incoming.startedAt).getTime()) / 3600000;
     if (diffH > 4) continue;
     const plannedMin = Number(row.planned_duration_min || 0);
