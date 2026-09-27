@@ -70,7 +70,7 @@ Projection rules are technical only:
 - complete canonical season/mesocycle/microcycle/session payloads remain stored unchanged in JSONB;
 - within the imported microcycle, the canonical session list is authoritative for **open** operational sessions: planned/modified sessions omitted by a changed canonical plan are removed from the current projection but remain recoverable in the immutable prior import revision.
 
-Existing finalized sessions are never overwritten or removed by a later plan import. Existing higher operational session versions are not silently downgraded.
+Existing finalized sessions are never overwritten or removed by a later plan import. Canonical planned sessions do not carry an independent source version, so an accepted changed canonical plan advances the existing **operational** session version instead of downgrading or rejecting an already adapted open session.
 
 ## Hashing and revisions
 
