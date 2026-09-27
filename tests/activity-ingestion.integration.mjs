@@ -94,6 +94,7 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
 
   const finalized = await repository.saveJournalEntry(athleteId, first.activity.id, {
     session_rpe: 4.5,
+    expectation_match: 'as_expected',
     pain_0_10: 0,
     comment: 'ruhige Z2 Einheit',
     deviations: [],
@@ -107,6 +108,25 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
   const completed = await repository.getLatestCompletedSession(athleteId);
   assert.equal(completed.import_activity_id, first.activity.id);
   assert.equal(Number(completed.session_rpe), 4.5);
+  assert.equal(completed.expectation_match, 'as_expected');
+  assert.equal(completed.athlete_authored_by_subject, athleteId);
+
+  const notes = await repository.saveCoachSessionNote(athleteId, finalized.completed_session_id, 'Technik im nächsten Block beobachten.', 'coach-1');
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].authored_by_subject, 'coach-1');
+
+  const comparison = await repository.getWeekComparison(athleteId, today);
+  const row = comparison.sessions.find(record => record.plan.planned_session_id === plannedSessionId);
+  assert.ok(row);
+  assert.equal(row.actual.completed_session_id, finalized.completed_session_id);
+  assert.equal(Number(row.actual.session_rpe), 4.5);
+  assert.equal(row.actual.subjective.expectation_match, 'as_expected');
+  assert.equal(row.actual.subjective.authored_by_subject, athleteId);
+  assert.equal(row.actual.evidence.avg_power_w, 205);
+  assert.equal(row.actual.provenance.activity_sources.length, 2);
+  assert.equal(row.actual.coach_notes[0].note, 'Technik im nächsten Block beobachten.');
+  assert.equal(comparison.summary.planned_sessions >= 1, true);
+  assert.equal(comparison.summary.completed_planned_sessions >= 1, true);
 });
 
 test('an unplanned imported activity becomes training history after journal finalization', async () => {
@@ -125,8 +145,9 @@ test('an unplanned imported activity becomes training history after journal fina
   const finalized = await repository.saveJournalEntry(unplannedAthleteId, imported.activity.id, {
     session_rpe: 5,
     pain_0_10: 1,
+    expectation_match: 'harder',
     comment: 'spontane Einheit',
-    deviations: ['unplanned'],
+    deviations: ['other'],
     finalize: true
   }, unplannedAthleteId);
   assert.ok(finalized.completed_session_id);
@@ -170,17 +191,17 @@ test('a device import after manual completion links to the existing completed se
     source('garmin', `manual-first-${randomUUID()}`, new Date(start.getTime() + 20000).toISOString(), 3590, 14900, 'd'),
     manualFirstAthleteId
   );
-  assert.equal(imported.activity.planned_session_id, null);
+  assert.equal(imported.activity.completed_session_id, completedId);
+  assert.equal(imported.activity.planned_session_id, plannedSessionId);
+  assert.equal(imported.activity.journal, null);
 
-  const finalized = await repository.saveJournalEntry(manualFirstAthleteId, imported.activity.id, {
-    session_rpe: 4,
-    pain_0_10: 0,
-    comment: 'Gerätedaten nachgetragen',
-    deviations: [],
-    finalize: true
-  }, manualFirstAthleteId);
-  assert.equal(finalized.completed_session_id, completedId);
-  assert.equal(finalized.planned_session_id, plannedSessionId);
+  const repeated = await repository.ingestActivity(
+    manualFirstAthleteId,
+    { ...source('garmin', 'ignored', new Date(start.getTime() + 20000).toISOString(), 3590, 14900, 'd'), externalActivityId: imported.activity.sources[0].external_activity_id },
+    manualFirstAthleteId
+  );
+  assert.equal(repeated.disposition, 'exact_duplicate');
+  assert.equal(repeated.activity.completed_session_id, completedId);
 
   const counts = await db.query('SELECT COUNT(*)::int AS count FROM completed_sessions WHERE athlete_id=?', [manualFirstAthleteId]);
   assert.equal(Number(counts[0].count), 1);
