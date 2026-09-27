@@ -74,6 +74,30 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
   assert.equal(first.activity.planned_session_id, plannedSessionId);
   assert.deepEqual(first.activity.canonical_summary.providers, ['garmin']);
 
+  const repeatedGarmin = await repository.ingestActivity(athleteId, garmin, athleteId);
+  assert.equal(repeatedGarmin.disposition, 'exact_duplicate');
+  assert.equal(repeatedGarmin.activity.id, first.activity.id);
+  assert.equal(repeatedGarmin.activity.sources.length, 1);
+
+  await assert.rejects(
+    repository.saveJournalEntry(athleteId, first.activity.id, {
+      expectation_match: 'as_expected',
+      pain_0_10: 0,
+      deviations: [],
+      finalize: true
+    }, athleteId),
+    error => error.statusCode === 400 && error.message === 'invalid_journal_entry'
+  );
+  const beforeRpe = await repository.getJournalActivity(athleteId, first.activity.id);
+  assert.equal(beforeRpe.completed_session_id, null);
+
+  const beforeFinalization = await repository.getWeekComparison(athleteId, today);
+  const observedRow = beforeFinalization.sessions.find(record => record.plan.planned_session_id === plannedSessionId);
+  assert.equal(observedRow.actual.completion_status, 'awaiting_subjective_finalization');
+  assert.equal(observedRow.actual.completed_session_id, null);
+  assert.equal(Math.round(observedRow.actual.duration_min), 60);
+  assert.equal(Math.round(beforeFinalization.summary.actual_duration_min), 60);
+
   const concept2 = source('concept2', 'c2-1', start.toISOString(), 3600, 15000, 'b');
   const second = await repository.ingestActivity(athleteId, concept2, athleteId);
   assert.equal(second.disposition, 'auto_merged');
