@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "baselineSha": "b7d63b7c13e6e86b5ec43d84fa8009bdaf5e5005"
+  },
+  "status": "closed-with-product-decisions-pending",
+  "investigations": [
+    {
+      "id": "INV-001",
+      "question": "Can the existing repository remain the sole operational producer?",
+      "status": "closed",
+      "evidence": [
+        "README.md",
+        "src/app.mjs",
+        "migrations/postgresql/001_initial.sql"
+      ],
+      "conclusion": "yes"
+    },
+    {
+      "id": "INV-002",
+      "question": "Is FIT ingestion already technically available for MVP?",
+      "status": "closed",
+      "evidence": [
+        "src/domain/activity-import.mjs",
+        "docs/activity-journal-ingestion.md"
+      ],
+      "conclusion": "yes"
+    },
+    {
+      "id": "INV-003",
+      "question": "Does current Authentik integration support isolated self-service users?",
+      "status": "closed",
+      "evidence": [
+        "src/auth.mjs",
+        "deploy/COOLIFY-AUTHENTIK.md"
+      ],
+      "conclusion": "yes; one subject maps to one athlete; coach/RBAC is absent"
+    },
+    {
+      "id": "INV-004",
+      "question": "Can Skillz sport-training-plan.json be ingested without a new persistence model?",
+      "status": "closed",
+      "evidence": [
+        "src/domain/planning.mjs",
+        "migrations/postgresql/001_initial.sql",
+        "GithubLarsKomo/skillz:schemas/sport-athlete-management-v1.schema.json"
+      ],
+      "conclusion": "yes; build an explicit versioned adapter into the existing season/meso/micro/session model"
+    },
+    {
+      "id": "INV-005",
+      "question": "Is a new performance-test subsystem required?",
+      "status": "closed",
+      "evidence": [
+        "repository search at baseline"
+      ],
+      "conclusion": "yes; no first-class test protocol/result model exists"
+    },
+    {
+      "id": "INV-006",
+      "question": "Is an embedded LLM required for MVP?",
+      "status": "closed",
+      "evidence": [
+        "existing adaptation boundary and user requirement"
+      ],
+      "conclusion": "no; deterministic export/import handoff is sufficient and preferable for v1"
+    }
+  ],
+  "blockers": [
+    "Five product decisions remain unconfirmed in progressive Grilling R1."
+  ],
+  "nextAction": "Complete rowing-sport-os-journal-v1 Grilling R1 and route to conversation-to-spec."
+}
