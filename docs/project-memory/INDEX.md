@@ -9,7 +9,7 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling and technical Wayfinding are complete. `SPEC.md@0.1.0` has been generated and passed its consistency check. The specification is **approved**; vertical issue slicing is released.
+Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved and the implementation backlog is materialized as GitHub issues #21–#27.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
@@ -23,7 +23,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260927-180200-rowing-sport-os-spec-approved.md)
+- [Latest event](events/EVT-20260927-181000-rowing-sport-os-backlog.md)
 
 ## Canonical project artifacts
 
@@ -35,10 +35,22 @@ Confirmed v1 additions include:
 - [DEC-001 Coach v1](decisions/DEC-001-coach-first-class-v1.md)
 - [DEC-002 Manual-first adaptation](decisions/DEC-002-manual-first-adaptation.md)
 
-## Open loops
+## Backlog
 
-None at the specification stage.
+- [Vertical issues](../backlog/rowing-sport-os-journal-v1-vertical-issues.md)
+- [Dependency order](../backlog/rowing-sport-os-journal-v1-dependency-order.json)
+- VI-001 → GitHub #21
+- VI-002 → GitHub #22
+- VI-003 → GitHub #23
+- VI-004 → GitHub #24
+- VI-005 → GitHub #25
+- VI-006 → GitHub #26
+- VI-007 → GitHub #27
+
+## Open loop
+
+Implementation has not started.
 
 ## Next step
 
-Run `spec-to-vertical-issues`, persist the backlog artifacts and create the GitHub implementation issues in dependency order.
+Implement VI-001 / GitHub #21: Coach↔Athlete authorization end to end.

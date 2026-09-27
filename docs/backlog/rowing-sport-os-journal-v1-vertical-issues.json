@@ -1,0 +1,509 @@
+{
+  "schemaVersion": 1,
+  "specId": "rowing-sport-os-journal-v1",
+  "specVersion": "0.1.0",
+  "specRef": "bd9b06bc19e41c197ce81b906ce0d4921bfb8e57",
+  "issues": [
+    {
+      "id": "VI-001",
+      "title": "Add Coach↔Athlete authorization end to end",
+      "outcome": "An Authentik-authenticated Coach can work only with explicitly assigned athletes, while Athlete self-service continues unchanged and every cross-athlete action is auditable.",
+      "sourceRequirementIds": [
+        "REQ-ROLE-001",
+        "REQ-ROLE-002",
+        "REQ-ROLE-003",
+        "REQ-ROLE-004",
+        "REQ-ROLE-005"
+      ],
+      "behavior": [
+        "Represent application principal role separately from athlete identity.",
+        "Persist active/inactive Coach↔Athlete assignments with history.",
+        "Resolve actor and target athlete on every athlete-scoped route.",
+        "Return 403 for an unassigned Coach without leaking unnecessary athlete existence information.",
+        "Audit Coach actor, target athlete, action and entity.",
+        "Expose explicit current-athlete context in Coach-facing UI paths without redesigning the accepted layout."
+      ],
+      "domainInvariants": [
+        "Authentik trusted-proxy authentication remains mandatory in production.",
+        "Athlete access to own data remains backward compatible.",
+        "No Coach has implicit global athlete access.",
+        "Athlete-authored subjective observations cannot be rewritten through Coach privilege."
+      ],
+      "components": [
+        "src/auth.mjs",
+        "src/app.mjs",
+        "migrations/postgresql/",
+        "tests/auth.test.mjs",
+        "site/app/"
+      ],
+      "dependencies": [],
+      "assumptions": [
+        "Coach↔Athlete assignment administration may initially be operator-controlled."
+      ],
+      "securityAndMigration": [
+        "Additive forward PostgreSQL migration only.",
+        "Preserve existing Authentik subject→athlete continuity.",
+        "Add authorization regression tests to all representative athlete-scoped route families."
+      ],
+      "tests": [
+        "Athlete A cannot access Athlete B.",
+        "Coach assigned to A can access A.",
+        "Same Coach receives 403 for B.",
+        "Revoked assignment blocks subsequent access.",
+        "Audit record identifies Coach actor and athlete target."
+      ],
+      "acceptanceEvidence": [
+        "Automated authorization tests green.",
+        "Manual/API smoke with two athletes + one Coach demonstrates allowed and denied paths.",
+        "Migration/readiness pass."
+      ],
+      "nonGoals": [
+        "User-facing Admin console.",
+        "Organization/team hierarchy beyond explicit Coach↔Athlete assignment."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 21,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/21",
+        "state": "open"
+      }
+    },
+    {
+      "id": "VI-002",
+      "title": "Import canonical Skillz training plans with revision history",
+      "outcome": "An Athlete or assigned Coach can import a canonical Skillz plan bundle, re-import identical content idempotently, and retain explicit history for changed plans.",
+      "sourceRequirementIds": [
+        "REQ-PLAN-001",
+        "REQ-PLAN-002",
+        "REQ-PLAN-003",
+        "REQ-PLAN-004",
+        "REQ-PLAN-005"
+      ],
+      "behavior": [
+        "Accept sport-training-plan.json plus transport-only referenced companion artifacts.",
+        "Validate contract version/shape before persistence.",
+        "Store producer/source refs and content hash.",
+        "Map canonical season/meso/micro/session data into existing planning persistence without redefining sport-science semantics.",
+        "Preserve session IDs, objectives, duration, planned RPE, intensity/stop rules, flexibility and structured items.",
+        "Treat same hash as idempotent success; changed content creates explicit revision."
+      ],
+      "domainInvariants": [
+        "Skillz owns sport-science semantics.",
+        "No silent overwrite of historical plan state.",
+        "Transport envelope cannot reinterpret canonical artifacts."
+      ],
+      "components": [
+        "src/domain/planning.mjs",
+        "src/app.mjs",
+        "migrations/postgresql/",
+        "tests/planning.test.mjs",
+        "site/app/"
+      ],
+      "dependencies": [
+        "VI-001"
+      ],
+      "assumptions": [
+        "Exact import-envelope name/endpoint is implementation detail."
+      ],
+      "securityAndMigration": [
+        "Only Athlete self or assigned Coach may import for target athlete.",
+        "Store immutable provenance/hash.",
+        "Additive migrations."
+      ],
+      "tests": [
+        "Valid canonical bundle imports.",
+        "Invalid bundle returns 422.",
+        "Same bundle twice creates no duplicate revision.",
+        "Changed bundle creates revision and retains prior version.",
+        "Unassigned Coach import returns 403."
+      ],
+      "acceptanceEvidence": [
+        "Automated plan adapter tests.",
+        "UI/API import demo showing current + prior revision.",
+        "DB provenance/hash evidence."
+      ],
+      "nonGoals": [
+        "Reimplement Skillz plan generation.",
+        "Embedded LLM plan generation."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 22,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/22",
+        "state": "open"
+      }
+    },
+    {
+      "id": "VI-003",
+      "title": "Unify FIT/manual journal completion with plan-vs-actual views",
+      "outcome": "An Athlete can finalize a real session once—whether manual or FIT-backed—with RPE and subjective context, and Athlete/assigned Coach can inspect transparent session/week Soll-Ist.",
+      "sourceRequirementIds": [
+        "REQ-JRN-001",
+        "REQ-JRN-002",
+        "REQ-JRN-003",
+        "REQ-JRN-004",
+        "REQ-JRN-005",
+        "REQ-JRN-006",
+        "REQ-JRN-007",
+        "REQ-CHECK-001",
+        "REQ-CHECK-002",
+        "REQ-IMP-001",
+        "REQ-IMP-002",
+        "REQ-IMP-003",
+        "REQ-IMP-004"
+      ],
+      "behavior": [
+        "Preserve existing Garmin FIT/TCX, Concept2 and RP3 normalization/dedupe.",
+        "Link an activity to a compatible planned session without auto-finalizing subjective data.",
+        "Require Session-RPE to finalize.",
+        "Capture easier/as_expected/harder, optional pain, structured deviations and optional Athlete comment.",
+        "Preserve Athlete authorship and separate Coach notes.",
+        "Converge manual and imported paths onto exactly one completed_session; late imports attach instead of duplicating.",
+        "Show session and weekly plan-vs-actual duration/RPE and available intensity/items/distance/work plus provenance."
+      ],
+      "domainInvariants": [
+        "One real session→one canonical activity and one completed-session record.",
+        "Provider evidence is immutable/provenanced.",
+        "Morning Check remains distinct; passive data never replaces pain/illness/subjective reporting.",
+        "No opaque compliance score."
+      ],
+      "components": [
+        "src/domain/activity-import.mjs",
+        "src/persistence/activity-repository.mjs",
+        "src/app.mjs",
+        "site/app/journal.js",
+        "site/app/",
+        "docs/activity-journal-ingestion.md",
+        "migrations/postgresql/"
+      ],
+      "dependencies": [
+        "VI-001",
+        "VI-002"
+      ],
+      "assumptions": [
+        "Exact structured deviation taxonomy may be extended without changing confirmed minimum semantics."
+      ],
+      "securityAndMigration": [
+        "Coach reads require assignment.",
+        "Coach cannot overwrite Athlete subjective fields.",
+        "Existing FIT/C2/RP3 dedupe behavior must regress-test cleanly."
+      ],
+      "tests": [
+        "Repeated FIT upload remains idempotent.",
+        "FIT-linked session finalizes only after RPE.",
+        "Manual completion then late FIT import does not duplicate.",
+        "Athlete authorship persists.",
+        "Unassigned Coach cannot view journal.",
+        "Weekly Soll-Ist renders available metrics without black-box score."
+      ],
+      "acceptanceEvidence": [
+        "End-to-end browser/API journal demo.",
+        "Regression tests for provider dedupe + completion convergence.",
+        "Session/week comparison screenshot/test fixture."
+      ],
+      "nonGoals": [
+        "Garmin Connect cloud OAuth.",
+        "Mandatory extra fatigue/motivation scales after every session."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 23,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/23",
+        "state": "open"
+      }
+    },
+    {
+      "id": "VI-004",
+      "title": "Add structured RowErg and bike performance testing",
+      "outcome": "Athlete or assigned Coach can plan, execute and review fixed RowErg and staged lactate tests while measured, derived and estimated values remain distinguishable.",
+      "sourceRequirementIds": [
+        "REQ-TST-001",
+        "REQ-TST-002",
+        "REQ-TST-003",
+        "REQ-TST-004",
+        "REQ-TST-005",
+        "REQ-TST-006",
+        "REQ-TST-007"
+      ],
+      "behavior": [
+        "Support test lifecycle from planned protocol through performed result and retest history.",
+        "Provide fixed RowErg protocols: 500m, 1k, 2k, 5k, 30min.",
+        "Provide RowErg and bike lactate step tests.",
+        "Provide configurable staged protocol.",
+        "Persist stage duration, power/pace, HR, lactate, RPE, cadence/stroke rate and comment.",
+        "Persist device, protocol/version, warm-up, environment, termination reason, actor/time and notes.",
+        "Classify relevant values as measured, derived or assumed_or_estimated.",
+        "Keep interpretation/recommendation ownership in Skillz."
+      ],
+      "domainInvariants": [
+        "Assumptions are never presented/exported as measurements.",
+        "App stores evidence; it does not invent thresholds from incomplete tests."
+      ],
+      "components": [
+        "migrations/postgresql/",
+        "src/app.mjs",
+        "src/domain/",
+        "src/persistence/",
+        "site/app/",
+        "tests/"
+      ],
+      "dependencies": [
+        "VI-001"
+      ],
+      "assumptions": [
+        "Protocol presentation may reuse existing card/form grammar."
+      ],
+      "securityAndMigration": [
+        "Coach test operations require active assignment.",
+        "Test changes retain actor/provenance.",
+        "Additive migrations only."
+      ],
+      "tests": [
+        "Save/reload each fixed RowErg protocol.",
+        "Save/reload RowErg and bike staged lactate test.",
+        "Generic staged protocol accepts configurable stages.",
+        "Measurement class visible and round-trips.",
+        "Unassigned Coach receives 403."
+      ],
+      "acceptanceEvidence": [
+        "Automated persistence/API tests.",
+        "Browser demo for fixed and staged tests.",
+        "Database/provenance fixture."
+      ],
+      "nonGoals": [
+        "Automatic lactate-threshold diagnosis inside WebApp.",
+        "Medical test interpretation."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 24,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/24",
+        "state": "open"
+      }
+    },
+    {
+      "id": "VI-005",
+      "title": "Export deterministic adaptation handoff and apply validated proposals explicitly",
+      "outcome": "Athlete or assigned Coach can download an inspectable minimized adaptation JSON, import a validated proposal, and explicitly apply it once without any model directly mutating the plan.",
+      "sourceRequirementIds": [
+        "REQ-AI-001",
+        "REQ-AI-002",
+        "REQ-AI-003",
+        "REQ-AI-004",
+        "REQ-AI-005",
+        "REQ-AI-006",
+        "REQ-AI-007",
+        "REQ-BRAIN-001",
+        "REQ-BRAIN-002",
+        "REQ-BRAIN-003"
+      ],
+      "behavior": [
+        "Build a deterministic versioned sport-athlete-adaptation-handoff from profile/goals/current plan/Soll-Ist/completions/subjective observations/check-ins/tests/notes/safety/uncertainties/source refs.",
+        "Let user inspect/download the JSON before external use.",
+        "Exclude unrelated raw telemetry and secrets.",
+        "Accept only schema-valid returned proposal artifacts; invalid output fails closed.",
+        "Importing proposal never mutates plan.",
+        "Explicit authenticated Athlete or assigned-Coach apply records actor and prior/new versions and is single-application safe.",
+        "Define contract-only future Athlete-learning promotion boundary with evidence refs, conditions, counter-evidence, confidence and freshness.",
+        "Do not implement automatic Second-Brain writes."
+      ],
+      "domainInvariants": [
+        "MVP has no LLM dependency.",
+        "Model/service output is proposal-only.",
+        "Authorization/safety gates are deterministic.",
+        "No raw operational telemetry is promoted to Second Brain."
+      ],
+      "components": [
+        "src/domain/skillz-adapter.mjs",
+        "src/app.mjs",
+        "contracts/",
+        "migrations/postgresql/",
+        "site/app/",
+        "tests/"
+      ],
+      "dependencies": [
+        "VI-002",
+        "VI-003",
+        "VI-004"
+      ],
+      "assumptions": [
+        "Embedded provider configuration remains a later issue; manual download/upload is canonical v1 path."
+      ],
+      "securityAndMigration": [
+        "No API keys/secrets in exported JSON.",
+        "Coach requires active assignment.",
+        "Proposal/apply events are audited and version-bound."
+      ],
+      "tests": [
+        "Export is deterministic for same snapshot.",
+        "Export excludes secrets/unrelated raw samples.",
+        "Invalid proposal returns 422/no mutation.",
+        "Valid proposal import alone leaves plan unchanged.",
+        "Explicit apply changes supported version exactly once.",
+        "Second apply conflicts.",
+        "Unassigned Coach cannot export/import/apply."
+      ],
+      "acceptanceEvidence": [
+        "Golden-file handoff contract test.",
+        "End-to-end manual export→proposal import→explicit apply demo.",
+        "Audit/version evidence."
+      ],
+      "nonGoals": [
+        "Embedded OpenAI-compatible provider UI.",
+        "Automatic model invocation.",
+        "Automatic Second-Brain persistence."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 25,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/25",
+        "state": "open"
+      }
+    },
+    {
+      "id": "VI-006",
+      "title": "Provide athlete data export and privacy rollout gate",
+      "outcome": "Athletes can self-export their longitudinal data, assigned Coaches are authorization-bound, and the product has a verifiable retention/deletion/logging gate before broad multi-user rollout.",
+      "sourceRequirementIds": [
+        "REQ-DATA-001",
+        "REQ-DATA-002",
+        "REQ-DATA-003",
+        "REQ-DATA-004"
+      ],
+      "behavior": [
+        "Provide authenticated Athlete self-service structured export covering profile/goals, plan/revisions, journal/completions, activity/source summaries, check-ins, tests, adaptation history and relevant audit records.",
+        "State whether raw provider files are included or only referenced.",
+        "Permit assigned Coach export only through explicit authorization/audit.",
+        "Document and verify retention policy, deletion/request procedure, immutable audit/security treatment and backup/restore-window handling.",
+        "Review application/proxy logging so journal/symptom/test/physiology payloads are not emitted unnecessarily."
+      ],
+      "domainInvariants": [
+        "Export never broadens authorization.",
+        "Operational/audit evidence treatment is explicit rather than silently deleted.",
+        "Privacy-sensitive payloads are minimized in logs."
+      ],
+      "components": [
+        "src/app.mjs",
+        "src/persistence/",
+        "deploy/COOLIFY-AUTHENTIK.md",
+        "docs/",
+        "tests/"
+      ],
+      "dependencies": [
+        "VI-001",
+        "VI-002",
+        "VI-003",
+        "VI-004",
+        "VI-005"
+      ],
+      "assumptions": [
+        "Provider raw-file inclusion may be reference-only where size/privacy makes bundling inappropriate, but manifest must be explicit."
+      ],
+      "securityAndMigration": [
+        "Every export audited.",
+        "Deletion/retention procedure must account for backups and immutable security evidence.",
+        "No secrets in export."
+      ],
+      "tests": [
+        "Athlete exports own data.",
+        "Unassigned Coach export denied.",
+        "Assigned Coach export audited.",
+        "Export manifest identifies included/excluded provider raw files.",
+        "Logging test/review confirms sensitive bodies are not emitted by default."
+      ],
+      "acceptanceEvidence": [
+        "Downloadable JSON export fixture.",
+        "Authorization tests.",
+        "Documented retention/deletion/backup procedure with verification checklist."
+      ],
+      "nonGoals": [
+        "Automated account deletion UI if operator procedure satisfies the v1 rollout gate.",
+        "Cross-product data export."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 26,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/26",
+        "state": "open"
+      }
+    },
+    {
+      "id": "VI-007",
+      "title": "Deploy Rowing Sport OS v1 behind Authentik on Hetzner",
+      "outcome": "The approved v1 runs at sportjournal.ratzeburg-ai.de through Authentik with private PostgreSQL and passes the complete Athlete/Coach/FIT/plan/test/export/adaptation production smoke suite.",
+      "sourceRequirementIds": [
+        "REQ-OPS-001",
+        "REQ-OPS-002",
+        "REQ-OPS-003"
+      ],
+      "behavior": [
+        "Deploy repository Dockerfile through Coolify with PUBLIC_ORIGIN=https://sportjournal.ratzeburg-ai.de.",
+        "Use private PostgreSQL 18.x and least-privilege credentials.",
+        "Keep Authentik trusted proxy/header secret boundary and eliminate public bypass routes.",
+        "Run checksum-tracked forward migrations and readiness.",
+        "Execute representative Athlete and Coach smoke paths plus plan/FIT/test/export/adaptation checks.",
+        "Verify backup/restore appropriate to deployment stage."
+      ],
+      "domainInvariants": [
+        "PostgreSQL 5432 is not public.",
+        "Production AUTH_MODE remains proxy.",
+        "No second unauthenticated app route.",
+        "Failed reasoning cannot mutate training plan."
+      ],
+      "components": [
+        "deploy/COOLIFY-AUTHENTIK.md",
+        "Dockerfile",
+        "src/config.mjs",
+        "scripts/",
+        "migrations/postgresql/",
+        "tests/"
+      ],
+      "dependencies": [
+        "VI-001",
+        "VI-002",
+        "VI-003",
+        "VI-004",
+        "VI-005",
+        "VI-006"
+      ],
+      "assumptions": [
+        "DNS target may be changed later without changing product data model."
+      ],
+      "securityAndMigration": [
+        "Production secrets remain in Coolify/secret store.",
+        "Migration history is not rewritten.",
+        "Backup/restore verification precedes meaningful athlete-data rollout."
+      ],
+      "tests": [
+        "npm test / repository CI green.",
+        "npm run migrate + npm run ready green.",
+        "Authenticated Athlete smoke.",
+        "Assigned Coach smoke.",
+        "Unassigned Coach denied.",
+        "FIT dedupe/finalize smoke.",
+        "Plan import/revision smoke.",
+        "Test save/read smoke.",
+        "Data export smoke.",
+        "Proposal import cannot mutate until explicit apply.",
+        "Direct container/public bypass unavailable."
+      ],
+      "acceptanceEvidence": [
+        "Green CI on deployment commit.",
+        "Recorded deployment checklist and smoke evidence.",
+        "Verified public Authentik route and private DB/bypass posture."
+      ],
+      "nonGoals": [
+        "Garmin Connect cloud OAuth.",
+        "Embedded LLM provider.",
+        "Automatic Athlete Second Brain writes."
+      ],
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 27,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/27",
+        "state": "open"
+      }
+    }
+  ],
+  "blocked": []
+}
