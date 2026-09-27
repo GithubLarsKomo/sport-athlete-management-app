@@ -61,7 +61,12 @@
         "User-facing Admin console.",
         "Organization/team hierarchy beyond explicit Coach↔Athlete assignment."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 21,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/21",
+        "state": "open"
+      }
     },
     {
       "id": "VI-002",
@@ -121,7 +126,12 @@
         "Reimplement Skillz plan generation.",
         "Embedded LLM plan generation."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 22,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/22",
+        "state": "open"
+      }
     },
     {
       "id": "VI-003",
@@ -195,7 +205,12 @@
         "Garmin Connect cloud OAuth.",
         "Mandatory extra fatigue/motivation scales after every session."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 23,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/23",
+        "state": "open"
+      }
     },
     {
       "id": "VI-004",
@@ -259,7 +274,12 @@
         "Automatic lactate-threshold diagnosis inside WebApp.",
         "Medical test interpretation."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 24,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/24",
+        "state": "open"
+      }
     },
     {
       "id": "VI-005",
@@ -333,7 +353,12 @@
         "Automatic model invocation.",
         "Automatic Second-Brain persistence."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 25,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/25",
+        "state": "open"
+      }
     },
     {
       "id": "VI-006",
@@ -395,7 +420,12 @@
         "Automated account deletion UI if operator procedure satisfies the v1 rollout gate.",
         "Cross-product data export."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 26,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/26",
+        "state": "open"
+      }
     },
     {
       "id": "VI-007",
@@ -467,7 +497,12 @@
         "Embedded LLM provider.",
         "Automatic Athlete Second Brain writes."
       ],
-      "handoff": "iterate-software-projects"
+      "handoff": "iterate-software-projects",
+      "githubIssue": {
+        "number": 27,
+        "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/27",
+        "state": "open"
+      }
     }
   ],
   "blocked": []
