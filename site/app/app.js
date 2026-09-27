@@ -7,12 +7,18 @@ let activeProfile = null;
 let latestDecision = null;
 let weekStart = startOfWeek(new Date());
 
+function targetAthleteId() {
+  return new URLSearchParams(window.location.search).get('athlete')?.trim() || '';
+}
+
 async function api(path, options = {}) {
+  const target = targetAthleteId();
   const response = await fetch(path, {
     credentials: 'same-origin',
     ...options,
     headers: {
       ...(options.body ? { 'content-type': 'application/json' } : {}),
+      ...(target ? { 'x-sam-target-athlete': target } : {}),
       ...(options.headers || {})
     }
   });
@@ -190,10 +196,49 @@ async function loadWeek() {
   }
 }
 
+async function configurePrincipal(me) {
+  $('#identity').textContent = me.role === 'coach'
+    ? `${me.displayName || me.subject} · Coach`
+    : (me.displayName || me.subject);
+
+  const context = $('#coachContext');
+  const select = $('#coachAthlete');
+  if (me.role !== 'coach') {
+    context?.classList.add('hidden');
+    return true;
+  }
+
+  const { athletes } = await api('/api/v1/coach/athletes');
+  if (!athletes.length) throw new Error('coach_has_no_assigned_athletes');
+
+  const requested = targetAthleteId();
+  const selected = athletes.find(athlete => athlete.athlete_id === requested);
+  if (!selected) {
+    const next = new URL(window.location.href);
+    next.searchParams.set('athlete', athletes[0].athlete_id);
+    window.location.replace(next);
+    return false;
+  }
+
+  select.innerHTML = athletes.map(athlete =>
+    `<option value="${esc(athlete.athlete_id)}">${esc(athlete.display_name || athlete.email || athlete.athlete_id)}</option>`
+  ).join('');
+  select.value = selected.athlete_id;
+  context.classList.remove('hidden');
+  select.onchange = () => {
+    const next = new URL(window.location.href);
+    next.searchParams.set('athlete', select.value);
+    window.location.assign(next);
+  };
+  return true;
+}
+
 async function load() {
   try {
-    const [me, profileResult, context, training, latest, history, checkin] = await Promise.all([
-      api('/api/v1/me'),
+    const me = await api('/api/v1/me');
+    if (!await configurePrincipal(me)) return;
+
+    const [profileResult, context, training, latest, history, checkin] = await Promise.all([
       api('/api/v1/athlete/profile'),
       api('/api/v1/context'),
       api('/api/v1/training/today'),
@@ -202,7 +247,6 @@ async function load() {
       api('/api/v1/checkins/today')
     ]);
 
-    $('#identity').textContent = me.displayName || me.subject;
     renderProfile(profileResult.profile);
 
     todaySession = training.session;
