@@ -33,7 +33,7 @@ function entityPayload(entity) {
   return entity.payload || entity;
 }
 
-async function writePlanPackage(conn, athleteId, plan) {
+async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = false } = {}) {
   const assertOwnedVersion = async (table, id, incomingVersion) => {
     const rows = await conn.query(`SELECT athlete_id, version FROM ${table} WHERE id=? FOR UPDATE`, [id]);
     if (rows[0]?.athlete_id && rows[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
@@ -79,11 +79,18 @@ async function writePlanPackage(conn, athleteId, plan) {
       updated_at=CURRENT_TIMESTAMP`,
     [plan.microcycle.id, athleteId, plan.mesocycle.id, plan.microcycle.start_date, plan.microcycle.end_date, plan.microcycle.focus, plan.microcycle.version, JSON.stringify(entityPayload(plan.microcycle))]);
 
+  let finalizedPreserved = 0;
   for (const session of plan.sessions) {
     const existing = await conn.query('SELECT athlete_id, version, status FROM planned_sessions WHERE id=? FOR UPDATE', [session.id]);
     if (existing[0]?.athlete_id && existing[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
+    if (existing[0] && ['completed','cancelled'].includes(existing[0].status)) {
+      if (preserveFinalized) {
+        finalizedPreserved += 1;
+        continue;
+      }
+      throw httpError('cannot_overwrite_finalized_session', 409);
+    }
     if (existing[0] && Number(existing[0].version) > session.version) throw httpError('stale_plan_version', 409);
-    if (existing[0] && ['completed','cancelled'].includes(existing[0].status)) throw httpError('cannot_overwrite_finalized_session', 409);
     const payload = plannedPayload(session);
     await conn.query(`INSERT INTO planned_sessions (id, athlete_id, microcycle_id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -106,7 +113,8 @@ async function writePlanPackage(conn, athleteId, plan) {
     season_id: plan.season.id,
     mesocycle_id: plan.mesocycle.id,
     microcycle_id: plan.microcycle.id,
-    session_count: plan.sessions.length
+    session_count: plan.sessions.length,
+    finalized_sessions_preserved: finalizedPreserved
   };
 }
 
@@ -321,7 +329,9 @@ export function createRepository(db) {
             'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
             [athleteId, actor, 'plan.canonical_import_unchanged', 'training_plan_import', row.id, JSON.stringify({
               revision: Number(row.revision),
-              content_hash: row.content_hash
+              content_hash: row.content_hash,
+              attempted_producer: normalized.producer,
+              attempted_source_refs: normalized.sourceRefs
             })]
           );
           return {
@@ -342,7 +352,7 @@ export function createRepository(db) {
         );
         const previous = latestRows[0] || null;
         const revision = previous ? Number(previous.revision) + 1 : 1;
-        const applied = await writePlanPackage(conn, athleteId, normalized.planPackage);
+        const applied = await writePlanPackage(conn, athleteId, normalized.planPackage, { preserveFinalized: true });
         const importId = randomUUID();
 
         await conn.query(
@@ -368,6 +378,7 @@ export function createRepository(db) {
             content_hash: normalized.contentHash,
             supersedes_import_id: previous?.id || null,
             session_count: applied.session_count,
+            finalized_sessions_preserved: applied.finalized_sessions_preserved,
             producer: normalized.producer
           })]
         );
