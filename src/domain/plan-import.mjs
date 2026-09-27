@@ -24,6 +24,24 @@ function dateTime(value) {
   return typeof value === 'string' && Number.isFinite(Date.parse(value));
 }
 
+const PLAN_TIME_ZONE = 'Europe/Berlin';
+const planDateFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: PLAN_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+});
+
+export function planLocalDate(value) {
+  if (!dateTime(value)) return null;
+  const parts = Object.fromEntries(
+    planDateFormatter.formatToParts(new Date(value))
+      .filter(part => part.type !== 'literal')
+      .map(part => [part.type, part.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
 function positiveVersion(value) {
   return Number.isInteger(value) && value >= 1;
 }
@@ -87,9 +105,9 @@ function validatePlannedSession(session, index, microcycle, errors) {
   if (session.items != null && !Array.isArray(session.items)) errors.push(`${label}.items must be an array`);
 
   if (dateTime(session.planned_start)) {
-    const localDate = session.planned_start.slice(0, 10);
+    const localDate = planLocalDate(session.planned_start);
     if (!date(localDate) || !inside(localDate, microcycle.start_date, microcycle.end_date)) {
-      errors.push(`${label}.planned_start must fall inside microcycle dates`);
+      errors.push(`${label}.planned_start must fall inside microcycle dates in ${PLAN_TIME_ZONE}`);
     }
   }
 }
@@ -252,7 +270,7 @@ export function normalizeCanonicalPlanImportBundle(value) {
     sessions: microcycle.sessions.map(session => ({
       id: session.planned_session_id,
       version: 1,
-      local_date: session.planned_start.slice(0, 10),
+      local_date: planLocalDate(session.planned_start),
       planned_start: session.planned_start,
       session_type: session.session_type,
       objective: session.objective,
