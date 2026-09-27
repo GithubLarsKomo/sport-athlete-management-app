@@ -129,8 +129,11 @@ export function validateCanonicalPlanImportBundle(value) {
   validateEnvelope(mesocycle, 'sport-mesocycle.json', errors);
   validateEnvelope(microcycle, 'sport-microcycle.json', errors);
 
-  const athleteIds = [plan.athlete_id, season.athlete_id, mesocycle.athlete_id, microcycle.athlete_id].filter(nonEmpty);
-  if (new Set(athleteIds).size > 1) errors.push('all canonical artifacts must use the same athlete_id');
+  const athleteIds = Object.values(value.files)
+    .filter(object)
+    .map(artifact => artifact.athlete_id)
+    .filter(nonEmpty);
+  if (new Set(athleteIds).size > 1) errors.push('all canonical artifacts with athlete_id must use the same athlete_id');
 
   const refs = [
     ['profileRef', null],
@@ -211,12 +214,12 @@ export function normalizeCanonicalPlanImportBundle(value) {
   const mesocycle = value.files['sport-mesocycle.json'];
   const microcycle = value.files['sport-microcycle.json'];
 
+  const companionSourceRefs = Object.values(value.files)
+    .filter(object)
+    .flatMap(artifact => Array.isArray(artifact.source_refs) ? artifact.source_refs : []);
   const sourceRefs = [...new Set([
     value.producer.source_ref,
-    ...plan.source_refs,
-    ...season.source_refs,
-    ...mesocycle.source_refs,
-    ...microcycle.source_refs
+    ...companionSourceRefs
   ].filter(nonEmpty))];
 
   const planPackage = {
