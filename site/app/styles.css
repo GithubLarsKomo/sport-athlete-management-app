@@ -132,6 +132,31 @@ button{min-height:44px}
 .plan-import-row>div:first-child{grid-template-columns:auto 1fr;align-items:center;gap:9px}
 .plan-import-row span:not(.mini-state){font-size:.67rem;text-transform:uppercase;letter-spacing:.05em;color:var(--sam-text-muted);font-weight:800}
 .plan-import-row strong,.plan-import-row b{font-size:.79rem;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.comparison-summary{margin-top:18px;padding-top:16px;border-top:1px solid var(--sam-border)}
+.comparison-summary-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.comparison-summary-grid>div{display:grid;gap:3px;padding:10px;border:1px solid var(--sam-border);border-radius:10px;background:var(--sport-white)}
+.comparison-summary-grid span{font-size:.67rem;text-transform:uppercase;letter-spacing:.05em;color:var(--sam-text-muted);font-weight:800}
+.comparison-summary-grid b{font-size:.95rem;font-variant-numeric:tabular-nums}
+.comparison-list{display:grid;gap:10px;margin-top:12px}
+.comparison-row{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(0,1.2fr);gap:14px;padding:14px;border:1px solid var(--sam-border);border-radius:13px;background:var(--sam-surface-subtle)}
+.comparison-row.unplanned{border-style:dashed}
+.comparison-plan h3{margin:.5rem 0 .2rem;font-size:.98rem}
+.comparison-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0 0}
+.comparison-facts>div{padding:7px 8px;border:1px solid var(--sam-border);border-radius:8px;background:var(--sport-white)}
+.comparison-facts dt{font-size:.64rem;text-transform:uppercase;letter-spacing:.04em;color:var(--sam-text-muted);font-weight:800}
+.comparison-facts dd{margin:.16rem 0 0;font-size:.8rem;font-weight:800;overflow-wrap:anywhere}
+.comparison-actual{min-width:0}
+.comparison-actual>p,.subjective-summary>p{font-size:.78rem;margin:.55rem 0}
+.coach-notes{display:grid;gap:6px;margin-top:10px}
+.coach-note{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:8px 10px;border-left:3px solid var(--sam-accent);background:var(--sport-white);font-size:.78rem}
+.coach-note-form{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-top:10px}
+.coach-note-form label{display:grid;gap:5px;font-size:.76rem;font-weight:800}
+.coach-note-form input{min-height:42px;border:1px solid var(--sam-border-strong);border-radius:9px;padding:8px 10px;background:var(--sport-white)}
+.deviation-fieldset{border:1px solid var(--sam-border);border-radius:10px;padding:10px 12px;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.deviation-fieldset legend{font-size:.74rem;font-weight:850;color:var(--sam-text-muted);padding:0 5px}
+.deviation-fieldset label{display:flex!important;grid-template-columns:none!important;align-items:center;gap:6px;font-size:.76rem!important;font-weight:650!important}
+.deviation-fieldset input{width:auto!important;min-height:auto!important}
+.subjective-summary,.finalized-subjective{margin-top:12px;padding:10px 12px;border:1px solid var(--sam-border);border-radius:10px;background:var(--sport-white)}
 .week-card{margin-bottom:20px}
 .week-head{align-items:center}
 .week-controls{display:flex;gap:8px;align-items:center}
@@ -210,6 +235,7 @@ button{min-height:44px}
 }
 @media(max-width:980px){
   .week-sessions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .comparison-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.comparison-row{grid-template-columns:1fr}.deviation-fieldset{grid-template-columns:repeat(2,minmax(0,1fr))}
   .specialist-grid{grid-template-columns:1fr}
   .journal-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
   .form-grid.compact{grid-template-columns:1fr 1fr}
@@ -224,6 +250,7 @@ button{min-height:44px}
   .journal-head #concept2Sync{width:100%}.import-strip{grid-template-columns:1fr}.journal-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
   .form-grid.compact{grid-template-columns:1fr}.form-grid.compact .wide{grid-column:auto}.dedupe-warning{align-items:flex-start;flex-direction:column}.dedupe-warning button{margin-left:0;width:100%}
   .week-sessions,.specialist-grid{grid-template-columns:1fr}
+  .comparison-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.comparison-facts{grid-template-columns:1fr}.coach-note-form{grid-template-columns:1fr}.deviation-fieldset{grid-template-columns:1fr}
   .session-tile{min-height:auto}.specialist-tile{min-height:auto}
   .history-item{grid-template-columns:76px 70px 1fr}.history-item .mini-state{grid-column:3}
   .decision-actions{justify-content:stretch}.decision-actions .primary{width:100%}
