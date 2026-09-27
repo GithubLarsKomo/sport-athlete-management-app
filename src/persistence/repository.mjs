@@ -29,6 +29,119 @@ function plannedPayload(session) {
   };
 }
 
+function entityPayload(entity) {
+  return entity.payload || entity;
+}
+
+async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = false, reconcileSessions = false, advanceSessionVersion = false } = {}) {
+  const assertOwnedVersion = async (table, id, incomingVersion) => {
+    const rows = await conn.query(`SELECT athlete_id, version FROM ${table} WHERE id=? FOR UPDATE`, [id]);
+    if (rows[0]?.athlete_id && rows[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
+    if (rows[0] && Number(rows[0].version) > incomingVersion) throw httpError('stale_plan_version', 409);
+  };
+
+  await assertOwnedVersion('seasons', plan.season.id, plan.season.version);
+  await conn.query(`INSERT INTO seasons (id, athlete_id, name, start_date, end_date, status, version, payload_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (id) DO UPDATE SET
+      name=EXCLUDED.name,
+      start_date=EXCLUDED.start_date,
+      end_date=EXCLUDED.end_date,
+      status=EXCLUDED.status,
+      version=EXCLUDED.version,
+      payload_json=EXCLUDED.payload_json,
+      updated_at=CURRENT_TIMESTAMP`,
+    [plan.season.id, athleteId, plan.season.name, plan.season.start_date, plan.season.end_date, plan.season.status, plan.season.version, JSON.stringify(entityPayload(plan.season))]);
+
+  await assertOwnedVersion('mesocycles', plan.mesocycle.id, plan.mesocycle.version);
+  await conn.query(`INSERT INTO mesocycles (id, athlete_id, season_id, start_date, end_date, primary_adaptation, version, payload_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (id) DO UPDATE SET
+      season_id=EXCLUDED.season_id,
+      start_date=EXCLUDED.start_date,
+      end_date=EXCLUDED.end_date,
+      primary_adaptation=EXCLUDED.primary_adaptation,
+      version=EXCLUDED.version,
+      payload_json=EXCLUDED.payload_json,
+      updated_at=CURRENT_TIMESTAMP`,
+    [plan.mesocycle.id, athleteId, plan.season.id, plan.mesocycle.start_date, plan.mesocycle.end_date, plan.mesocycle.primary_adaptation, plan.mesocycle.version, JSON.stringify(entityPayload(plan.mesocycle))]);
+
+  await assertOwnedVersion('microcycles', plan.microcycle.id, plan.microcycle.version);
+  await conn.query(`INSERT INTO microcycles (id, athlete_id, mesocycle_id, start_date, end_date, focus, version, payload_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (id) DO UPDATE SET
+      mesocycle_id=EXCLUDED.mesocycle_id,
+      start_date=EXCLUDED.start_date,
+      end_date=EXCLUDED.end_date,
+      focus=EXCLUDED.focus,
+      version=EXCLUDED.version,
+      payload_json=EXCLUDED.payload_json,
+      updated_at=CURRENT_TIMESTAMP`,
+    [plan.microcycle.id, athleteId, plan.mesocycle.id, plan.microcycle.start_date, plan.microcycle.end_date, plan.microcycle.focus, plan.microcycle.version, JSON.stringify(entityPayload(plan.microcycle))]);
+
+  const removedSessionIds = [];
+  if (reconcileSessions) {
+    const incomingIds = new Set(plan.sessions.map(session => session.id));
+    const existingSessions = await conn.query(
+      'SELECT id, status FROM planned_sessions WHERE athlete_id=? AND microcycle_id=? FOR UPDATE',
+      [athleteId, plan.microcycle.id]
+    );
+    for (const existingSession of existingSessions) {
+      if (incomingIds.has(existingSession.id)) continue;
+      if (!['planned', 'modified'].includes(existingSession.status)) continue;
+      await conn.query(
+        'DELETE FROM planned_sessions WHERE id=? AND athlete_id=? AND microcycle_id=?',
+        [existingSession.id, athleteId, plan.microcycle.id]
+      );
+      removedSessionIds.push(existingSession.id);
+    }
+  }
+
+  let finalizedPreserved = 0;
+  for (const session of plan.sessions) {
+    const existing = await conn.query('SELECT athlete_id, version, status FROM planned_sessions WHERE id=? FOR UPDATE', [session.id]);
+    if (existing[0]?.athlete_id && existing[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
+    if (existing[0] && ['completed','cancelled'].includes(existing[0].status)) {
+      if (preserveFinalized) {
+        finalizedPreserved += 1;
+        continue;
+      }
+      throw httpError('cannot_overwrite_finalized_session', 409);
+    }
+    let operationalVersion = session.version;
+    if (existing[0] && advanceSessionVersion) {
+      operationalVersion = Math.max(Number(existing[0].version) + 1, session.version);
+    } else if (existing[0] && Number(existing[0].version) > session.version) {
+      throw httpError('stale_plan_version', 409);
+    }
+    const payload = plannedPayload(session);
+    await conn.query(`INSERT INTO planned_sessions (id, athlete_id, microcycle_id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (id) DO UPDATE SET
+        microcycle_id=EXCLUDED.microcycle_id,
+        local_date=EXCLUDED.local_date,
+        planned_start=EXCLUDED.planned_start,
+        session_type=EXCLUDED.session_type,
+        objective=EXCLUDED.objective,
+        planned_duration_min=EXCLUDED.planned_duration_min,
+        planned_rpe=EXCLUDED.planned_rpe,
+        status=EXCLUDED.status,
+        version=EXCLUDED.version,
+        payload_json=EXCLUDED.payload_json,
+        updated_at=CURRENT_TIMESTAMP`,
+      [session.id, athleteId, plan.microcycle.id, session.local_date, new Date(session.planned_start), session.session_type, session.objective, session.planned_duration_min, session.planned_rpe ?? null, session.status || 'planned', operationalVersion, JSON.stringify(payload)]);
+  }
+
+  return {
+    season_id: plan.season.id,
+    mesocycle_id: plan.mesocycle.id,
+    microcycle_id: plan.microcycle.id,
+    session_count: plan.sessions.length,
+    finalized_sessions_preserved: finalizedPreserved,
+    removed_open_session_ids: removedSessionIds
+  };
+}
+
 export function createRepository(db) {
   return {
     async resolvePrincipal(identity) {
@@ -211,75 +324,128 @@ export function createRepository(db) {
 
     async applyPlanPackage(athleteId, plan, actor) {
       return db.transaction(async conn => {
-        const assertOwnedVersion = async (table, id, incomingVersion) => {
-          const rows = await conn.query(`SELECT athlete_id, version FROM ${table} WHERE id=? FOR UPDATE`, [id]);
-          if (rows[0]?.athlete_id && rows[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
-          if (rows[0] && Number(rows[0].version) > incomingVersion) throw httpError('stale_plan_version', 409);
-        };
-        await assertOwnedVersion('seasons', plan.season.id, plan.season.version);
-        await conn.query(`INSERT INTO seasons (id, athlete_id, name, start_date, end_date, status, version, payload_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT (id) DO UPDATE SET
-            name=EXCLUDED.name,
-            start_date=EXCLUDED.start_date,
-            end_date=EXCLUDED.end_date,
-            status=EXCLUDED.status,
-            version=EXCLUDED.version,
-            payload_json=EXCLUDED.payload_json,
-            updated_at=CURRENT_TIMESTAMP`,
-          [plan.season.id, athleteId, plan.season.name, plan.season.start_date, plan.season.end_date, plan.season.status, plan.season.version, JSON.stringify(plan.season)]);
-
-        await assertOwnedVersion('mesocycles', plan.mesocycle.id, plan.mesocycle.version);
-        await conn.query(`INSERT INTO mesocycles (id, athlete_id, season_id, start_date, end_date, primary_adaptation, version, payload_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT (id) DO UPDATE SET
-            season_id=EXCLUDED.season_id,
-            start_date=EXCLUDED.start_date,
-            end_date=EXCLUDED.end_date,
-            primary_adaptation=EXCLUDED.primary_adaptation,
-            version=EXCLUDED.version,
-            payload_json=EXCLUDED.payload_json,
-            updated_at=CURRENT_TIMESTAMP`,
-          [plan.mesocycle.id, athleteId, plan.season.id, plan.mesocycle.start_date, plan.mesocycle.end_date, plan.mesocycle.primary_adaptation, plan.mesocycle.version, JSON.stringify(plan.mesocycle)]);
-
-        await assertOwnedVersion('microcycles', plan.microcycle.id, plan.microcycle.version);
-        await conn.query(`INSERT INTO microcycles (id, athlete_id, mesocycle_id, start_date, end_date, focus, version, payload_json)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT (id) DO UPDATE SET
-            mesocycle_id=EXCLUDED.mesocycle_id,
-            start_date=EXCLUDED.start_date,
-            end_date=EXCLUDED.end_date,
-            focus=EXCLUDED.focus,
-            version=EXCLUDED.version,
-            payload_json=EXCLUDED.payload_json,
-            updated_at=CURRENT_TIMESTAMP`,
-          [plan.microcycle.id, athleteId, plan.mesocycle.id, plan.microcycle.start_date, plan.microcycle.end_date, plan.microcycle.focus, plan.microcycle.version, JSON.stringify(plan.microcycle)]);
-
-        for (const session of plan.sessions) {
-          const existing = await conn.query('SELECT athlete_id, version, status FROM planned_sessions WHERE id=? FOR UPDATE', [session.id]);
-          if (existing[0]?.athlete_id && existing[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
-          if (existing[0] && Number(existing[0].version) > session.version) throw httpError('stale_plan_version', 409);
-          if (existing[0] && ['completed','cancelled'].includes(existing[0].status)) throw httpError('cannot_overwrite_finalized_session', 409);
-          const payload = plannedPayload(session);
-          await conn.query(`INSERT INTO planned_sessions (id, athlete_id, microcycle_id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (id) DO UPDATE SET
-              microcycle_id=EXCLUDED.microcycle_id,
-              local_date=EXCLUDED.local_date,
-              planned_start=EXCLUDED.planned_start,
-              session_type=EXCLUDED.session_type,
-              objective=EXCLUDED.objective,
-              planned_duration_min=EXCLUDED.planned_duration_min,
-              planned_rpe=EXCLUDED.planned_rpe,
-              status=EXCLUDED.status,
-              version=EXCLUDED.version,
-              payload_json=EXCLUDED.payload_json,
-              updated_at=CURRENT_TIMESTAMP`,
-            [session.id, athleteId, plan.microcycle.id, session.local_date, new Date(session.planned_start), session.session_type, session.objective, session.planned_duration_min, session.planned_rpe ?? null, session.status || 'planned', session.version, JSON.stringify(payload)]);
-        }
-        await conn.query('INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)', [athleteId, actor, 'plan.imported', 'microcycle', plan.microcycle.id, JSON.stringify({ season_id: plan.season.id, mesocycle_id: plan.mesocycle.id, session_count: plan.sessions.length, version: plan.microcycle.version })]);
-        return { season_id: plan.season.id, mesocycle_id: plan.mesocycle.id, microcycle_id: plan.microcycle.id, session_count: plan.sessions.length };
+        const applied = await writePlanPackage(conn, athleteId, plan);
+        await conn.query(
+          'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+          [athleteId, actor, 'plan.imported', 'microcycle', plan.microcycle.id, JSON.stringify({
+            season_id: plan.season.id,
+            mesocycle_id: plan.mesocycle.id,
+            session_count: plan.sessions.length,
+            version: plan.microcycle.version,
+            source: 'legacy_plan_package'
+          })]
+        );
+        return applied;
       });
+    },
+
+    async importCanonicalPlanBundle(athleteId, normalized, actor) {
+      return db.transaction(async conn => {
+        await conn.query('SELECT pg_advisory_xact_lock(hashtext(?))', [`sport-journal:plan-import:${athleteId}`]);
+
+        const existing = await conn.query(
+          'SELECT id, revision, content_hash, producer_json, source_refs_json, supersedes_import_id, created_at FROM training_plan_imports WHERE athlete_id=? AND content_hash=? LIMIT 1',
+          [athleteId, normalized.contentHash]
+        );
+        if (existing[0]) {
+          const row = existing[0];
+          await conn.query(
+            'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+            [athleteId, actor, 'plan.canonical_import_unchanged', 'training_plan_import', row.id, JSON.stringify({
+              revision: Number(row.revision),
+              content_hash: row.content_hash,
+              attempted_producer: normalized.producer,
+              attempted_source_refs: normalized.sourceRefs
+            })]
+          );
+          return {
+            import_id: row.id,
+            revision: Number(row.revision),
+            content_hash: row.content_hash,
+            producer: parseJson(row.producer_json),
+            source_refs: parseJson(row.source_refs_json) || [],
+            supersedes_import_id: row.supersedes_import_id || null,
+            imported_at: row.created_at,
+            disposition: 'unchanged'
+          };
+        }
+
+        const latestRows = await conn.query(
+          'SELECT id, revision FROM training_plan_imports WHERE athlete_id=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',
+          [athleteId]
+        );
+        const previous = latestRows[0] || null;
+        const revision = previous ? Number(previous.revision) + 1 : 1;
+        const applied = await writePlanPackage(conn, athleteId, normalized.planPackage, {
+          preserveFinalized: true,
+          reconcileSessions: true,
+          advanceSessionVersion: true
+        });
+        const importId = randomUUID();
+
+        await conn.query(
+          `INSERT INTO training_plan_imports
+            (id, athlete_id, revision, content_hash, producer_json, source_refs_json, bundle_json, imported_by_subject, supersedes_import_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            importId,
+            athleteId,
+            revision,
+            normalized.contentHash,
+            JSON.stringify(normalized.producer),
+            JSON.stringify(normalized.sourceRefs),
+            JSON.stringify(normalized.bundle),
+            actor,
+            previous?.id || null
+          ]
+        );
+        await conn.query(
+          'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+          [athleteId, actor, 'plan.canonical_imported', 'training_plan_import', importId, JSON.stringify({
+            revision,
+            content_hash: normalized.contentHash,
+            supersedes_import_id: previous?.id || null,
+            session_count: applied.session_count,
+            finalized_sessions_preserved: applied.finalized_sessions_preserved,
+            removed_open_session_ids: applied.removed_open_session_ids,
+            producer: normalized.producer
+          })]
+        );
+
+        return {
+          import_id: importId,
+          revision,
+          content_hash: normalized.contentHash,
+          producer: normalized.producer,
+          source_refs: normalized.sourceRefs,
+          supersedes_import_id: previous?.id || null,
+          imported_at: new Date().toISOString(),
+          disposition: 'created',
+          applied
+        };
+      });
+    },
+
+    async listPlanImports(athleteId, limit = 20) {
+      const safeLimit = Math.max(1, Math.min(Number(limit) || 20, 100));
+      const rows = await db.query(
+        `SELECT id, revision, content_hash, producer_json, source_refs_json, imported_by_subject, supersedes_import_id, created_at
+         FROM training_plan_imports
+         WHERE athlete_id=?
+         ORDER BY revision DESC
+         LIMIT ?`,
+        [athleteId, safeLimit]
+      );
+      return rows.map(row => ({
+        import_id: row.id,
+        revision: Number(row.revision),
+        content_hash: row.content_hash,
+        producer: parseJson(row.producer_json),
+        source_refs: parseJson(row.source_refs_json) || [],
+        imported_by_subject: row.imported_by_subject,
+        supersedes_import_id: row.supersedes_import_id || null,
+        imported_at: row.created_at
+      }));
     },
 
     async getWeekSessions(athleteId, fromDate = isoDate()) {

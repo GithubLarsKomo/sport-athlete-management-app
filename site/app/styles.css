@@ -49,8 +49,8 @@
 *{box-sizing:border-box}
 html{background:var(--sam-bg)}
 body{margin:0;background:var(--sam-bg);color:var(--sam-text)}
-button,input,select{font:inherit}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sam-focus);outline-offset:2px}
+button,input,select,textarea{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--sam-focus);outline-offset:2px}
 button{min-height:44px}
 .topbar{
   display:flex;justify-content:space-between;align-items:center;gap:20px;
@@ -114,6 +114,24 @@ button{min-height:44px}
 .facts.compact{grid-template-columns:minmax(140px,.55fr) 1fr;margin:0}
 .facts dt{color:var(--sam-text-muted);font-size:.84rem}
 .facts dd{margin:0;font-weight:750;font-variant-numeric:tabular-nums}
+.plan-import-card{margin-bottom:20px;border-top:3px solid var(--sam-accent)}
+.plan-import-form{display:grid;gap:10px;margin-top:18px}
+.plan-import-form label{font-size:.82rem;font-weight:800}
+.plan-import-form textarea{
+  width:100%;min-height:190px;resize:vertical;border:1px solid var(--sam-border-strong);border-radius:12px;
+  padding:12px;background:var(--sport-white);color:var(--sam-text);font:500 .82rem/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace
+}
+.plan-import-form textarea:hover{border-color:var(--sam-accent)}
+.plan-import-actions{display:flex;justify-content:flex-end}
+.plan-import-history{display:grid;gap:8px;margin-top:14px}
+.plan-import-row{
+  display:grid;grid-template-columns:minmax(180px,.7fr) minmax(220px,1.3fr) minmax(150px,.7fr);
+  gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--sam-border);border-radius:11px;background:var(--sam-surface-subtle)
+}
+.plan-import-row>div{display:grid;gap:3px;min-width:0}
+.plan-import-row>div:first-child{grid-template-columns:auto 1fr;align-items:center;gap:9px}
+.plan-import-row span:not(.mini-state){font-size:.67rem;text-transform:uppercase;letter-spacing:.05em;color:var(--sam-text-muted);font-weight:800}
+.plan-import-row strong,.plan-import-row b{font-size:.79rem;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .week-card{margin-bottom:20px}
 .week-head{align-items:center}
 .week-controls{display:flex;gap:8px;align-items:center}
@@ -202,6 +220,7 @@ button{min-height:44px}
   .shell{padding:18px 12px 44px}.grid.two{grid-template-columns:1fr}.hero{align-items:flex-start}
   .form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.card{padding:17px;border-radius:15px}
   .week-head,.journal-head{align-items:flex-start;flex-direction:column}.week-controls{width:100%}.week-controls .secondary:nth-child(2){flex:1}
+  .plan-import-actions{justify-content:stretch}.plan-import-actions .primary{width:100%}.plan-import-row{grid-template-columns:1fr}
   .journal-head #concept2Sync{width:100%}.import-strip{grid-template-columns:1fr}.journal-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
   .form-grid.compact{grid-template-columns:1fr}.form-grid.compact .wide{grid-column:auto}.dedupe-warning{align-items:flex-start;flex-direction:column}.dedupe-warning button{margin-left:0;width:100%}
   .week-sessions,.specialist-grid{grid-template-columns:1fr}

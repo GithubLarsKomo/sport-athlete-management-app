@@ -94,6 +94,26 @@
       </article>
     </section>
 
+    <section class="card plan-import-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">TRAININGSPLAN · SKILLZ</p>
+          <h2>Kanonischen Plan importieren</h2>
+          <p class="muted">Importiert ein versioniertes <code>sport-training-plan.json</code>-Bundle mit Saison-, Meso- und Mikrozyklus. Identische Inhalte bleiben idempotent; Änderungen erzeugen eine neue nachvollziehbare Planrevision.</p>
+        </div>
+        <span class="pill">JSON · manuell</span>
+      </div>
+      <form id="planImportForm" class="plan-import-form">
+        <label for="planImportJson">Canonical Skillz bundle</label>
+        <textarea id="planImportJson" name="bundle" rows="10" required spellcheck="false" placeholder='{"schema_version":1,"kind":"sport-training-plan-import",...}'></textarea>
+        <div class="plan-import-actions">
+          <button class="primary" type="submit">Plan prüfen &amp; importieren</button>
+        </div>
+      </form>
+      <p id="planImportMessage" class="message"></p>
+      <div id="planImportHistory" class="plan-import-history"><p class="muted">Importhistorie wird geladen …</p></div>
+    </section>
+
     <section class="card week-card">
       <div class="section-head week-head">
         <div>

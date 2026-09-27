@@ -94,7 +94,7 @@ DATABASE_URL=postgresql://<dedicated-user>:<secret>@<private-postgres-host>:5432
 DB_POOL_MAX=5
 ```
 
-PostgreSQL remains private infrastructure. Port 5432 is never exposed publicly. Active migrations live under `migrations/postgresql/`; legacy MariaDB SQL in the parent migration directory is frozen provenance. The active sequence currently includes specialist reasoning as migration 004 and journal/activity ingestion as migration 005. Migrations are SHA-256 tracked, transactional where supported and serialized by a PostgreSQL advisory transaction lock.
+PostgreSQL remains private infrastructure. Port 5432 is never exposed publicly. Active migrations live under `migrations/postgresql/`; legacy MariaDB SQL in the parent migration directory is frozen provenance. The active sequence includes specialist reasoning (004), journal/activity ingestion (005), Coach↔Athlete authorization (006) and immutable canonical training-plan import history (007). Migrations are SHA-256 tracked, transactional where supported and serialized by a PostgreSQL advisory transaction lock.
 
 The health/baseline architecture anticipates future persistence for enhanced `objective_metrics`, `device_connections`, `biometric_baselines`, `biometric_anomalies` and `body_measurements`. These are design targets until corresponding migrations/API code are implemented.
 
@@ -133,6 +133,15 @@ GET  /api/v1/journal
 PUT  /api/v1/journal/{activity_id}
 POST /api/v1/journal/{target_activity_id}/merge
 ```
+
+## Canonical Skillz training-plan import
+
+```text
+POST /api/v1/planning/import
+GET  /api/v1/planning/imports
+```
+
+The import accepts a transport envelope containing the canonical `sport-training-plan.json` plus its season/mesocycle/microcycle companion artifacts. It validates Skillz contract `0.1.0`, stores deterministic SHA-256 provenance, treats identical content idempotently and retains changed bundles as immutable revisions. The existing `PUT /api/v1/planning/active` route remains a compatibility path for the older internal plan package. See [`docs/canonical-plan-import.md`](docs/canonical-plan-import.md).
 
 The application also exposes identity/profile, goals/context, planning, check-ins, manual session completion, adaptation history/apply, read-only P1/P2 artifacts and private specialist producer/ingest endpoints. Passive health endpoints are intentionally not documented as available until their adapter/persistence implementation exists.
 

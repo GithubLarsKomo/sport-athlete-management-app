@@ -9,11 +9,13 @@ const [html, js, p1] = await Promise.all([
 ]);
 
 test('dashboard exposes the complete athlete-facing P0 controls', () => {
-  for (const id of ['profileForm', 'weekSessions', 'checkinForm', 'sessionForm', 'decision', 'applyDecision']) {
+  for (const id of ['profileForm', 'planImportForm', 'planImportHistory', 'weekSessions', 'checkinForm', 'sessionForm', 'decision', 'applyDecision']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
   assert.match(js, /\/api\/v1\/athlete\/profile/);
   assert.match(js, /\/api\/v1\/training\/week\?from=/);
+  assert.match(js, /\/api\/v1\/planning\/import/);
+  assert.match(js, /\/api\/v1\/planning\/imports\?limit=8/);
   assert.match(js, /\/api\/v1\/adaptation\/\$\{encodeURIComponent\(decision\.adaptation_decision_id\)\}\/apply/);
 });
 

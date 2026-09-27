@@ -196,6 +196,34 @@ async function loadWeek() {
   }
 }
 
+function renderPlanImports(imports) {
+  const target = $('#planImportHistory');
+  if (!imports.length) {
+    target.innerHTML = '<p class="muted">Noch kein kanonischer Trainingsplan importiert.</p>';
+    return;
+  }
+  target.innerHTML = imports.map(record => {
+    const source = record.producer?.source_ref || record.source_refs?.[0] || '–';
+    const importedAt = record.imported_at
+      ? formatDate(record.imported_at, { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      : '–';
+    return `<article class="plan-import-row">
+      <div><span class="mini-state">Revision ${esc(record.revision)}</span><strong>${esc(record.content_hash?.slice(0, 12) || '–')}</strong></div>
+      <div><span>Quelle</span><b>${esc(source)}</b></div>
+      <div><span>Importiert</span><b>${esc(importedAt)}</b></div>
+    </article>`;
+  }).join('');
+}
+
+async function loadPlanImports() {
+  try {
+    const result = await api('/api/v1/planning/imports?limit=8');
+    renderPlanImports(result.imports || []);
+  } catch (error) {
+    $('#planImportHistory').innerHTML = `<p class="message error">${esc(error.message)}</p>`;
+  }
+}
+
 function setCoachReadOnly(enabled) {
   document.body.dataset.role = enabled ? 'coach' : 'athlete';
   for (const selector of ['#profileForm', '#checkinForm', '#sessionForm']) {
@@ -282,11 +310,41 @@ async function load() {
     renderDecision(latest.decision);
     renderHistory(history.decisions || []);
     if (checkin.checkin) setMessage('#checkinMessage', 'Morning Check für heute ist gespeichert.');
-    await loadWeek();
+    await Promise.all([loadWeek(), loadPlanImports()]);
   } catch (error) {
     document.body.innerHTML = `<main class="shell"><section class="card"><h1>Zugriff nicht möglich</h1><p>${esc(error.message)}</p></section></main>`;
   }
 }
+
+$('#planImportForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const textarea = $('#planImportJson');
+  let bundle;
+  try {
+    bundle = JSON.parse(textarea.value);
+  } catch {
+    return setMessage('#planImportMessage', 'Das JSON ist syntaktisch ungültig.', false);
+  }
+
+  const button = event.currentTarget.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const result = await api('/api/v1/planning/import', {
+      method: 'POST',
+      body: JSON.stringify(bundle)
+    });
+    const record = result.imported;
+    const state = record.disposition === 'unchanged'
+      ? `bereits als Revision ${record.revision} vorhanden`
+      : `als Revision ${record.revision} importiert`;
+    setMessage('#planImportMessage', `Plan ${state} · SHA-256 ${record.content_hash.slice(0, 12)}…`);
+    await Promise.all([loadPlanImports(), loadWeek()]);
+  } catch (error) {
+    setMessage('#planImportMessage', error.message, false);
+  } finally {
+    button.disabled = false;
+  }
+});
 
 $('#profileForm').addEventListener('submit', async (event) => {
   event.preventDefault();
