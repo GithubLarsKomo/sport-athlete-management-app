@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#21",
+  "implementationHeadSha": "9a89d334dc7f9f4d1e29980e8641992bb1776b0d",
+  "blockingRisks": [],
+  "residualRisks": [
+    {
+      "id": "RR-001",
+      "severity": "low",
+      "summary": "Coach must be operator-provisioned before first Coach login.",
+      "disposition": "documented-operational-precondition",
+      "followUp": "Consider an explicit invite/provisioning workflow only if a later admin product requirement is approved."
+    },
+    {
+      "id": "RR-002",
+      "severity": "deferred",
+      "summary": "Production Authentik/Coolify E2E is not verified by VI-001.",
+      "disposition": "owned-by-VI-007",
+      "followUp": "Issue #27 deployment acceptance."
+    },
+    {
+      "id": "RR-003",
+      "severity": "planned",
+      "summary": "Separate Coach-authored notes are not yet implemented.",
+      "disposition": "owned-by-later-journal-slice",
+      "followUp": "VI-003/#23 must preserve Athlete authorship while adding Coach note semantics."
+    }
+  ],
+  "doNotRepeat": [
+    "Do not move Coach role authorization into trusted client headers or Authentik groups as a shortcut.",
+    "Do not let Coach privilege overwrite Athlete-authored subjective data.",
+    "Do not modify historical migration 006 after it is merged."
+  ],
+  "nextSkill": "two-axis-code-review"
+}
