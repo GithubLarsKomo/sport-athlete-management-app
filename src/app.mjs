@@ -7,6 +7,7 @@ import { readJson, sendJson, sendText } from './http.mjs';
 import { commonEnvelope, validateCheckin, validateCompletedSession } from './domain/contracts.mjs';
 import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
 import { validatePlanPackage, validateSessionRevisionCommand } from './domain/planning.mjs';
+import { normalizeCanonicalPlanImportBundle } from './domain/plan-import.mjs';
 import { specialistIngestAuthorized } from './domain/p1-artifacts.mjs';
 import { buildAthleteSnapshot } from './domain/athlete-snapshot.mjs';
 import { produceSpecialistArtifacts } from './domain/specialist-producer.mjs';
@@ -44,6 +45,7 @@ function writeOriginAllowed(req, config) {
 function coachActionAllowed(method, pathname) {
   if (!MUTATING.has(method || '')) return true;
   if (method === 'PUT' && pathname === '/api/v1/planning/active') return true;
+  if (method === 'POST' && pathname === '/api/v1/planning/import') return true;
   if (method === 'POST' && pathname === '/api/v1/adaptation/evaluate') return true;
   if (method === 'POST' && /^\/api\/v1\/adaptation\/[^/]+\/apply$/.test(pathname)) return true;
   return false;
@@ -223,6 +225,20 @@ export function createApplication({ config, repository }) {
         const body = await readJson(req);
         if (!new Set(['outcome','performance','process']).has(body.goal_type) || !String(body.description || '').trim()) return sendJson(res, 400, { error: 'invalid_goal' });
         return sendJson(res, 201, { goal: await repository.createGoal(athleteId, body, identity.subject) });
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/planning/imports') {
+        return sendJson(res, 200, { imports: await repository.listPlanImports(athleteId, url.searchParams.get('limit')) });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/v1/planning/import') {
+        const body = await readJson(req, 2 * 1024 * 1024);
+        const normalized = normalizeCanonicalPlanImportBundle(body);
+        if (normalized.errors.length) return sendJson(res, 422, { error: 'invalid_plan_import', details: normalized.errors });
+        if (normalized.athleteId !== athleteId) {
+          return sendJson(res, 422, { error: 'plan_athlete_mismatch', details: ['canonical athlete_id must match the authenticated target athlete'] });
+        }
+        const imported = await repository.importCanonicalPlanBundle(athleteId, normalized, identity.subject);
+        return sendJson(res, imported.disposition === 'created' ? 201 : 200, { imported });
       }
 
       if (req.method === 'PUT' && url.pathname === '/api/v1/planning/active') {
