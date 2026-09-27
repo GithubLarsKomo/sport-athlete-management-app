@@ -196,10 +196,25 @@ async function loadWeek() {
   }
 }
 
+function setCoachReadOnly(enabled) {
+  document.body.dataset.role = enabled ? 'coach' : 'athlete';
+  for (const selector of ['#profileForm', '#checkinForm', '#sessionForm']) {
+    const form = $(selector);
+    if (!form) continue;
+    for (const control of form.querySelectorAll('input, select, button')) control.disabled = enabled;
+  }
+  if (enabled) {
+    setMessage('#profileMessage', 'Coach-Ansicht: athlete-eigene Profildaten sind schreibgeschützt.');
+    setMessage('#checkinMessage', 'Coach-Ansicht: Morning Check bleibt eine athlete-eigene Eingabe.');
+    setMessage('#sessionMessage', 'Coach-Ansicht: Session-Abschluss und RPE bleiben athlete-eigene Eingaben.');
+  }
+}
+
 async function configurePrincipal(me) {
   $('#identity').textContent = me.role === 'coach'
     ? `${me.displayName || me.subject} · Coach`
     : (me.displayName || me.subject);
+  setCoachReadOnly(me.role === 'coach');
 
   const context = $('#coachContext');
   const select = $('#coachAthlete');
