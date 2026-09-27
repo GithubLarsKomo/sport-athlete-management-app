@@ -1,6 +1,39 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { matchActivity, normalizeConcept2Result, normalizeRp3Csv, normalizeTcx } from '../src/domain/activity-import.mjs';
+import { Encoder, Profile } from '@garmin/fitsdk';
+import { matchActivity, normalizeConcept2Result, normalizeFileImport, normalizeRp3Csv, normalizeTcx } from '../src/domain/activity-import.mjs';
+
+
+test('real Garmin FIT bytes normalize deterministically for idempotent upload identity', async () => {
+  const encoder = new Encoder();
+  encoder.onMesg(Profile.MesgNum.FILE_ID, {
+    manufacturer: 'development',
+    product: 1,
+    serialNumber: 123456,
+    timeCreated: new Date('2026-09-27T06:00:00Z'),
+    type: 'activity'
+  });
+  const contentBase64 = Buffer.from(encoder.close()).toString('base64');
+
+  const first = await normalizeFileImport({
+    provider: 'garmin',
+    format: 'fit',
+    filename: 'rowing.fit',
+    content_base64: contentBase64
+  });
+  const second = await normalizeFileImport({
+    provider: 'garmin',
+    format: 'fit',
+    filename: 'rowing-copy.fit',
+    content_base64: contentBase64
+  });
+
+  assert.equal(first.provider, 'garmin');
+  assert.equal(first.startedAt, '2026-09-27T06:00:00.000Z');
+  assert.match(first.rawSha256, /^[a-f0-9]{64}$/);
+  assert.equal(second.rawSha256, first.rawSha256);
+  assert.equal(second.externalActivityId, first.externalActivityId);
+});
 
 test('Concept2 results normalize tenths-of-seconds and rowing metrics', () => {
   const result = normalizeConcept2Result({
