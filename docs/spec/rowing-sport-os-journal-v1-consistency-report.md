@@ -1,7 +1,7 @@
 # Rowing Sport OS / Sport Journal v1 — Consistency Report
 
 Spec: `SPEC.md@0.1.0`  
-Status: **PASS for approval**; implementation slicing remains gated on explicit approval.
+Status: **PASS / approved**; specification released to implementation slicing.
 
 ## Checks
 
@@ -32,4 +32,4 @@ None found.
 
 ## Gate
 
-Explicit user approval of `SPEC.md@0.1.0` is required before creating `vertical-issues.json` or GitHub implementation issues.
+User approval received on 2026-09-27. `spec-to-vertical-issues` may proceed against this specification version.
