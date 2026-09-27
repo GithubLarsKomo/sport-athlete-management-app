@@ -236,3 +236,43 @@ test('assigned Coach can write only a separate Coach note, while Athlete cannot 
     assert.equal(athleteWriteTouched, false);
   });
 });
+
+
+test('manual Athlete completion preserves subjective authorship and v1 post-session fields', async () => {
+  let captured = null;
+  const repository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'athlete', athleteId: 'athlete-a' };
+    },
+    async completeSession(athleteId, plannedSessionId, payload, actor) {
+      captured = { athleteId, plannedSessionId, payload, actor };
+      return payload;
+    }
+  };
+
+  await withServer(repository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/sessions/session-1/complete`, {
+      method:'POST',
+      headers:{ 'content-type':'application/json' },
+      body:JSON.stringify({
+        started_at:'2026-09-27T17:00:00.000Z',
+        completed_at:'2026-09-27T18:00:00.000Z',
+        duration_min:60,
+        session_rpe:6,
+        completion_status:'modified',
+        expectation_match:'harder',
+        pain_0_10:2,
+        deviations:['fatigue'],
+        comment:'Gegen Ende zäher als geplant.'
+      })
+    });
+    assert.equal(response.status, 201);
+    assert.equal(captured.athleteId, 'athlete-a');
+    assert.equal(captured.plannedSessionId, 'session-1');
+    assert.equal(captured.actor, 'subject-1');
+    assert.equal(captured.payload.athlete_authored_by_subject, 'subject-1');
+    assert.equal(captured.payload.expectation_match, 'harder');
+    assert.deepEqual(captured.payload.deviations, ['fatigue']);
+    assert.equal(captured.payload.session_load, 360);
+  });
+});
