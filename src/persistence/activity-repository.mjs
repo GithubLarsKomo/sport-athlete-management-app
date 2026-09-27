@@ -163,15 +163,17 @@ async function plannedSessionMatch(conn, athleteId, incoming) {
 }
 
 async function completedSessionMatch(conn, athleteId, activity) {
-  const rows = await conn.query(`SELECT id, planned_session_id, started_at, completed_at, duration_min
-    FROM completed_sessions
-    WHERE athlete_id=?
-      AND started_at BETWEEN (?::timestamptz - INTERVAL '15 minutes') AND (?::timestamptz + INTERVAL '15 minutes')
-    ORDER BY ABS(EXTRACT(EPOCH FROM (started_at - ?::timestamptz))) ASC
+  const rows = await conn.query(`SELECT c.id, c.planned_session_id, c.started_at, c.completed_at, c.duration_min, p.session_type
+    FROM completed_sessions c
+    LEFT JOIN planned_sessions p ON p.id=c.planned_session_id AND p.athlete_id=c.athlete_id
+    WHERE c.athlete_id=?
+      AND c.started_at BETWEEN (?::timestamptz - INTERVAL '15 minutes') AND (?::timestamptz + INTERVAL '15 minutes')
+    ORDER BY ABS(EXTRACT(EPOCH FROM (c.started_at - ?::timestamptz))) ASC
     LIMIT 5`, [athleteId, activity.started_at, activity.started_at, activity.started_at]);
   const activityStart = new Date(activity.started_at).getTime();
   const activityDurationMin = Number(activity.duration_s || 0) / 60;
   for (const row of rows) {
+    if (row.session_type && !activityTypesCompatible(row.session_type, activity.activity_type)) continue;
     const startDiffS = Math.abs(new Date(row.started_at).getTime() - activityStart) / 1000;
     if (startDiffS > 5 * 60) continue;
     const completedDurationMin = Number(row.duration_min || 0);
