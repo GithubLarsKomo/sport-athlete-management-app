@@ -1,12 +1,18 @@
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
 
+function targetAthleteId() {
+  return new URLSearchParams(window.location.search).get('athlete')?.trim() || '';
+}
+
 async function api(path, options = {}) {
+  const target = targetAthleteId();
   const response = await fetch(path, {
     credentials: 'same-origin',
     ...options,
     headers: {
       ...(options.body ? { 'content-type': 'application/json' } : {}),
+      ...(target ? { 'x-sam-target-athlete': target } : {}),
       ...(options.headers || {})
     }
   });
