@@ -152,3 +152,87 @@ test('me exposes application role without requiring athlete target', async () =>
     assert.equal(body.athleteId, null);
   });
 });
+
+
+test('unassigned Coach cannot read Athlete journal', async () => {
+  let journalReadTouched = false;
+  const repository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'coach', athleteId: null };
+    },
+    async coachCanAccess() {
+      return false;
+    },
+    async listJournal() {
+      journalReadTouched = true;
+      return [];
+    }
+  };
+
+  await withServer(repository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/journal`, {
+      headers: { 'x-sam-target-athlete': 'athlete-b' }
+    });
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).error, 'athlete_scope_forbidden');
+    assert.equal(journalReadTouched, false);
+  });
+});
+
+test('assigned Coach can write only a separate Coach note, while Athlete cannot use the Coach-note endpoint', async () => {
+  const saved = [];
+  const audits = [];
+  const coachRepository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'coach', athleteId: null };
+    },
+    async coachCanAccess(_subject, athleteId) {
+      return athleteId === 'athlete-a';
+    },
+    async audit(athleteId, actor, eventType, entityType, entityId, details) {
+      audits.push({ athleteId, actor, eventType, entityType, entityId, details });
+    },
+    async saveCoachSessionNote(athleteId, completedSessionId, note, actor) {
+      saved.push({ athleteId, completedSessionId, note, actor });
+      return [{ completed_session_id: completedSessionId, authored_by_subject: actor, note }];
+    }
+  };
+
+  await withServer(coachRepository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/completed-sessions/completed-1/coach-note`, {
+      method:'PUT',
+      headers: {
+        'content-type':'application/json',
+        'x-sam-target-athlete':'athlete-a'
+      },
+      body: JSON.stringify({ note:'Technik stabil, nächstes Mal Schlaglänge beobachten.' })
+    });
+    assert.equal(response.status, 200);
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0].actor, 'subject-1');
+    assert.equal(saved[0].athleteId, 'athlete-a');
+    assert.equal(audits[0].eventType, 'coach.api_access');
+  });
+
+  let athleteWriteTouched = false;
+  const athleteRepository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'athlete', athleteId: 'athlete-a' };
+    },
+    async saveCoachSessionNote() {
+      athleteWriteTouched = true;
+      return [];
+    }
+  };
+
+  await withServer(athleteRepository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/completed-sessions/completed-1/coach-note`, {
+      method:'PUT',
+      headers: { 'content-type':'application/json' },
+      body: JSON.stringify({ note:'should fail' })
+    });
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).error, 'coach_role_required');
+    assert.equal(athleteWriteTouched, false);
+  });
+});
