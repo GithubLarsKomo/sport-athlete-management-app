@@ -3,7 +3,7 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-200300-vi-002-delivered.md",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-224800-vi-003-delivered.md",
   "currentStage": "backlog",
   "canonicalArtifacts": [
     {
@@ -71,6 +71,18 @@
       "path": "docs/project-memory/events/EVT-20260927-200300-vi-002-delivered.md",
       "status": "completed",
       "ref": "37e45c8298da64b9810e0b36147cc11449021470"
+    },
+    {
+      "type": "engineering-delivery-status",
+      "path": "docs/engineering/vi-003/engineering-delivery-status.json",
+      "status": "delivered",
+      "ref": "50acab4696854c94e9ceb2142d15f50ea154e746"
+    },
+    {
+      "type": "delivered-increment",
+      "path": "docs/project-memory/events/EVT-20260927-224800-vi-003-delivered.md",
+      "status": "completed",
+      "ref": "50acab4696854c94e9ceb2142d15f50ea154e746"
     }
   ],
   "decisions": [
@@ -87,18 +99,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-010",
+      "id": "OPEN-011",
       "type": "pending",
-      "summary": "Implement VI-003 / GitHub #23.",
-      "nextAction": "Unify FIT/manual journal completion with Athlete-authored subjective finalization and transparent session/week plan-vs-actual views."
+      "summary": "Implement VI-004 / GitHub #24.",
+      "nextAction": "Add structured RowErg and bike performance testing with explicit measured/derived/assumed_or_estimated classification."
     }
   ],
   "lastVerified": {
-    "headSha": "37e45c8298da64b9810e0b36147cc11449021470",
-    "at": "2026-09-27T20:03:00+02:00"
+    "headSha": "50acab4696854c94e9ceb2142d15f50ea154e746",
+    "at": "2026-09-27T22:48:00+02:00"
   },
   "nextAction": {
-    "description": "Implement VI-003 / GitHub issue #23.",
+    "description": "Implement VI-004 / GitHub issue #24.",
     "skill": "iterate-software-projects"
   }
 }
