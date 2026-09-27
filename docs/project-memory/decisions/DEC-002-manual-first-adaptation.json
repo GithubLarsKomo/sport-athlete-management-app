@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "DEC-002",
+  "title": "Manual-first adaptation and Second-Brain boundary",
+  "status": "accepted",
+  "date": "2026-09-27",
+  "decision": "Use deterministic manual adaptation handoff in v1; LLM output is proposal-only; no automatic Second-Brain writes.",
+  "authority": "Confirmed v1 scope and Grilling R1",
+  "consequences": [
+    "MVP does not depend on an LLM provider.",
+    "Plan mutation requires explicit human action.",
+    "Operational telemetry stays in PostgreSQL.",
+    "Later learning promotion requires governed evidence-linked contracts."
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "grillingId": "rowing-sport-os-journal-v1",
+  "definitionVersion": "0.1.0",
+  "status": "completed",
+  "completedAt": "2026-09-27T15:39:00+02:00",
+  "confirmedDecisions": [
+    "Athlete and Coach are first-class v1 users; coach access requires explicit athlete assignment.",
+    "Post-session capture uses mandatory RPE plus expectation match, optional pain, structured deviation reason and optional free comment.",
+    "v1 performance tests include RowErg 500m, 1000m, 2000m, 5000m, 30min, RowErg lactate, bike lactate and a configurable staged protocol.",
+    "Self-service export is MVP scope; complete deletion/retention is required before broader multi-user rollout.",
+    "Athlete Second Brain is contract-ready only in v1; no automatic persistence."
+  ],
+  "requirements": [
+    {
+      "id": "REQ-ROLE-001",
+      "statement": "Authenticate all users through Authentik and authorize Athlete and Coach roles inside the application.",
+      "source": "R1-01"
+    },
+    {
+      "id": "REQ-ROLE-002",
+      "statement": "Permit a Coach to access only explicitly assigned athletes and audit every cross-athlete action.",
+      "source": "R1-01"
+    },
+    {
+      "id": "REQ-JRN-001",
+      "statement": "Require Session-RPE 0-10 for journal finalization.",
+      "source": "R1-02"
+    },
+    {
+      "id": "REQ-JRN-002",
+      "statement": "Capture perceived difficulty relative to plan expectation, optional pain, structured deviation reason and optional comment.",
+      "source": "R1-02"
+    },
+    {
+      "id": "REQ-TST-001",
+      "statement": "Support structured RowErg 500m, 1000m, 2000m, 5000m and 30min protocols.",
+      "source": "R1-03"
+    },
+    {
+      "id": "REQ-TST-002",
+      "statement": "Support structured RowErg and bike lactate step tests plus a configurable staged protocol.",
+      "source": "R1-03"
+    },
+    {
+      "id": "REQ-TST-003",
+      "statement": "Distinguish measured, derived and assumed/estimated test values with provenance.",
+      "source": "R1-03"
+    },
+    {
+      "id": "REQ-DATA-001",
+      "statement": "Provide self-service athlete data export in MVP.",
+      "source": "R1-04"
+    },
+    {
+      "id": "REQ-DATA-002",
+      "statement": "Treat complete deletion/retention behavior as a production release gate before broader multi-user rollout.",
+      "source": "R1-04"
+    },
+    {
+      "id": "REQ-BRAIN-001",
+      "statement": "Prepare a governed Athlete Second-Brain contract boundary without automatic v1 persistence.",
+      "source": "R1-05"
+    }
+  ],
+  "nonGoals": [
+    "Garmin Connect cloud OAuth in MVP",
+    "Automatic LLM-driven plan mutation",
+    "Automatic athlete Second-Brain writes",
+    "Opaque global readiness/health/compliance score",
+    "User-facing administrator console in v1"
+  ],
+  "openProductDecisions": [],
+  "technicalUnknowns": [],
+  "risks": [
+    "Coach access expands authorization and privacy scope and therefore requires explicit assignment checks on every athlete-scoped endpoint.",
+    "Current app-local plan package can drift from canonical Skillz plan semantics without a versioned adapter.",
+    "Subjective athlete journal entries must not be silently overwritten by coaches or device imports."
+  ],
+  "aiMlReadiness": {
+    "status": "complete",
+    "summary": "MVP is deterministic and manual-first. Structured adaptation handoff export is created before embedded LLM integration. Any future model runs in proposal/shadow mode first; hard safety and authorization boundaries remain deterministic; plan mutation always requires explicit human action."
+  },
+  "routingTarget": "conversation-to-spec",
+  "routingReason": "All material product decisions are confirmed and technical wayfinding is already complete."
+}

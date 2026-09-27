@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "DEC-001",
+  "title": "Coach is a first-class v1 user",
+  "status": "accepted",
+  "date": "2026-09-27",
+  "decision": "Support Athlete and Coach in v1; Coach access requires explicit athlete assignment and server-side authorization/audit.",
+  "authority": "User-confirmed Grilling R1",
+  "consequences": [
+    "Separate acting user identity from target athlete identity.",
+    "Add explicit Coach-Athlete assignment persistence.",
+    "Authorize every athlete-scoped endpoint.",
+    "Preserve athlete authorship of subjective journal data."
+  ],
+  "alternativesRejected": [
+    "Athlete-only v1 with coach added later.",
+    "Implicit coach access to all athletes.",
+    "User-facing Admin console in v1."
+  ]
+}

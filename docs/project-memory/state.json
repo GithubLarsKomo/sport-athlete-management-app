@@ -3,61 +3,59 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-140300-rowing-sport-os-wayfinding.md",
-  "currentStage": "wayfinding",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-180200-rowing-sport-os-spec-approved.md",
+  "currentStage": "specification",
   "canonicalArtifacts": [
     {
       "type": "wayfinding",
       "path": "docs/wayfinding/rowing-sport-os-journal-v1-gap-audit.md",
       "status": "completed",
-      "ref": "b7d63b7c13e6e86b5ec43d84fa8009bdaf5e5005"
+      "ref": "1bb9445f40aa5b4279bea488e8e73ff1067950ec"
     },
     {
       "type": "grilling-definition",
       "path": "GithubLarsKomo/grilling/examples/rowing-sport-os-journal-v1.json",
-      "status": "prepared",
+      "status": "completed",
       "ref": "rowing-sport-os-journal-v1@0.1.0"
+    },
+    {
+      "type": "requirements-handoff",
+      "path": "docs/requirements/rowing-sport-os-journal-v1-requirements-handoff.json",
+      "status": "completed",
+      "ref": "8fb2b8380ac646ac821540e89f8cb5071361f07f"
+    },
+    {
+      "type": "spec",
+      "path": "SPEC.md",
+      "status": "approved",
+      "ref": "dd6efe957d93b49625f6e5ba3a9ac6d13cafa34f"
+    },
+    {
+      "type": "consistency-report",
+      "path": "docs/spec/rowing-sport-os-journal-v1-consistency-report.md",
+      "status": "pass-approved",
+      "ref": "dd6efe957d93b49625f6e5ba3a9ac6d13cafa34f"
     }
   ],
-  "decisions": [],
-  "openLoops": [
+  "decisions": [
     {
-      "id": "OPEN-001",
-      "type": "question",
-      "summary": "v1 user/role model",
-      "nextAction": "Answer Grilling R1 question sj-user-model."
+      "id": "DEC-001",
+      "path": "docs/project-memory/decisions/DEC-001-coach-first-class-v1.md",
+      "state": "accepted"
     },
     {
-      "id": "OPEN-002",
-      "type": "question",
-      "summary": "post-session subjective fields",
-      "nextAction": "Answer Grilling R1 question sj-post-session-subjective."
-    },
-    {
-      "id": "OPEN-003",
-      "type": "question",
-      "summary": "v1 performance-test catalogue",
-      "nextAction": "Answer Grilling R1 question sj-testing-v1."
-    },
-    {
-      "id": "OPEN-004",
-      "type": "question",
-      "summary": "data export/deletion boundary",
-      "nextAction": "Answer Grilling R1 question sj-data-portability."
-    },
-    {
-      "id": "OPEN-005",
-      "type": "question",
-      "summary": "athlete Second-Brain preparation",
-      "nextAction": "Answer Grilling R1 question sj-second-brain."
+      "id": "DEC-002",
+      "path": "docs/project-memory/decisions/DEC-002-manual-first-adaptation.md",
+      "state": "accepted"
     }
   ],
+  "openLoops": [],
   "lastVerified": {
-    "headSha": "b7d63b7c13e6e86b5ec43d84fa8009bdaf5e5005",
-    "at": "2026-09-27T14:03:00+02:00"
+    "headSha": "dd6efe957d93b49625f6e5ba3a9ac6d13cafa34f",
+    "at": "2026-09-27T18:02:00+02:00"
   },
   "nextAction": {
-    "description": "Complete rowing-sport-os-journal-v1 Grilling R1 and generate normative SPEC.md.",
-    "skill": "round-based-requirements-grilling"
+    "description": "Run spec-to-vertical-issues against approved SPEC.md@0.1.0.",
+    "skill": "spec-to-vertical-issues"
   }
 }
