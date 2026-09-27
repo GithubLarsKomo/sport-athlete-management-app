@@ -26,3 +26,40 @@ test('checkin rejects malformed local date', () => {
   const value={...commonEnvelope('a'),local_date:'22-08-2026',sleep_quality_1_5:4,fatigue_1_5:2,soreness_1_5:2,stress_1_5:2,motivation_1_5:4};
   assert.ok(validateCheckin(value).some(e=>e.includes('YYYY-MM-DD')));
 });
+
+
+test('completed session accepts v1 post-session subjective fields', () => {
+  const value={
+    ...commonEnvelope('a'),
+    completed_session_id:'c',
+    started_at:'2026-08-22T11:00:00.000Z',
+    completed_at:'2026-08-22T12:00:00.000Z',
+    duration_min:60,
+    session_rpe:6,
+    session_load:360,
+    completion_status:'modified',
+    expectation_match:'harder',
+    pain_0_10:3,
+    deviations:['fatigue','weather_environment'],
+    comment:'Gegenwind, Beine schwer'
+  };
+  assert.deepEqual(validateCompletedSession(value),[]);
+});
+
+test('completed session rejects unknown expectation and deviation reasons', () => {
+  const value={
+    ...commonEnvelope('a'),
+    completed_session_id:'c',
+    started_at:'2026-08-22T11:00:00.000Z',
+    completed_at:'2026-08-22T12:00:00.000Z',
+    duration_min:60,
+    session_rpe:6,
+    session_load:360,
+    completion_status:'completed',
+    expectation_match:'surprising',
+    deviations:['mystery_reason']
+  };
+  const errors=validateCompletedSession(value);
+  assert.ok(errors.some(error=>error.includes('expectation_match')));
+  assert.ok(errors.some(error=>error.includes('unsupported deviation reason')));
+});

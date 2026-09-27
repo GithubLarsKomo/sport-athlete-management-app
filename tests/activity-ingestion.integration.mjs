@@ -74,6 +74,30 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
   assert.equal(first.activity.planned_session_id, plannedSessionId);
   assert.deepEqual(first.activity.canonical_summary.providers, ['garmin']);
 
+  const repeatedGarmin = await repository.ingestActivity(athleteId, garmin, athleteId);
+  assert.equal(repeatedGarmin.disposition, 'exact_duplicate');
+  assert.equal(repeatedGarmin.activity.id, first.activity.id);
+  assert.equal(repeatedGarmin.activity.sources.length, 1);
+
+  await assert.rejects(
+    repository.saveJournalEntry(athleteId, first.activity.id, {
+      expectation_match: 'as_expected',
+      pain_0_10: 0,
+      deviations: [],
+      finalize: true
+    }, athleteId),
+    error => error.statusCode === 400 && error.message === 'invalid_journal_entry'
+  );
+  const beforeRpe = await repository.getJournalActivity(athleteId, first.activity.id);
+  assert.equal(beforeRpe.completed_session_id, null);
+
+  const beforeFinalization = await repository.getWeekComparison(athleteId, today);
+  const observedRow = beforeFinalization.sessions.find(record => record.plan.planned_session_id === plannedSessionId);
+  assert.equal(observedRow.actual.completion_status, 'awaiting_subjective_finalization');
+  assert.equal(observedRow.actual.completed_session_id, null);
+  assert.equal(Math.round(observedRow.actual.duration_min), 60);
+  assert.equal(Math.round(beforeFinalization.summary.actual_duration_min), 60);
+
   const concept2 = source('concept2', 'c2-1', start.toISOString(), 3600, 15000, 'b');
   const second = await repository.ingestActivity(athleteId, concept2, athleteId);
   assert.equal(second.disposition, 'auto_merged');
@@ -94,6 +118,7 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
 
   const finalized = await repository.saveJournalEntry(athleteId, first.activity.id, {
     session_rpe: 4.5,
+    expectation_match: 'as_expected',
     pain_0_10: 0,
     comment: 'ruhige Z2 Einheit',
     deviations: [],
@@ -107,6 +132,36 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
   const completed = await repository.getLatestCompletedSession(athleteId);
   assert.equal(completed.import_activity_id, first.activity.id);
   assert.equal(Number(completed.session_rpe), 4.5);
+  assert.equal(completed.expectation_match, 'as_expected');
+  assert.equal(completed.athlete_authored_by_subject, athleteId);
+
+  const notes = await repository.saveCoachSessionNote(athleteId, finalized.completed_session_id, 'Technik im nächsten Block beobachten.', 'coach-1');
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].authored_by_subject, 'coach-1');
+
+  const comparison = await repository.getWeekComparison(athleteId, today);
+  const row = comparison.sessions.find(record => record.plan.planned_session_id === plannedSessionId);
+  assert.ok(row);
+  assert.equal(row.actual.completed_session_id, finalized.completed_session_id);
+  assert.equal(Number(row.actual.session_rpe), 4.5);
+  assert.equal(row.actual.subjective.expectation_match, 'as_expected');
+  assert.equal(row.actual.subjective.authored_by_subject, athleteId);
+  assert.equal(row.actual.evidence.avg_power_w, 205);
+  assert.equal(row.actual.provenance.activity_sources.length, 2);
+  assert.equal(row.actual.coach_notes[0].note, 'Technik im nächsten Block beobachten.');
+  assert.equal(comparison.summary.planned_sessions >= 1, true);
+  assert.equal(comparison.summary.completed_planned_sessions >= 1, true);
+
+  await assert.rejects(
+    repository.saveJournalEntry(athleteId, first.activity.id, {
+      session_rpe: 3,
+      expectation_match: 'easier',
+      pain_0_10: 0,
+      deviations: [],
+      finalize: true
+    }, athleteId),
+    error => error.statusCode === 409 && error.message === 'journal_already_finalized'
+  );
 });
 
 test('an unplanned imported activity becomes training history after journal finalization', async () => {
@@ -125,8 +180,9 @@ test('an unplanned imported activity becomes training history after journal fina
   const finalized = await repository.saveJournalEntry(unplannedAthleteId, imported.activity.id, {
     session_rpe: 5,
     pain_0_10: 1,
+    expectation_match: 'harder',
     comment: 'spontane Einheit',
-    deviations: ['unplanned'],
+    deviations: ['other'],
     finalize: true
   }, unplannedAthleteId);
   assert.ok(finalized.completed_session_id);
@@ -170,18 +226,66 @@ test('a device import after manual completion links to the existing completed se
     source('garmin', `manual-first-${randomUUID()}`, new Date(start.getTime() + 20000).toISOString(), 3590, 14900, 'd'),
     manualFirstAthleteId
   );
-  assert.equal(imported.activity.planned_session_id, null);
+  assert.equal(imported.activity.completed_session_id, completedId);
+  assert.equal(imported.activity.planned_session_id, plannedSessionId);
+  assert.equal(imported.activity.journal, null);
 
-  const finalized = await repository.saveJournalEntry(manualFirstAthleteId, imported.activity.id, {
-    session_rpe: 4,
-    pain_0_10: 0,
-    comment: 'Gerätedaten nachgetragen',
-    deviations: [],
-    finalize: true
-  }, manualFirstAthleteId);
-  assert.equal(finalized.completed_session_id, completedId);
-  assert.equal(finalized.planned_session_id, plannedSessionId);
+  const repeated = await repository.ingestActivity(
+    manualFirstAthleteId,
+    { ...source('garmin', 'ignored', new Date(start.getTime() + 20000).toISOString(), 3590, 14900, 'd'), externalActivityId: imported.activity.sources[0].external_activity_id },
+    manualFirstAthleteId
+  );
+  assert.equal(repeated.disposition, 'exact_duplicate');
+  assert.equal(repeated.activity.completed_session_id, completedId);
+
+  await assert.rejects(
+    repository.saveJournalEntry(manualFirstAthleteId, imported.activity.id, {
+      session_rpe: 4,
+      expectation_match: 'as_expected',
+      pain_0_10: 0,
+      deviations: [],
+      finalize: true
+    }, manualFirstAthleteId),
+    error => error.statusCode === 409 && error.message === 'session_already_finalized_elsewhere'
+  );
 
   const counts = await db.query('SELECT COUNT(*)::int AS count FROM completed_sessions WHERE athlete_id=?', [manualFirstAthleteId]);
   assert.equal(Number(counts[0].count), 1);
+});
+
+
+test('activity linkage requires compatible session type for both plan and late completion matching', async () => {
+  const mismatchAthleteId = `activity-it-${randomUUID()}`;
+  await repository.ensureAthlete({ subject: mismatchAthleteId, athleteId: mismatchAthleteId, email: null, displayName: 'Type Match Athlete' });
+  const start = new Date();
+  start.setHours(15, 0, 0, 0);
+  const plannedSessionId = randomUUID();
+  await repository.applyPlanPackage(mismatchAthleteId, planWithSession(plannedSessionId, start, 'Rowing only'), mismatchAthleteId);
+
+  const completedId = randomUUID();
+  await repository.completeSession(mismatchAthleteId, plannedSessionId, {
+    schema_version: 1,
+    athlete_id: mismatchAthleteId,
+    generated_at: new Date().toISOString(),
+    source_refs: ['manual:test'],
+    uncertainties: [],
+    safety_flags: [],
+    completed_session_id: completedId,
+    planned_session_id: plannedSessionId,
+    started_at: start.toISOString(),
+    completed_at: new Date(start.getTime() + 3600 * 1000).toISOString(),
+    duration_min: 60,
+    session_rpe: 4,
+    session_load: 240,
+    completion_status: 'completed',
+    deviations: []
+  }, mismatchAthleteId);
+
+  const cycling = {
+    ...source('garmin', `cycling-${randomUUID()}`, new Date(start.getTime() + 15000).toISOString(), 3600, 25000, 'e'),
+    activityType: 'cycling'
+  };
+  const imported = await repository.ingestActivity(mismatchAthleteId, cycling, mismatchAthleteId);
+  assert.equal(imported.activity.planned_session_id, null);
+  assert.equal(imported.activity.completed_session_id, null);
 });

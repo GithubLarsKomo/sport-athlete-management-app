@@ -374,6 +374,10 @@ function compatibleType(a, b) {
   return 0;
 }
 
+export function activityTypesCompatible(a, b) {
+  return compatibleType(String(a || '').toLowerCase(), String(b || '').toLowerCase()) > 0;
+}
+
 function ratioScore(a, b, tolerance) {
   if (a == null || b == null) return 0.5;
   const scale = Math.max(Math.abs(a), Math.abs(b), 1);

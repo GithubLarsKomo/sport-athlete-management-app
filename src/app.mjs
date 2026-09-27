@@ -48,6 +48,7 @@ function coachActionAllowed(method, pathname) {
   if (method === 'POST' && pathname === '/api/v1/planning/import') return true;
   if (method === 'POST' && pathname === '/api/v1/adaptation/evaluate') return true;
   if (method === 'POST' && /^\/api\/v1\/adaptation\/[^/]+\/apply$/.test(pathname)) return true;
+  if (method === 'PUT' && /^\/api\/v1\/completed-sessions\/[^/]+\/coach-note$/.test(pathname)) return true;
   return false;
 }
 
@@ -252,6 +253,11 @@ export function createApplication({ config, repository }) {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return sendJson(res, 400, { error: 'invalid_from_date' });
         return sendJson(res, 200, { sessions: await repository.getWeekSessions(athleteId, from) });
       }
+      if (req.method === 'GET' && url.pathname === '/api/v1/training/week-comparison') {
+        const from = url.searchParams.get('from') || localDate();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return sendJson(res, 400, { error: 'invalid_from_date' });
+        return sendJson(res, 200, await repository.getWeekComparison(athleteId, from));
+      }
 
       if (req.method === 'GET' && url.pathname === '/api/v1/context') return sendJson(res, 200, await repository.getContext(athleteId));
       if (req.method === 'GET' && url.pathname === '/api/v1/training/today') return sendJson(res, 200, { session: await repository.getTodaySession(athleteId) });
@@ -310,6 +316,14 @@ export function createApplication({ config, repository }) {
         const to = url.searchParams.get('to');
         return sendJson(res, 200, { activities: await repository.listJournal(athleteId, { from, to, limit: url.searchParams.get('limit') }) });
       }
+      const coachNoteMatch = url.pathname.match(/^\/api\/v1\/completed-sessions\/([^/]+)\/coach-note$/);
+      if (req.method === 'PUT' && coachNoteMatch) {
+        if (principal.role !== 'coach') return sendJson(res, 403, { error: 'coach_role_required' });
+        const body = await readJson(req);
+        const notes = await repository.saveCoachSessionNote(athleteId, coachNoteMatch[1], body.note, principal.subject);
+        return sendJson(res, 200, { notes });
+      }
+
       const journalMatch = url.pathname.match(/^\/api\/v1\/journal\/([^/]+)$/);
       if (req.method === 'PUT' && journalMatch) {
         const body = await readJson(req);
@@ -365,9 +379,10 @@ export function createApplication({ config, repository }) {
         const body = await readJson(req);
         const completed = {
           ...body,
-          ...commonEnvelope(athleteId),
+          ...commonEnvelope(athleteId, { sourceRefs: ['manual:athlete-entry'] }),
           completed_session_id: body.completed_session_id || randomUUID(),
           planned_session_id: plannedSessionId,
+          athlete_authored_by_subject: identity.subject,
           session_load: Number(body.duration_min) * Number(body.session_rpe)
         };
         const errors = validateCompletedSession(completed);

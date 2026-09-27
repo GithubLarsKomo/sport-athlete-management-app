@@ -60,18 +60,96 @@ function metric(label, value, unit = '') {
   return `<div><dt>${esc(label)}</dt><dd>${esc(display)}${unit ? ` ${esc(unit)}` : ''}</dd></div>`;
 }
 
+const deviationOptions = [
+  ['time_constraint','Zeit'],
+  ['weather_environment','Wetter/Umgebung'],
+  ['fatigue','Müdigkeit'],
+  ['pain','Schmerz'],
+  ['illness','Krankheit'],
+  ['equipment','Material'],
+  ['intentionally_modified','bewusst geändert'],
+  ['external_interruption','externe Unterbrechung'],
+  ['other','sonstiges']
+];
+
+function expectationLabel(value) {
+  return ({ easier:'leichter als erwartet', as_expected:'wie erwartet', harder:'härter als erwartet' })[value] || '–';
+}
+
+function subjectiveState(activity) {
+  const source = activity.journal || activity.completion || {};
+  return {
+    session_rpe: source.session_rpe ?? null,
+    expectation_match: source.expectation_match || null,
+    pain_0_10: source.pain_0_10 ?? source.pain_during ?? null,
+    deviations: Array.isArray(source.deviations) ? source.deviations : [],
+    comment: source.comment || null,
+    authored_by_subject: source.authored_by_subject || source.athlete_authored_by_subject || null,
+    finalized: Boolean(activity.journal?.finalized_at || activity.completed_session_id)
+  };
+}
+
+function subjectiveHtml(subjective) {
+  const deviations = subjective.deviations.length
+    ? subjective.deviations.map(value => esc(String(value).replaceAll('_',' '))).join(', ')
+    : '–';
+  return `<div class="subjective-summary">
+    <dl class="comparison-facts">
+      <div><dt>Session RPE</dt><dd>${esc(subjective.session_rpe ?? '–')}</dd></div>
+      <div><dt>Erwartung</dt><dd>${esc(expectationLabel(subjective.expectation_match))}</dd></div>
+      <div><dt>Schmerz</dt><dd>${esc(subjective.pain_0_10 ?? '–')}</dd></div>
+    </dl>
+    <p><b>Abweichungen:</b> ${deviations}</p>
+    <p><b>Athlete-Kommentar:</b> ${esc(subjective.comment || '–')}</p>
+    <p class="muted">Athlete-Autor: ${esc(subjective.authored_by_subject || '–')}</p>
+  </div>`;
+}
+
+function coachNotesHtml(notes = []) {
+  if (!notes.length) return '';
+  return `<div class="coach-notes">${notes.map(note =>
+    `<div class="coach-note"><b>Coach</b><span>${esc(note.note)}</span></div>`
+  ).join('')}</div>`;
+}
+
+function journalForm(activity, subjective) {
+  if (subjective.finalized) {
+    return `<div class="finalized-subjective">${subjectiveHtml(subjective)}<p class="muted">Subjektiver Abschluss ist final; Gerätedaten dürfen später weiterhin als Provenienz andocken.</p></div>`;
+  }
+  const checked = new Set(subjective.deviations);
+  return `<form class="journal-entry-form form-grid compact" data-activity-id="${esc(activity.id)}">
+    <label>Session RPE <input name="session_rpe" type="number" min="0" max="10" step="0.5" value="${esc(subjective.session_rpe ?? '')}" required></label>
+    <label>Erwartung
+      <select name="expectation_match" required>
+        <option value="">–</option>
+        <option value="easier" ${subjective.expectation_match === 'easier' ? 'selected' : ''}>leichter</option>
+        <option value="as_expected" ${subjective.expectation_match === 'as_expected' ? 'selected' : ''}>wie erwartet</option>
+        <option value="harder" ${subjective.expectation_match === 'harder' ? 'selected' : ''}>härter</option>
+      </select>
+    </label>
+    <label>Schmerz 0–10 <input name="pain_0_10" type="number" min="0" max="10" step="1" value="${esc(subjective.pain_0_10 ?? '')}"></label>
+    <label class="wide">Athlete-Kommentar <input name="comment" type="text" maxlength="4000" value="${esc(subjective.comment ?? '')}" placeholder="Wie war die Einheit?"></label>
+    <fieldset class="deviation-fieldset wide">
+      <legend>Abweichungsgründe · optional</legend>
+      ${deviationOptions.map(([value,label]) => `<label><input type="checkbox" name="deviations" value="${esc(value)}" ${checked.has(value) ? 'checked' : ''}> ${esc(label)}</label>`).join('')}
+    </fieldset>
+    <button class="primary wide" type="submit">Journal finalisieren</button>
+  </form>`;
+}
+
 function renderActivity(activity) {
   const summary = activity.canonical_summary || {};
-  const journal = activity.journal || {};
+  const subjective = subjectiveState(activity);
   const review = activity.match_state === 'review' && activity.match_candidate_activity_id;
+  const status = subjective.finalized ? 'Journal final' : review ? 'Dublette prüfen' : 'Importiert';
   return `<article class="journal-item ${review ? 'journal-review' : ''}" data-activity-id="${esc(activity.id)}">
     <div class="journal-item-head">
       <div>
         <div class="source-badges">${sourceBadges(activity)}</div>
         <h3>${esc(activity.activity_type.replaceAll('_', ' '))}</h3>
-        <p class="muted">${esc(dateTime(activity.started_at))}${activity.planned_session_id ? ' · Plan zugeordnet' : ''}</p>
+        <p class="muted">${esc(dateTime(activity.started_at))}${activity.planned_session_id ? ' · Plan zugeordnet' : ''}${activity.completed_session_id ? ' · Completion verknüpft' : ''}</p>
       </div>
-      <span class="pill">${journal.finalized_at ? 'Journal final' : review ? 'Dublette prüfen' : 'Importiert'}</span>
+      <span class="pill">${status}</span>
     </div>
     <dl class="journal-metrics">
       ${metric('Dauer', duration(summary.duration_s))}
@@ -86,13 +164,9 @@ function renderActivity(activity) {
       ? `<div class="dedupe-warning"><strong>Mögliche Dublette</strong><span>Match ${(Number(activity.match_score || 0) * 100).toFixed(0)} %</span>${coachReadOnly ? '' : `<button class="secondary merge-activity" type="button" data-target="${esc(activity.match_candidate_activity_id)}" data-duplicate="${esc(activity.id)}">Zusammenführen</button>`}</div>`
       : ''}
     ${coachReadOnly
-      ? `<div class="coach-readonly-note muted">Coach-Ansicht: RPE, Schmerz und athlete-eigene Kommentare sind schreibgeschützt.</div>`
-      : `<form class="journal-entry-form form-grid compact" data-activity-id="${esc(activity.id)}">
-          <label>Session RPE <input name="session_rpe" type="number" min="0" max="10" step="0.5" value="${esc(journal.session_rpe ?? '')}" required></label>
-          <label>Schmerz 0–10 <input name="pain_0_10" type="number" min="0" max="10" step="1" value="${esc(journal.pain_0_10 ?? '')}"></label>
-          <label class="wide">Kommentar <input name="comment" type="text" maxlength="4000" value="${esc(journal.comment ?? '')}" placeholder="Wie war die Einheit?"></label>
-          <button class="primary wide" type="submit">${journal.finalized_at ? 'Journal aktualisieren' : 'Journal finalisieren'}</button>
-        </form>`}
+      ? `<div class="coach-readonly-note muted">Coach-Ansicht: Athlete-RPE, Erwartung, Schmerz, Abweichungen und Kommentar sind schreibgeschützt.</div>${subjectiveHtml(subjective)}`
+      : journalForm(activity, subjective)}
+    ${coachNotesHtml(activity.coach_notes)}
   </article>`;
 }
 
@@ -163,9 +237,10 @@ async function saveJournal(event) {
       method:'PUT',
       body:JSON.stringify({
         session_rpe: Number(data.get('session_rpe')),
+        expectation_match: data.get('expectation_match'),
         pain_0_10: data.get('pain_0_10') === '' ? null : Number(data.get('pain_0_10')),
         comment: String(data.get('comment') || ''),
-        deviations: [],
+        deviations: [...form.querySelectorAll('input[name="deviations"]:checked')].map(input => input.value),
         finalize: true
       })
     });

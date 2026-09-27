@@ -62,6 +62,98 @@ function formatDate(value, options = { weekday: 'short', day: '2-digit', month: 
   return new Intl.DateTimeFormat('de-DE', options).format(date);
 }
 
+function formatNumber(value, digits = 1) {
+  if (value == null || value === '' || !Number.isFinite(Number(value))) return '–';
+  return Number(value).toLocaleString('de-DE', { maximumFractionDigits: digits });
+}
+
+function formatDurationMin(value) {
+  return value == null ? '–' : `${formatNumber(value, 1)} min`;
+}
+
+function expectationLabel(value) {
+  return ({ easier:'leichter', as_expected:'wie erwartet', harder:'härter' })[value] || '–';
+}
+
+function coachNotesHtml(notes = []) {
+  if (!notes.length) return '<span class="muted">keine Coach-Notiz</span>';
+  return notes.map(note => `<div class="coach-note"><b>Coach</b><span>${esc(note.note)}</span></div>`).join('');
+}
+
+function comparisonActualHtml(actual) {
+  if (!actual) return '<p class="muted">Noch keine Ist-Daten.</p>';
+  const s = actual.subjective || {};
+  const e = actual.evidence || {};
+  const providers = (actual.provenance?.activity_sources || []).map(source =>
+    `<span class="source-badge source-${esc(source.provider)}">${esc(String(source.provider).toUpperCase())}</span>`
+  ).join('');
+  const deviations = (s.deviations || []).length ? s.deviations.map(value => esc(String(value).replaceAll('_',' '))).join(', ') : '–';
+  const work = e.work_kj == null ? '–' : `${formatNumber(e.work_kj, 0)} kJ`;
+  const pace = e.pace_500_s == null ? '–' : `${Math.floor(e.pace_500_s / 60)}:${String(Math.round(e.pace_500_s % 60)).padStart(2,'0')} /500 m`;
+  return `<div class="comparison-actual">
+    <dl class="comparison-facts">
+      <div><dt>Dauer Ist</dt><dd>${esc(formatDurationMin(actual.duration_min))}</dd></div>
+      <div><dt>RPE Ist</dt><dd>${esc(actual.session_rpe ?? '–')}</dd></div>
+      <div><dt>Erwartung</dt><dd>${esc(expectationLabel(s.expectation_match))}</dd></div>
+      <div><dt>Schmerz</dt><dd>${esc(s.pain_0_10 ?? '–')}</dd></div>
+      <div><dt>Distanz</dt><dd>${esc(e.distance_m == null ? '–' : `${formatNumber(e.distance_m / 1000, 2)} km`)}</dd></div>
+      <div><dt>Ø Leistung</dt><dd>${esc(e.avg_power_w == null ? '–' : `${formatNumber(e.avg_power_w, 0)} W`)}</dd></div>
+      <div><dt>Ø HF</dt><dd>${esc(e.avg_hr_bpm == null ? '–' : `${formatNumber(e.avg_hr_bpm, 0)} bpm`)}</dd></div>
+      <div><dt>Pace</dt><dd>${esc(pace)}</dd></div>
+      <div><dt>Arbeit</dt><dd>${esc(work)}</dd></div>
+      <div><dt>Intervalle</dt><dd>${esc(e.interval_count ?? '–')}</dd></div>
+    </dl>
+    <p><b>Abweichungen:</b> ${deviations}</p>
+    <p><b>Athlete-Kommentar:</b> ${esc(s.comment || '–')}</p>
+    <p class="muted">Athlete-Autor: ${esc(s.authored_by_subject || '–')} · Status: ${esc(actual.completion_status || '–')}</p>
+    <div class="source-badges">${providers || '<span class="muted">manuelle Completion</span>'}</div>
+    <div class="coach-notes">${coachNotesHtml(actual.coach_notes)}</div>
+    ${document.body.dataset.role === 'coach' && actual.completed_session_id ? `
+      <form class="coach-note-form" data-completed-session-id="${esc(actual.completed_session_id)}">
+        <label>Coach-Notiz <input name="note" maxlength="4000" required placeholder="Separate Coach-Beobachtung"></label>
+        <button class="secondary" type="submit">Coach-Notiz speichern</button>
+      </form>` : ''}
+  </div>`;
+}
+
+function renderWeekComparison(result) {
+  const summary = result.summary || {};
+  $('#weekComparisonSummary').innerHTML = `<div class="comparison-summary-grid">
+    <div><span>Sessions Soll</span><b>${esc(summary.planned_sessions ?? 0)}</b></div>
+    <div><span>abgeschlossen</span><b>${esc(summary.completed_planned_sessions ?? 0)}</b></div>
+    <div><span>zusätzlich</span><b>${esc(summary.unplanned_sessions ?? 0)}</b></div>
+    <div><span>Dauer Soll</span><b>${esc(formatDurationMin(summary.planned_duration_min))}</b></div>
+    <div><span>Dauer Ist</span><b>${esc(formatDurationMin(summary.actual_duration_min))}</b></div>
+    <div><span>Ø RPE Soll / Ist</span><b>${esc(formatNumber(summary.planned_rpe_average,1))} / ${esc(formatNumber(summary.actual_rpe_average,1))}</b></div>
+  </div><p class="muted">Transparente Soll/Ist-Daten; kein zusammenfassender Compliance-Score.</p>`;
+
+  const planned = (result.sessions || []).map(record => {
+    const p = record.plan;
+    const items = (p.items || []).length ? `${p.items.length} Plan-Item(s)` : 'keine strukturierten Items';
+    return `<article class="comparison-row">
+      <div class="comparison-plan">
+        <span class="mini-state ${esc(p.status || 'planned')}">${esc(p.status || 'planned')}</span>
+        <h3>${esc(p.objective)}</h3>
+        <p class="muted">${esc(formatDate(`${p.local_date}T12:00:00`))} · ${esc(p.session_type)} · v${esc(p.version)}</p>
+        <dl class="comparison-facts">
+          <div><dt>Dauer Soll</dt><dd>${esc(formatDurationMin(p.planned_duration_min))}</dd></div>
+          <div><dt>RPE Soll</dt><dd>${esc(p.planned_rpe ?? '–')}</dd></div>
+          <div><dt>Intensität</dt><dd>${esc(p.intensity_rule || '–')}</dd></div>
+          <div><dt>Items</dt><dd>${esc(items)}</dd></div>
+        </dl>
+      </div>
+      ${comparisonActualHtml(record.actual)}
+    </article>`;
+  }).join('');
+
+  const unplanned = (result.unplanned || []).map(record => `<article class="comparison-row unplanned">
+    <div class="comparison-plan"><span class="mini-state">ungeplant</span><h3>Zusätzliche Einheit</h3><p class="muted">${esc(record.actual.session_type || 'Training')}</p></div>
+    ${comparisonActualHtml(record.actual)}
+  </article>`).join('');
+
+  $('#weekComparisonDetails').innerHTML = planned + unplanned || '<p class="muted">Noch keine Soll/Ist-Daten in dieser Woche.</p>';
+}
+
 function formValue(form, name, value) {
   const input = form.elements.namedItem(name);
   if (!input) return;
@@ -189,10 +281,13 @@ function renderWeek(sessions) {
 
 async function loadWeek() {
   try {
-    const result = await api(`/api/v1/training/week?from=${encodeURIComponent(localIsoDate(weekStart))}`);
-    renderWeek(result.sessions || []);
+    const result = await api(`/api/v1/training/week-comparison?from=${encodeURIComponent(localIsoDate(weekStart))}`);
+    renderWeek((result.sessions || []).map(record => record.plan));
+    renderWeekComparison(result);
   } catch (error) {
     $('#weekSessions').innerHTML = `<p class="message error">${esc(error.message)}</p>`;
+    $('#weekComparisonSummary').innerHTML = '';
+    $('#weekComparisonDetails').innerHTML = '';
   }
 }
 
@@ -420,10 +515,13 @@ $('#sessionForm').addEventListener('submit', async (event) => {
         completed_at: now.toISOString(),
         duration_min: duration,
         session_rpe: Number(f.get('session_rpe')),
+        expectation_match: f.get('expectation_match'),
         completion_status: f.get('completion_status'),
-        pain_during: f.get('pain_during') === '' ? null : Number(f.get('pain_during')),
+        pain_0_10: f.get('pain_0_10') === '' ? null : Number(f.get('pain_0_10')),
+        pain_during: f.get('pain_0_10') === '' ? null : Number(f.get('pain_0_10')),
         pain_after: null,
-        deviations: []
+        comment: String(f.get('comment') || ''),
+        deviations: [...event.currentTarget.querySelectorAll('input[name="deviations"]:checked')].map(input => input.value)
       })
     });
     const result = await api('/api/v1/adaptation/evaluate', { method:'POST', body:'{}' });
@@ -432,6 +530,28 @@ $('#sessionForm').addEventListener('submit', async (event) => {
     await load();
   } catch (error) {
     setMessage('#sessionMessage',error.message,false);
+  }
+});
+
+$('#weekComparisonDetails').addEventListener('submit', async (event) => {
+  const form = event.target.closest('.coach-note-form');
+  if (!form) return;
+  event.preventDefault();
+  const completedSessionId = form.dataset.completedSessionId;
+  const data = new FormData(form);
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    await api(`/api/v1/completed-sessions/${encodeURIComponent(completedSessionId)}/coach-note`, {
+      method:'PUT',
+      body:JSON.stringify({ note: String(data.get('note') || '') })
+    });
+    setMessage('#sessionMessage', 'Coach-Notiz separat gespeichert.');
+    await loadWeek();
+  } catch (error) {
+    setMessage('#sessionMessage', error.message, false);
+  } finally {
+    button.disabled = false;
   }
 });
 

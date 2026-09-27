@@ -128,6 +128,8 @@
         </div>
       </div>
       <div id="weekSessions" class="week-sessions"></div>
+      <div id="weekComparisonSummary" class="comparison-summary"><p class="muted">Soll/Ist wird geladen …</p></div>
+      <div id="weekComparisonDetails" class="comparison-list"></div>
     </section>
 
     <section class="card journal-card">
@@ -190,8 +192,29 @@
         <form id="sessionForm" class="form-grid">
           <label>Dauer <input name="duration_min" type="number" min="0" step="1" required placeholder="Minuten"></label>
           <label>Session RPE <input name="session_rpe" type="number" min="0" max="10" step="0.5" required></label>
+          <label>Erwartung
+            <select name="expectation_match" required>
+              <option value="">–</option>
+              <option value="easier">leichter als erwartet</option>
+              <option value="as_expected">wie erwartet</option>
+              <option value="harder">härter als erwartet</option>
+            </select>
+          </label>
           <label>Status <select name="completion_status"><option value="completed">wie geplant</option><option value="modified">modifiziert</option><option value="stopped">abgebrochen</option></select></label>
-          <label>Schmerz währenddessen <input name="pain_during" type="number" min="0" max="10" step="1"></label>
+          <label>Schmerz 0–10 <input name="pain_0_10" type="number" min="0" max="10" step="1"></label>
+          <label class="wide">Athlete-Kommentar <input name="comment" type="text" maxlength="4000" placeholder="Was war anders als erwartet?"></label>
+          <fieldset class="deviation-fieldset wide">
+            <legend>Abweichungsgründe · optional</legend>
+            <label><input type="checkbox" name="deviations" value="time_constraint"> Zeit</label>
+            <label><input type="checkbox" name="deviations" value="weather_environment"> Wetter/Umgebung</label>
+            <label><input type="checkbox" name="deviations" value="fatigue"> Müdigkeit</label>
+            <label><input type="checkbox" name="deviations" value="pain"> Schmerz</label>
+            <label><input type="checkbox" name="deviations" value="illness"> Krankheit</label>
+            <label><input type="checkbox" name="deviations" value="equipment"> Material</label>
+            <label><input type="checkbox" name="deviations" value="intentionally_modified"> bewusst geändert</label>
+            <label><input type="checkbox" name="deviations" value="external_interruption"> externe Unterbrechung</label>
+            <label><input type="checkbox" name="deviations" value="other"> sonstiges</label>
+          </fieldset>
           <button class="primary wide" type="submit">Session speichern & auswerten</button>
         </form>
         <p id="sessionMessage" class="message"></p>

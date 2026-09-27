@@ -17,7 +17,7 @@ Garmin and comparable wearable platforms are providers of observations and optio
 3. morning check-in, with passive device context when available
 4. device/service activity ingestion and cross-provider deduplication
 5. one canonical journal activity with Garmin, Concept2 and/or RP3 source provenance
-6. athlete RPE, pain, deviations and comment
+6. athlete RPE, expectation match, pain, structured deviations and comment with authorship
 7. journal finalization into exactly one `completed_session`
 8. longitudinal Recovery, Training Tolerance, Performance Capacity, Physiological Stability and Body/Energy context where data are available
 9. event/checkpoint-driven P1/P2 specialist generation where relevant
@@ -94,7 +94,7 @@ DATABASE_URL=postgresql://<dedicated-user>:<secret>@<private-postgres-host>:5432
 DB_POOL_MAX=5
 ```
 
-PostgreSQL remains private infrastructure. Port 5432 is never exposed publicly. Active migrations live under `migrations/postgresql/`; legacy MariaDB SQL in the parent migration directory is frozen provenance. The active sequence includes specialist reasoning (004), journal/activity ingestion (005), Coach↔Athlete authorization (006) and immutable canonical training-plan import history (007). Migrations are SHA-256 tracked, transactional where supported and serialized by a PostgreSQL advisory transaction lock.
+PostgreSQL remains private infrastructure. Port 5432 is never exposed publicly. Active migrations live under `migrations/postgresql/`; legacy MariaDB SQL in the parent migration directory is frozen provenance. The active sequence includes specialist reasoning (004), journal/activity ingestion (005), Coach↔Athlete authorization (006), immutable canonical training-plan import history (007) and journal authorship/Coach notes (008). Migrations are SHA-256 tracked, transactional where supported and serialized by a PostgreSQL advisory transaction lock.
 
 The health/baseline architecture anticipates future persistence for enhanced `objective_metrics`, `device_connections`, `biometric_baselines`, `biometric_anomalies` and `body_measurements`. These are design targets until corresponding migrations/API code are implemented.
 
@@ -132,7 +132,11 @@ POST /api/v1/import/concept2/sync
 GET  /api/v1/journal
 PUT  /api/v1/journal/{activity_id}
 POST /api/v1/journal/{target_activity_id}/merge
+GET  /api/v1/training/week-comparison?from=YYYY-MM-DD
+PUT  /api/v1/completed-sessions/{completed_session_id}/coach-note
 ```
+
+The v1 journal uses one canonical completed session across manual and device-backed paths, preserves Athlete authorship, keeps Coach notes separate and exposes explicit session/week Soll-Ist without an opaque compliance score. See [`docs/journal-plan-vs-actual.md`](docs/journal-plan-vs-actual.md).
 
 ## Canonical Skillz training-plan import
 
