@@ -132,3 +132,49 @@ test('unassigned Coach receives 403 before plan import persistence', async () =>
     assert.equal(writeTouched, false);
   });
 });
+
+
+test('assigned Coach can import a canonical plan for the assigned athlete', async () => {
+  const audits = [];
+  let importedBy = null;
+  const repository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'coach', athleteId: null };
+    },
+    async coachCanAccess(subject, athleteId) {
+      return subject === 'subject-1' && athleteId === 'athlete-a';
+    },
+    async audit(athleteId, actor, eventType, entityType, entityId, details) {
+      audits.push({ athleteId, actor, eventType, entityType, entityId, details });
+    },
+    async importCanonicalPlanBundle(athleteId, normalized, actor) {
+      importedBy = actor;
+      assert.equal(athleteId, 'athlete-a');
+      assert.equal(normalized.athleteId, 'athlete-a');
+      return {
+        import_id: 'coach-import-1',
+        revision: 1,
+        content_hash: normalized.contentHash,
+        producer: normalized.producer,
+        source_refs: normalized.sourceRefs,
+        supersedes_import_id: null,
+        disposition: 'created'
+      };
+    }
+  };
+
+  await withServer(repository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/planning/import`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-sam-target-athlete': 'athlete-a'
+      },
+      body: JSON.stringify(canonicalPlanImportFixture('athlete-a'))
+    });
+    assert.equal(response.status, 201);
+    assert.equal(importedBy, 'subject-1');
+    assert.equal(audits[0].eventType, 'coach.api_access');
+    assert.equal(audits[0].athleteId, 'athlete-a');
+  });
+});
