@@ -379,7 +379,7 @@ export function createApplication({ config, repository }) {
         const body = await readJson(req);
         const completed = {
           ...body,
-          ...commonEnvelope(athleteId),
+          ...commonEnvelope(athleteId, { sourceRefs: ['manual:athlete-entry'] }),
           completed_session_id: body.completed_session_id || randomUUID(),
           planned_session_id: plannedSessionId,
           athlete_authored_by_subject: identity.subject,
