@@ -1,3 +1,4 @@
+import { validateSessionSubjective } from './journal.mjs';
 const COMMON = ['schema_version', 'athlete_id', 'generated_at', 'source_refs', 'uncertainties', 'safety_flags'];
 
 function required(value, fields) {
@@ -48,6 +49,7 @@ export function validateCompletedSession(value) {
   if (validDateTime(value.started_at) && validDateTime(value.completed_at) && Date.parse(value.completed_at) < Date.parse(value.started_at)) errors.push('completed_at must not precede started_at');
   if (!numberIn(value.duration_min, 0, Number.MAX_SAFE_INTEGER)) errors.push('duration_min must be >= 0');
   if (!numberIn(value.session_rpe, 0, 10)) errors.push('session_rpe must be 0..10');
+  errors.push(...validateSessionSubjective(value));
   const valid = new Set(['completed', 'modified', 'stopped', 'not_started']);
   if (!valid.has(value.completion_status)) errors.push('invalid completion_status');
   if (numberIn(value.duration_min, 0, Number.MAX_SAFE_INTEGER) && numberIn(value.session_rpe, 0, 10)) {
