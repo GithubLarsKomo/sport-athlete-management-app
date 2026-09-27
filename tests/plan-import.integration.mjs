@@ -80,3 +80,42 @@ test('canonical plan imports are idempotent and changed content creates immutabl
   assert.equal(priorBundle.files['sport-microcycle.json'].sessions[0].objective, 'Aerobic endurance');
   assert.equal(revisedBundle.files['sport-microcycle.json'].sessions[0].objective, 'Aerobic endurance revised');
 });
+
+
+test('canonical re-import preserves already finalized sessions while accepting the new plan revision', async () => {
+  const athleteId = `plan-finalized-${randomUUID()}`;
+  await repository.ensureAthlete({ subject: athleteId, athleteId, email: null, displayName: 'Finalized Session Athlete' });
+
+  const bundleV1 = uniqueBundle(athleteId);
+  const normalizedV1 = normalizeCanonicalPlanImportBundle(bundleV1);
+  const first = await repository.importCanonicalPlanBundle(athleteId, normalizedV1, athleteId);
+  assert.equal(first.revision, 1);
+
+  const sessionId = bundleV1.files['sport-microcycle.json'].sessions[0].planned_session_id;
+  const now = new Date();
+  await repository.completeSession(athleteId, sessionId, {
+    completed_session_id: randomUUID(),
+    planned_session_id: sessionId,
+    started_at: new Date(now.getTime() - 60 * 60000).toISOString(),
+    completed_at: now.toISOString(),
+    duration_min: 60,
+    session_rpe: 5,
+    session_load: 300,
+    completion_status: 'completed'
+  }, athleteId);
+
+  const bundleV2 = structuredClone(bundleV1);
+  bundleV2.files['sport-microcycle.json'].sessions[0].objective = 'Prescription changed after completion';
+  const normalizedV2 = normalizeCanonicalPlanImportBundle(bundleV2);
+  const second = await repository.importCanonicalPlanBundle(athleteId, normalizedV2, athleteId);
+
+  assert.equal(second.revision, 2);
+  assert.equal(second.applied.finalized_sessions_preserved, 1);
+
+  const finalized = await repository.getPlannedSessionById(athleteId, sessionId);
+  assert.equal(finalized.status, 'completed');
+  assert.equal(finalized.objective, 'Aerobic endurance');
+
+  const history = await repository.listPlanImports(athleteId);
+  assert.deepEqual(history.map(record => record.revision), [2, 1]);
+});
