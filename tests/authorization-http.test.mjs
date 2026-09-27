@@ -101,6 +101,43 @@ test('coach requires an explicit active assignment for the target athlete and ac
   });
 });
 
+test('assigned Coach cannot write athlete-authored subjective data', async () => {
+  let subjectiveWriteTouched = false;
+  const audits = [];
+  const repository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'coach', athleteId: null };
+    },
+    async coachCanAccess(_subject, athleteId) {
+      return athleteId === 'athlete-a';
+    },
+    async audit(athleteId, actor, eventType, entityType, entityId, details) {
+      audits.push({ athleteId, actor, eventType, entityType, entityId, details });
+    },
+    async saveCheckin() {
+      subjectiveWriteTouched = true;
+      return {};
+    }
+  };
+
+  await withServer(repository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/checkins`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-sam-target-athlete': 'athlete-a'
+      },
+      body: '{}'
+    });
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).error, 'coach_action_forbidden');
+    assert.equal(subjectiveWriteTouched, false);
+    assert.equal(audits[0].eventType, 'coach.api_denied');
+    assert.equal(audits[0].athleteId, 'athlete-a');
+    assert.equal(audits[0].details.reason, 'athlete_authored_or_unsupported_write');
+  });
+});
+
 test('me exposes application role without requiring athlete target', async () => {
   const repository = {
     async resolvePrincipal(identity) {
