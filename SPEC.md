@@ -1,6 +1,6 @@
 # SPEC.md — Rowing Sport OS / Sport Journal v1
 
-Status: **approval pending**  
+Status: **approved**  
 Spec ID: `rowing-sport-os-journal-v1`  
 Version: 0.1.0  
 Repository: `GithubLarsKomo/sport-athlete-management-app`  
@@ -532,4 +532,4 @@ Garmin cloud, embedded LLM and Athlete Second Brain remain later increments.
 ### Open blockers
 None for specification content.
 
-The only remaining workflow gate is **explicit user approval of this SPEC version** before `spec-to-vertical-issues`.
+The specification was explicitly approved by the user on 2026-09-27 and is released to `spec-to-vertical-issues`.
