@@ -276,3 +276,36 @@ test('manual Athlete completion preserves subjective authorship and v1 post-sess
     assert.equal(captured.payload.session_load, 360);
   });
 });
+
+
+test('weekly plan-vs-actual endpoint routes the authenticated Athlete scope and validates from date', async () => {
+  const calls = [];
+  const repository = {
+    async resolvePrincipal(identity) {
+      return { ...identity, role: 'athlete', athleteId: 'athlete-a' };
+    },
+    async getWeekComparison(athleteId, from) {
+      calls.push([athleteId, from]);
+      return {
+        from,
+        to: '2026-10-04',
+        sessions: [],
+        unplanned: [],
+        summary: { planned_sessions: 0, completed_planned_sessions: 0, unplanned_sessions: 0 }
+      };
+    }
+  };
+
+  await withServer(repository, async port => {
+    const response = await fetch(`http://127.0.0.1:${port}/api/v1/training/week-comparison?from=2026-09-28`);
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.from, '2026-09-28');
+    assert.deepEqual(calls, [['athlete-a','2026-09-28']]);
+
+    const invalid = await fetch(`http://127.0.0.1:${port}/api/v1/training/week-comparison?from=28-09-2026`);
+    assert.equal(invalid.status, 400);
+    assert.equal((await invalid.json()).error, 'invalid_from_date');
+    assert.equal(calls.length, 1);
+  });
+});
