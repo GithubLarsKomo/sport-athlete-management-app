@@ -151,6 +151,17 @@ test('Garmin and Concept2 imports collapse to one journal activity and finalize 
   assert.equal(row.actual.coach_notes[0].note, 'Technik im nächsten Block beobachten.');
   assert.equal(comparison.summary.planned_sessions >= 1, true);
   assert.equal(comparison.summary.completed_planned_sessions >= 1, true);
+
+  await assert.rejects(
+    repository.saveJournalEntry(athleteId, first.activity.id, {
+      session_rpe: 3,
+      expectation_match: 'easier',
+      pain_0_10: 0,
+      deviations: [],
+      finalize: true
+    }, athleteId),
+    error => error.statusCode === 409 && error.message === 'journal_already_finalized'
+  );
 });
 
 test('an unplanned imported activity becomes training history after journal finalization', async () => {
@@ -226,6 +237,17 @@ test('a device import after manual completion links to the existing completed se
   );
   assert.equal(repeated.disposition, 'exact_duplicate');
   assert.equal(repeated.activity.completed_session_id, completedId);
+
+  await assert.rejects(
+    repository.saveJournalEntry(manualFirstAthleteId, imported.activity.id, {
+      session_rpe: 4,
+      expectation_match: 'as_expected',
+      pain_0_10: 0,
+      deviations: [],
+      finalize: true
+    }, manualFirstAthleteId),
+    error => error.statusCode === 409 && error.message === 'session_already_finalized_elsewhere'
+  );
 
   const counts = await db.query('SELECT COUNT(*)::int AS count FROM completed_sessions WHERE athlete_id=?', [manualFirstAthleteId]);
   assert.equal(Number(counts[0].count), 1);
