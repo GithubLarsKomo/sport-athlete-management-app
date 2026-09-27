@@ -3,8 +3,8 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-185000-vi-001-hardened.md",
-  "currentStage": "implementation",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-190000-vi-001-delivered.md",
+  "currentStage": "backlog",
   "canonicalArtifacts": [
     {
       "type": "wayfinding",
@@ -51,8 +51,14 @@
     {
       "type": "implementation-evidence",
       "path": "docs/engineering/vi-001/implementation-evidence.json",
-      "status": "implemented-ci-verified-final-code-head",
-      "ref": "e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77"
+      "status": "delivered",
+      "ref": "a5915db7d7c2f67e6466f7079c01f0b3e90d0199"
+    },
+    {
+      "type": "delivered-increment",
+      "path": "docs/project-memory/events/EVT-20260927-190000-vi-001-delivered.md",
+      "status": "completed",
+      "ref": "a5915db7d7c2f67e6466f7079c01f0b3e90d0199"
     }
   ],
   "decisions": [
@@ -69,18 +75,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-008",
+      "id": "OPEN-009",
       "type": "pending",
-      "summary": "Review VI-001 / PR #29 on exact final head.",
-      "nextAction": "Run two-axis-code-review after current-head GitHub-hosted CI."
+      "summary": "Implement VI-002 / GitHub #22.",
+      "nextAction": "Implement canonical Skillz training-plan import with provenance, idempotency and revision history."
     }
   ],
   "lastVerified": {
-    "headSha": "e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77",
-    "at": "2026-09-27T18:50:00+02:00"
+    "headSha": "a5915db7d7c2f67e6466f7079c01f0b3e90d0199",
+    "at": "2026-09-27T19:00:00+02:00"
   },
   "nextAction": {
-    "description": "Run exact-head two-axis review for PR #29 after evidence-only commits pass CI.",
-    "skill": "two-axis-code-review"
+    "description": "Implement VI-002 / GitHub issue #22.",
+    "skill": "iterate-software-projects"
   }
 }

@@ -6,6 +6,7 @@ Status: ready
 
 ## VI-001 — Add Coach↔Athlete authorization end to end
 
+**Status:** DELIVERED · PR #29 · merge `a5915db7d7c2` · main CI green  
 **GitHub:** #21 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/21
 
 **Outcome:** An Authentik-authenticated Coach can work only with explicitly assigned athletes, while Athlete self-service continues unchanged and every cross-athlete action is auditable.

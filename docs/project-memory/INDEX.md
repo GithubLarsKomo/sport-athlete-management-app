@@ -9,7 +9,7 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 is implemented on PR #29 with GitHub-hosted CI evidence and is awaiting exact-head two-axis review.
+Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 is reviewed, merged and closed; main CI is green. VI-002/#22 is the active critical-path increment.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
@@ -23,7 +23,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260927-184000-vi-001-implemented.md)
+- [Latest event](events/EVT-20260927-190000-vi-001-delivered.md)
 
 ## Canonical project artifacts
 
@@ -39,7 +39,7 @@ Confirmed v1 additions include:
 
 - [Vertical issues](../backlog/rowing-sport-os-journal-v1-vertical-issues.md)
 - [Dependency order](../backlog/rowing-sport-os-journal-v1-dependency-order.json)
-- VI-001 → GitHub #21
+- VI-001 → GitHub #21 — **delivered**
 - VI-002 → GitHub #22
 - VI-003 → GitHub #23
 - VI-004 → GitHub #24
@@ -47,18 +47,25 @@ Confirmed v1 additions include:
 - VI-006 → GitHub #26
 - VI-007 → GitHub #27
 
+## Delivered increments
+
+### VI-001 / GitHub #21
+
+- PR #29
+- merge: `a5915db7d7c2f67e6466f7079c01f0b3e90d0199`
+- main CI: `36334503326` success
+- [Implementation evidence](../engineering/vi-001/implementation-evidence.json)
+- review decision: PASS / PASS WITH NOTES
+- issue state: completed
+
 ## Current engineering increment
 
-- VI-001 / GitHub #21
-- PR #29
-- [Implementation evidence](../engineering/vi-001/implementation-evidence.json)
-- [Reviewable change brief](../engineering/vi-001/reviewable-change-brief.md)
-- [Residual-risk handoff](../engineering/vi-001/implementation-residual-risk-handoff.json)
+VI-002 / GitHub #22 — canonical Skillz training-plan import with provenance, idempotency and revision history.
 
 ## Open loop
 
-Two-axis review of the exact final PR #29 head.
+Implement and review VI-002.
 
 ## Next step
 
-Review VI-001 against Issue #21 and the approved SPEC, then enter delivery follow-up if approved.
+Start VI-002 from current main.
