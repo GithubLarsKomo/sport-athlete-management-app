@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "lastIteration": {
+    "verticalIssueId": "VI-002",
+    "issue": 22,
+    "requirements": ["REQ-PLAN-001", "REQ-PLAN-002", "REQ-PLAN-003", "REQ-PLAN-004", "REQ-PLAN-005"],
+    "reviewedHeadSha": "5f8bcb92383c259c4ae23656e03465b879172eff",
+    "mergedSha": "37e45c8298da64b9810e0b36147cc11449021470",
+    "status": "closed-with-followups"
+  },
+  "completionEvidence": [
+    "PR #31 merged",
+    "Issue #22 closed completed",
+    "Reviewed-head CI #101 success",
+    "Main push CI #102 success",
+    "Canonical import revision history, idempotency, authorization, projection and provenance covered by automated tests"
+  ],
+  "openGaps": [
+    "Production deployment acceptance remains VI-007/#27.",
+    "Automated plan delivery is later scope."
+  ],
+  "doNotRepeat": [
+    "Do not reimplement Skillz sport-science plan generation in the WebApp.",
+    "Do not infer planned sessions from sport-training-plan.json weeks[] when canonical sport-microcycle.json sessions are available.",
+    "Do not overwrite finalized sessions during canonical plan re-import.",
+    "Do not derive journal local_date by slicing a UTC/offset timestamp; use Europe/Berlin.",
+    "Do not add a self-hosted GitHub runner unless a later requirement explicitly justifies it."
+  ],
+  "nextIteration": {
+    "verticalIssueId": "VI-003",
+    "issue": 23,
+    "title": "Unify FIT/manual journal completion with plan-vs-actual views",
+    "earliestNecessaryAction": "Inspect current activity-import, journal-completion and plan-vs-actual persistence paths against Issue #23 before implementing the smallest convergent slice."
+  }
+}

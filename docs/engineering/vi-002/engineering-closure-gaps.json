@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#22",
+  "verticalIssueId": "VI-002",
+  "blockingGaps": [],
+  "followUps": [
+    {
+      "id": "FU-002-01",
+      "state": "planned",
+      "summary": "Automated plan delivery remains outside the manual-first MVP.",
+      "owner": "later-scope"
+    },
+    {
+      "id": "FU-002-02",
+      "state": "deferred",
+      "summary": "Production Authentik/Coolify acceptance remains VI-007/#27.",
+      "owner": "VI-007"
+    },
+    {
+      "id": "FU-002-03",
+      "state": "contract-boundary",
+      "summary": "A future Skillz contract version requires an explicit importer adapter/version update.",
+      "owner": "future-contract-change"
+    }
+  ],
+  "closureState": "closed-with-followups"
+}

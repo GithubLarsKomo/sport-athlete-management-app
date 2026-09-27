@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#22",
+  "verticalIssueId": "VI-002",
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "base": "main",
+    "featureBranch": "feat/vi-002-canonical-plan-import",
+    "reviewedHeadSha": "5f8bcb92383c259c4ae23656e03465b879172eff",
+    "pr": 31,
+    "mergeSha": "37e45c8298da64b9810e0b36147cc11449021470"
+  },
+  "review": {
+    "axis1": "pass",
+    "axis2": "pass-with-notes",
+    "decision": "approve-with-notes",
+    "reviewId": 5331448398,
+    "reviewFreshnessAtMerge": "fresh"
+  },
+  "checks": {
+    "reviewHeadCi": {
+      "runId": 36339091164,
+      "runNumber": 101,
+      "headSha": "5f8bcb92383c259c4ae23656e03465b879172eff",
+      "conclusion": "success"
+    },
+    "mainPushCi": {
+      "runId": 36339192684,
+      "runNumber": 102,
+      "headSha": "37e45c8298da64b9810e0b36147cc11449021470",
+      "conclusion": "success"
+    }
+  },
+  "mergeState": "merged",
+  "deploymentState": "not-applicable-for-vi-002",
+  "issueClosure": {
+    "issue": 22,
+    "trackerState": "closed",
+    "stateReason": "completed",
+    "closureState": "verified"
+  },
+  "requirements": {
+    "sourceIds": ["REQ-PLAN-001", "REQ-PLAN-002", "REQ-PLAN-003", "REQ-PLAN-004", "REQ-PLAN-005"],
+    "closureState": "verified-for-v1",
+    "evidence": [
+      "PR #31 exact-head two-axis review anchored to 5f8bcb92383c259c4ae23656e03465b879172eff",
+      "GitHub Actions run 36339091164 passed on reviewed head",
+      "Squash merge 37e45c8298da64b9810e0b36147cc11449021470",
+      "GitHub Actions main push run 36339192684 passed",
+      "Issue #22 closed with reason completed"
+    ]
+  },
+  "residualRisks": [
+    "Importer is intentionally pinned to Skillz sport-training-plan-workflow contract 0.1.0.",
+    "v1 activation requires season, mesocycle and microcycle companion artifacts.",
+    "Manual JSON import is the approved MVP path; automated delivery is later scope.",
+    "Production Authentik/Coolify E2E remains owned by VI-007/#27.",
+    "Open-session reconciliation assumes stable canonical entity IDs across revisions."
+  ],
+  "status": "closed-with-followups",
+  "nextSkill": "iterate-software-projects"
+}

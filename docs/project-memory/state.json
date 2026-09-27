@@ -3,7 +3,7 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-190000-vi-001-delivered.md",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-200300-vi-002-delivered.md",
   "currentStage": "backlog",
   "canonicalArtifacts": [
     {
@@ -59,6 +59,18 @@
       "path": "docs/project-memory/events/EVT-20260927-190000-vi-001-delivered.md",
       "status": "completed",
       "ref": "a5915db7d7c2f67e6466f7079c01f0b3e90d0199"
+    },
+    {
+      "type": "engineering-delivery-status",
+      "path": "docs/engineering/vi-002/engineering-delivery-status.json",
+      "status": "delivered",
+      "ref": "37e45c8298da64b9810e0b36147cc11449021470"
+    },
+    {
+      "type": "delivered-increment",
+      "path": "docs/project-memory/events/EVT-20260927-200300-vi-002-delivered.md",
+      "status": "completed",
+      "ref": "37e45c8298da64b9810e0b36147cc11449021470"
     }
   ],
   "decisions": [
@@ -75,18 +87,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-009",
+      "id": "OPEN-010",
       "type": "pending",
-      "summary": "Implement VI-002 / GitHub #22.",
-      "nextAction": "Implement canonical Skillz training-plan import with provenance, idempotency and revision history."
+      "summary": "Implement VI-003 / GitHub #23.",
+      "nextAction": "Unify FIT/manual journal completion with Athlete-authored subjective finalization and transparent session/week plan-vs-actual views."
     }
   ],
   "lastVerified": {
-    "headSha": "a5915db7d7c2f67e6466f7079c01f0b3e90d0199",
-    "at": "2026-09-27T19:00:00+02:00"
+    "headSha": "37e45c8298da64b9810e0b36147cc11449021470",
+    "at": "2026-09-27T20:03:00+02:00"
   },
   "nextAction": {
-    "description": "Implement VI-002 / GitHub issue #22.",
+    "description": "Implement VI-003 / GitHub issue #23.",
     "skill": "iterate-software-projects"
   }
 }
