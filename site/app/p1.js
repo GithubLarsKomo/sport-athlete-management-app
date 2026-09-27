@@ -72,7 +72,11 @@ function render(records) {
 async function load() {
   if (!target) return;
   try {
-    const response = await fetch('/api/v1/p1/artifacts/latest', { credentials: 'same-origin' });
+    const targetAthlete = new URLSearchParams(window.location.search).get('athlete')?.trim() || '';
+    const response = await fetch('/api/v1/p1/artifacts/latest', {
+      credentials: 'same-origin',
+      headers: targetAthlete ? { 'x-sam-target-athlete': targetAthlete } : {}
+    });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
     render(body.artifacts || []);
