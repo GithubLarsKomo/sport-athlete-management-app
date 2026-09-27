@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#23",
+  "verticalIssueId": "VI-003",
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "base": "main",
+    "featureBranch": "feat/vi-003-journal-plan-vs-actual",
+    "reviewedHeadSha": "8f6f0148ae5c460613cb29c33af965de3dd4cc3f",
+    "pr": 33,
+    "mergeSha": "50acab4696854c94e9ceb2142d15f50ea154e746"
+  },
+  "review": {
+    "axis1": "pass",
+    "axis2": "pass-with-notes",
+    "decision": "approve-with-notes",
+    "reviewId": 5332013694,
+    "reviewFreshnessAtMerge": "fresh"
+  },
+  "checks": {
+    "reviewHeadCi": {
+      "runId": 36349249828,
+      "runNumber": 116,
+      "headSha": "8f6f0148ae5c460613cb29c33af965de3dd4cc3f",
+      "conclusion": "success"
+    },
+    "mainPushCi": {
+      "runId": 36349327148,
+      "runNumber": 117,
+      "headSha": "50acab4696854c94e9ceb2142d15f50ea154e746",
+      "conclusion": "success"
+    }
+  },
+  "mergeState": "merged",
+  "deploymentState": "not-applicable-for-vi-003",
+  "issueClosure": {
+    "issue": 23,
+    "trackerState": "closed",
+    "stateReason": "completed",
+    "closureState": "verified"
+  },
+  "requirements": {
+    "sourceIds": [
+      "REQ-JRN-001","REQ-JRN-002","REQ-JRN-003","REQ-JRN-004","REQ-JRN-005","REQ-JRN-006","REQ-JRN-007",
+      "REQ-CHECK-001","REQ-CHECK-002","REQ-IMP-001","REQ-IMP-002","REQ-IMP-003","REQ-IMP-004"
+    ],
+    "closureState": "verified-for-v1",
+    "evidence": [
+      "PR #33 exact-head two-axis review anchored to 8f6f0148ae5c460613cb29c33af965de3dd4cc3f",
+      "GitHub Actions run 36349249828 passed on reviewed head",
+      "Squash merge 50acab4696854c94e9ceb2142d15f50ea154e746",
+      "GitHub Actions main push run 36349327148 passed",
+      "Issue #23 closed with reason completed"
+    ]
+  },
+  "residualRisks": [
+    "Late same-sport completion attachment remains heuristic by start time and duration and may later need explicit ambiguity review.",
+    "Item-level comparison remains transparent plan-item count versus observed interval evidence rather than an inferred compliance score.",
+    "Historical pre-migration-008 journal rows may have null expectation/authorship metadata.",
+    "Production Authentik/Coolify E2E remains owned by VI-007/#27.",
+    "Garmin Connect cloud OAuth remains out of scope; manual FIT/TCX import is the v1 Garmin path."
+  ],
+  "status": "closed-with-followups",
+  "nextSkill": "iterate-software-projects"
+}

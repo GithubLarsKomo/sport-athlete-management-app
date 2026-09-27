@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "lastIteration": {
+    "verticalIssueId": "VI-003",
+    "issue": 23,
+    "requirements": [
+      "REQ-JRN-001","REQ-JRN-002","REQ-JRN-003","REQ-JRN-004","REQ-JRN-005","REQ-JRN-006","REQ-JRN-007",
+      "REQ-CHECK-001","REQ-CHECK-002","REQ-IMP-001","REQ-IMP-002","REQ-IMP-003","REQ-IMP-004"
+    ],
+    "reviewedHeadSha": "8f6f0148ae5c460613cb29c33af965de3dd4cc3f",
+    "mergedSha": "50acab4696854c94e9ceb2142d15f50ea154e746",
+    "status": "closed-with-followups"
+  },
+  "completionEvidence": [
+    "PR #33 merged",
+    "Issue #23 closed completed",
+    "Reviewed-head CI #116 success",
+    "Main push CI #117 success",
+    "Real FIT normalization identity plus Garmin repository re-import prove idempotency",
+    "PostgreSQL integration proves RPE gate, single finalization, late manual-completion attachment, authorship, Coach-note separation and compatible type matching",
+    "Weekly Soll-Ist endpoint/UI exposes explicit evidence without opaque compliance score"
+  ],
+  "openGaps": [
+    "Production deployment acceptance remains VI-007/#27.",
+    "Same-sport late attachment heuristic can be hardened later if collision evidence appears."
+  ],
+  "doNotRepeat": [
+    "Do not let device import synthesize Athlete subjective data.",
+    "Do not create a second completed_session when late device evidence matches an existing completion.",
+    "Do not let Coach notes overwrite Athlete-authored RPE, expectation, pain, deviations or comments.",
+    "Do not match activities to planned/completed sessions across incompatible activity types.",
+    "Do not replace explicit Soll-Ist evidence with an opaque compliance score.",
+    "Do not add Garmin Connect OAuth or a self-hosted runner in this v1 slice."
+  ],
+  "nextIteration": {
+    "verticalIssueId": "VI-004",
+    "issue": 24,
+    "title": "Add structured RowErg and bike performance testing",
+    "earliestNecessaryAction": "Inspect existing performance-test persistence/contracts against REQ-TST-001 through REQ-TST-007 and implement the smallest schema that supports fixed RowErg tests, staged lactate tests and generic staged protocols without conflating measured, derived and estimated values."
+  }
+}
