@@ -12,7 +12,8 @@
     "reconcile": "node scripts/reconcile-postgresql.mjs",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check-syntax.mjs",
-    "test:integration": "node --test tests/*.integration.mjs"
+    "test:integration": "node --test tests/*.integration.mjs",
+    "coach:access": "node scripts/manage-coach-access.mjs"
   },
   "engines": {
     "node": ">=22 <23"
