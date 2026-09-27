@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#21",
+  "verticalIssueId": "VI-001",
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "base": "main",
+    "baseSha": "4053761d98da8514fb1124d91965fc3b77506a2a",
+    "branch": "feat/vi-001-coach-athlete-authorization",
+    "headSha": "e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77",
+    "pr": 29
+  },
+  "acceptanceCriteria": [
+    {
+      "id": "AC-21-01",
+      "criterion": "Athlete A cannot access Athlete B.",
+      "status": "fulfilled",
+      "evidence": [
+        "tests/authorization-http.test.mjs: athlete defaults to own scope and foreign target returns 403.",
+        "GitHub Actions CI run 36334008337 passed npm test."
+      ]
+    },
+    {
+      "id": "AC-21-02",
+      "criterion": "Coach assigned to Athlete A can access Athlete A.",
+      "status": "fulfilled",
+      "evidence": [
+        "tests/authorization-http.test.mjs assigned-Coach HTTP case.",
+        "tests/authorization.integration.mjs real PostgreSQL grant + targeted HTTP GET returns 200.",
+        "CI run 36334008337 passed integration tests."
+      ]
+    },
+    {
+      "id": "AC-21-03",
+      "criterion": "Same Coach receives 403 for unassigned Athlete B.",
+      "status": "fulfilled",
+      "evidence": [
+        "tests/authorization-http.test.mjs unassigned target returns athlete_scope_forbidden/403."
+      ]
+    },
+    {
+      "id": "AC-21-04",
+      "criterion": "Revoked assignment blocks subsequent access.",
+      "status": "fulfilled",
+      "evidence": [
+        "tests/authorization.integration.mjs grants access, revokes persisted assignment, then same HTTP route returns 403.",
+        "Assignment interval retains effective_from/effective_to history."
+      ]
+    },
+    {
+      "id": "AC-21-05",
+      "criterion": "Audit identifies Coach actor and target athlete.",
+      "status": "fulfilled",
+      "evidence": [
+        "Allowed Coach request writes coach.api_access with actor_subject and athlete_id.",
+        "Grant/revoke write coach.assignment.granted/revoked.",
+        "Forbidden subjective write writes coach.api_denied.",
+        "Real PostgreSQL integration test verifies access audit."
+      ]
+    },
+    {
+      "id": "AC-21-06",
+      "criterion": "Migration/readiness and automated tests pass.",
+      "status": "fulfilled",
+      "evidence": [
+        "GitHub-hosted ubuntu-latest CI run 36334008337: npm test, syntax check, migration 006, readiness, integration suite, reconciliation and Docker build all passed."
+      ]
+    }
+  ],
+  "changedFiles": [
+    {
+      "path": "migrations/postgresql/006_coach_athlete_authorization.sql",
+      "rationale": "Add application principals and historical Coach↔Athlete assignments without altering prior tables."
+    },
+    {
+      "path": "src/persistence/repository.mjs",
+      "rationale": "Resolve principals, provision Coaches, grant/revoke assignments and verify active access."
+    },
+    {
+      "path": "src/app.mjs",
+      "rationale": "Separate actor from target athlete, authorize every user athlete-scoped route and restrict Coach writes."
+    },
+    {
+      "path": "scripts/manage-coach-access.mjs",
+      "rationale": "Provide v1 operator-controlled Coach provisioning/assignment without public Admin API."
+    },
+    {
+      "path": "site/index.html",
+      "rationale": "Expose explicit current-athlete context to Coach."
+    },
+    {
+      "path": "site/app/app.js",
+      "rationale": "Select assigned athlete and keep Athlete-authored forms read-only for Coach."
+    },
+    {
+      "path": "site/app/journal.js",
+      "rationale": "Carry selected athlete target, keep Athlete journal/import controls read-only for Coach, and avoid pre-selection errors."
+    },
+    {
+      "path": "site/app/p1.js",
+      "rationale": "Carry selected athlete target for read-only specialist evidence and avoid pre-selection errors."
+    },
+    {
+      "path": "site/app/styles.css",
+      "rationale": "Minimal existing-design-compatible styling for Coach athlete selector."
+    },
+    {
+      "path": "tests/authorization-http.test.mjs",
+      "rationale": "Focused actor/target/capability authorization tests."
+    },
+    {
+      "path": "tests/authorization.integration.mjs",
+      "rationale": "Real PostgreSQL + HTTP grant/revoke/audit proof."
+    },
+    {
+      "path": "docs/coach-access.md",
+      "rationale": "Document trust boundary and operator workflow."
+    },
+    {
+      "path": "package.json",
+      "rationale": "Expose operator Coach access command."
+    }
+  ],
+  "verification": {
+    "focused": [
+      "tests/authorization-http.test.mjs",
+      "tests/authorization.integration.mjs"
+    ],
+    "regression": [
+      "npm test",
+      "npm run check",
+      "npm run migrate",
+      "npm run ready",
+      "npm run test:integration",
+      "npm run reconcile",
+      "docker build"
+    ],
+    "external": [
+      "GitHub Actions run 36334290860: success on exact implementation code head e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77"
+    ]
+  },
+  "impacts": {
+    "migration": "Additive PostgreSQL migration 006. Existing athletes are backfilled as Athlete principals. No historical migration is modified.",
+    "security": "Authentik remains authentication boundary. x-sam-target-athlete is an untrusted selector; DB assignment is authoritative. Coach writes to Athlete-authored subjective surfaces are denied.",
+    "compatibility": "Unknown existing Authentik subjects continue to self-provision as Athletes. Coaches must be provisioned by an operator before first Coach use."
+  },
+  "rollback": "Application code can be rolled back while retaining additive authorization tables; do not edit/reverse migration 006. A later forward migration is required if schema rollback is ever necessary.",
+  "residualRisks": [
+    "Production Authentik/Coolify end-to-end deployment verification remains part of VI-007/#27, not VI-001.",
+    "Coach provisioning must occur before a new Coach first logs in; otherwise backward-compatible unknown-subject behavior creates an Athlete principal and intentional role-conflict protection prevents silent promotion.",
+    "Coach UI is intentionally read-only for Athlete-authored journal/check-in/session-completion fields; separate Coach notes arrive in the later journal vertical."
+  ],
+  "status": "externally-verified-ci-final-code-head",
+  "nextSkill": "two-axis-code-review"
+}

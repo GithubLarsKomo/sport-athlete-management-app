@@ -41,6 +41,14 @@ function writeOriginAllowed(req, config) {
   try { return new URL(origin).origin === expected; } catch { return false; }
 }
 
+function coachActionAllowed(method, pathname) {
+  if (!MUTATING.has(method || '')) return true;
+  if (method === 'PUT' && pathname === '/api/v1/planning/active') return true;
+  if (method === 'POST' && pathname === '/api/v1/adaptation/evaluate') return true;
+  if (method === 'POST' && /^\/api\/v1\/adaptation\/[^/]+\/apply$/.test(pathname)) return true;
+  return false;
+}
+
 function localDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
@@ -148,10 +156,55 @@ export function createApplication({ config, repository }) {
 
       const identity = resolveIdentity(req, config);
       if (!identity) return sendJson(res, 401, { error: 'unauthorized' });
-      await repository.ensureAthlete(identity);
-      const athleteId = identity.athleteId;
 
-      if (req.method === 'GET' && url.pathname === '/api/v1/me') return sendJson(res, 200, identity);
+      let principal;
+      if (typeof repository.resolvePrincipal === 'function') {
+        principal = await repository.resolvePrincipal(identity);
+      } else {
+        await repository.ensureAthlete(identity);
+        principal = { ...identity, role: 'athlete' };
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/me') return sendJson(res, 200, principal);
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/coach/athletes') {
+        if (principal.role !== 'coach') return sendJson(res, 403, { error: 'coach_role_required' });
+        return sendJson(res, 200, { athletes: await repository.listCoachAthletes(principal.subject) });
+      }
+
+      const requestedAthleteId = String(firstHeader(req.headers['x-sam-target-athlete']) || '').trim();
+      let athleteId;
+      if (principal.role === 'coach') {
+        if (!requestedAthleteId) return sendJson(res, 400, { error: 'athlete_target_required' });
+        if (!await repository.coachCanAccess(principal.subject, requestedAthleteId)) {
+          return sendJson(res, 403, { error: 'athlete_scope_forbidden' });
+        }
+        athleteId = requestedAthleteId;
+        if (!coachActionAllowed(req.method, url.pathname)) {
+          await repository.audit(
+            athleteId,
+            principal.subject,
+            'coach.api_denied',
+            'api_route',
+            url.pathname,
+            { method: req.method || 'GET', reason: 'athlete_authored_or_unsupported_write' }
+          );
+          return sendJson(res, 403, { error: 'coach_action_forbidden' });
+        }
+        await repository.audit(
+          athleteId,
+          principal.subject,
+          'coach.api_access',
+          'api_route',
+          url.pathname,
+          { method: req.method || 'GET' }
+        );
+      } else {
+        athleteId = principal.athleteId;
+        if (requestedAthleteId && requestedAthleteId !== athleteId) {
+          return sendJson(res, 403, { error: 'athlete_scope_forbidden' });
+        }
+      }
       if (req.method === 'GET' && url.pathname === '/api/v1/athlete/profile') return sendJson(res, 200, { profile: await repository.getProfile(athleteId) });
       if (req.method === 'PUT' && url.pathname === '/api/v1/athlete/profile') {
         const body = await readJson(req);

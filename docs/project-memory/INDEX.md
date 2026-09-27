@@ -9,7 +9,7 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved and the implementation backlog is materialized as GitHub issues #21–#27.
+Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 is implemented on PR #29 with GitHub-hosted CI evidence and is awaiting exact-head two-axis review.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
@@ -23,7 +23,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260927-181000-rowing-sport-os-backlog.md)
+- [Latest event](events/EVT-20260927-184000-vi-001-implemented.md)
 
 ## Canonical project artifacts
 
@@ -47,10 +47,18 @@ Confirmed v1 additions include:
 - VI-006 → GitHub #26
 - VI-007 → GitHub #27
 
+## Current engineering increment
+
+- VI-001 / GitHub #21
+- PR #29
+- [Implementation evidence](../engineering/vi-001/implementation-evidence.json)
+- [Reviewable change brief](../engineering/vi-001/reviewable-change-brief.md)
+- [Residual-risk handoff](../engineering/vi-001/implementation-residual-risk-handoff.json)
+
 ## Open loop
 
-Implementation has not started.
+Two-axis review of the exact final PR #29 head.
 
 ## Next step
 
-Implement VI-001 / GitHub #21: Coach↔Athlete authorization end to end.
+Review VI-001 against Issue #21 and the approved SPEC, then enter delivery follow-up if approved.
