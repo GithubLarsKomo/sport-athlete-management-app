@@ -41,5 +41,35 @@
     "VI-007"
   ],
   "blocked": [],
-  "rationale": "Authorization is the first privacy/safety boundary. Plan and test foundations precede adaptation handoff. Full data export follows availability of all v1 domains. Production deployment closes the MVP after all vertical acceptance paths exist."
+  "rationale": "Authorization is the first privacy/safety boundary. Plan and test foundations precede adaptation handoff. Full data export follows availability of all v1 domains. Production deployment closes the MVP after all vertical acceptance paths exist.",
+  "githubIssueMap": {
+    "VI-001": {
+      "number": 21,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/21"
+    },
+    "VI-002": {
+      "number": 22,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/22"
+    },
+    "VI-003": {
+      "number": 23,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/23"
+    },
+    "VI-004": {
+      "number": 24,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/24"
+    },
+    "VI-005": {
+      "number": 25,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/25"
+    },
+    "VI-006": {
+      "number": 26,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/26"
+    },
+    "VI-007": {
+      "number": 27,
+      "url": "https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/27"
+    }
+  }
 }
