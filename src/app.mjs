@@ -41,6 +41,14 @@ function writeOriginAllowed(req, config) {
   try { return new URL(origin).origin === expected; } catch { return false; }
 }
 
+function coachActionAllowed(method, pathname) {
+  if (!MUTATING.has(method || '')) return true;
+  if (method === 'PUT' && pathname === '/api/v1/planning/active') return true;
+  if (method === 'POST' && pathname === '/api/v1/adaptation/evaluate') return true;
+  if (method === 'POST' && /^\/api\/v1\/adaptation\/[^/]+\/apply$/.test(pathname)) return true;
+  return false;
+}
+
 function localDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
@@ -172,6 +180,17 @@ export function createApplication({ config, repository }) {
           return sendJson(res, 403, { error: 'athlete_scope_forbidden' });
         }
         athleteId = requestedAthleteId;
+        if (!coachActionAllowed(req.method, url.pathname)) {
+          await repository.audit(
+            athleteId,
+            principal.subject,
+            'coach.api_denied',
+            'api_route',
+            url.pathname,
+            { method: req.method || 'GET', reason: 'athlete_authored_or_unsupported_write' }
+          );
+          return sendJson(res, 403, { error: 'coach_action_forbidden' });
+        }
         await repository.audit(
           athleteId,
           principal.subject,
