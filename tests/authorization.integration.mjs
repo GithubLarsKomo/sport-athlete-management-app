@@ -95,7 +95,10 @@ test('Coach assignment grant and revoke control real athlete-scoped HTTP access'
     );
     assert.equal(accessAudit[0].athlete_id, athleteId);
     assert.equal(accessAudit[0].actor_subject, coachSubject);
-    assert.equal(accessAudit[0].details_json.method, 'GET');
+    const accessDetails = typeof accessAudit[0].details_json === 'string'
+      ? JSON.parse(accessAudit[0].details_json)
+      : accessAudit[0].details_json;
+    assert.equal(accessDetails.method, 'GET');
 
     const revoked = await repository.setCoachAthleteAssignment({
       coachSubject,
