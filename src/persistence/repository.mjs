@@ -31,6 +31,143 @@ function plannedPayload(session) {
 
 export function createRepository(db) {
   return {
+    async resolvePrincipal(identity) {
+      let rows = await db.query(
+        'SELECT auth_subject, role, athlete_id, email, display_name, active FROM app_principals WHERE auth_subject=? LIMIT 1',
+        [identity.subject]
+      );
+
+      if (!rows[0]) {
+        await this.ensureAthlete(identity);
+        await db.query(`INSERT INTO app_principals (auth_subject, role, athlete_id, email, display_name, active)
+          VALUES (?, 'athlete', ?, ?, ?, TRUE)
+          ON CONFLICT (auth_subject) DO NOTHING`,
+          [identity.subject, identity.athleteId, identity.email, identity.displayName]);
+        rows = await db.query(
+          'SELECT auth_subject, role, athlete_id, email, display_name, active FROM app_principals WHERE auth_subject=? LIMIT 1',
+          [identity.subject]
+        );
+      }
+
+      const principal = rows[0];
+      if (!principal || !principal.active) throw httpError('principal_inactive', 403);
+
+      if (principal.role === 'athlete') {
+        if (!principal.athlete_id) throw httpError('principal_athlete_missing', 500);
+        await db.query(
+          'UPDATE athletes SET email=?, display_name=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
+          [identity.email, identity.displayName, principal.athlete_id]
+        );
+      } else {
+        await db.query(
+          'UPDATE app_principals SET email=?, display_name=?, updated_at=CURRENT_TIMESTAMP WHERE auth_subject=?',
+          [identity.email, identity.displayName, identity.subject]
+        );
+      }
+
+      return {
+        subject: identity.subject,
+        role: principal.role,
+        athleteId: principal.athlete_id || null,
+        email: identity.email || principal.email || null,
+        displayName: identity.displayName || principal.display_name || identity.subject
+      };
+    },
+
+    async ensureCoachPrincipal(identity, actor = 'operator') {
+      return db.transaction(async conn => {
+        const existing = await conn.query(
+          'SELECT auth_subject, role, athlete_id, active FROM app_principals WHERE auth_subject=? FOR UPDATE',
+          [identity.subject]
+        );
+        if (existing[0]?.role === 'athlete') throw httpError('principal_role_conflict', 409);
+
+        await conn.query(`INSERT INTO app_principals (auth_subject, role, athlete_id, email, display_name, active)
+          VALUES (?, 'coach', NULL, ?, ?, TRUE)
+          ON CONFLICT (auth_subject) DO UPDATE SET
+            email=EXCLUDED.email,
+            display_name=EXCLUDED.display_name,
+            active=TRUE,
+            updated_at=CURRENT_TIMESTAMP`,
+          [identity.subject, identity.email || null, identity.displayName || identity.subject]);
+
+        await conn.query(
+          'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (NULL, ?, ?, ?, ?, ?)',
+          [actor, 'coach.principal.provisioned', 'app_principal', identity.subject, JSON.stringify({ role: 'coach' })]
+        );
+
+        return {
+          subject: identity.subject,
+          role: 'coach',
+          athleteId: null,
+          email: identity.email || null,
+          displayName: identity.displayName || identity.subject
+        };
+      });
+    },
+
+    async setCoachAthleteAssignment({ coachSubject, athleteId, active, actor = 'operator' }) {
+      return db.transaction(async conn => {
+        const coach = await conn.query(
+          "SELECT auth_subject FROM app_principals WHERE auth_subject=? AND role='coach' AND active=TRUE FOR UPDATE",
+          [coachSubject]
+        );
+        if (!coach[0]) throw httpError('coach_principal_not_found', 404);
+
+        const athlete = await conn.query('SELECT id FROM athletes WHERE id=? AND active=TRUE FOR UPDATE', [athleteId]);
+        if (!athlete[0]) throw httpError('athlete_not_found', 404);
+
+        const current = await conn.query(
+          'SELECT id FROM coach_athlete_assignments WHERE coach_subject=? AND athlete_id=? AND active=TRUE AND effective_to IS NULL FOR UPDATE',
+          [coachSubject, athleteId]
+        );
+
+        if (active) {
+          if (current[0]) return { assignment_id: current[0].id, coach_subject: coachSubject, athlete_id: athleteId, active: true, changed: false };
+          const id = randomUUID();
+          await conn.query(
+            'INSERT INTO coach_athlete_assignments (id, coach_subject, athlete_id, active, assigned_by_subject) VALUES (?, ?, ?, TRUE, ?)',
+            [id, coachSubject, athleteId, actor]
+          );
+          await conn.query(
+            'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+            [athleteId, actor, 'coach.assignment.granted', 'coach_athlete_assignment', id, JSON.stringify({ coach_subject: coachSubject })]
+          );
+          return { assignment_id: id, coach_subject: coachSubject, athlete_id: athleteId, active: true, changed: true };
+        }
+
+        if (!current[0]) return { assignment_id: null, coach_subject: coachSubject, athlete_id: athleteId, active: false, changed: false };
+        await conn.query(
+          'UPDATE coach_athlete_assignments SET active=FALSE, effective_to=CURRENT_TIMESTAMP WHERE id=?',
+          [current[0].id]
+        );
+        await conn.query(
+          'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+          [athleteId, actor, 'coach.assignment.revoked', 'coach_athlete_assignment', current[0].id, JSON.stringify({ coach_subject: coachSubject })]
+        );
+        return { assignment_id: current[0].id, coach_subject: coachSubject, athlete_id: athleteId, active: false, changed: true };
+      });
+    },
+
+    async listCoachAthletes(coachSubject) {
+      return db.query(`SELECT a.id AS athlete_id, a.email, a.display_name, ca.effective_from AS assigned_at
+        FROM coach_athlete_assignments ca
+        JOIN app_principals p ON p.auth_subject=ca.coach_subject AND p.role='coach' AND p.active=TRUE
+        JOIN athletes a ON a.id=ca.athlete_id AND a.active=TRUE
+        WHERE ca.coach_subject=? AND ca.active=TRUE AND ca.effective_to IS NULL
+        ORDER BY COALESCE(a.display_name, a.id), a.id`, [coachSubject]);
+    },
+
+    async coachCanAccess(coachSubject, athleteId) {
+      const rows = await db.query(`SELECT 1 AS allowed
+        FROM coach_athlete_assignments ca
+        JOIN app_principals p ON p.auth_subject=ca.coach_subject AND p.role='coach' AND p.active=TRUE
+        JOIN athletes a ON a.id=ca.athlete_id AND a.active=TRUE
+        WHERE ca.coach_subject=? AND ca.athlete_id=? AND ca.active=TRUE AND ca.effective_to IS NULL
+        LIMIT 1`, [coachSubject, athleteId]);
+      return Boolean(rows[0]);
+    },
+
     async ensureAthlete(identity) {
       await db.query(`INSERT INTO athletes (id, auth_subject, email, display_name)
         VALUES (?, ?, ?, ?)
