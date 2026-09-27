@@ -82,7 +82,9 @@ function renderActivity(activity) {
       ${metric('Schlagrate', summary.stroke_rate_spm, 'spm')}
       ${metric('Drag', summary.drag_factor)}
     </dl>
-    ${review ? `<div class="dedupe-warning"><strong>Mögliche Dublette</strong><span>Match ${(Number(activity.match_score || 0) * 100).toFixed(0)} %</span><button class="secondary merge-activity" type="button" data-target="${esc(activity.match_candidate_activity_id)}" data-duplicate="${esc(activity.id)}">Zusammenführen</button></div>` : ''}
+    ${review
+      ? `<div class="dedupe-warning"><strong>Mögliche Dublette</strong><span>Match ${(Number(activity.match_score || 0) * 100).toFixed(0)} %</span>${coachReadOnly ? '' : `<button class="secondary merge-activity" type="button" data-target="${esc(activity.match_candidate_activity_id)}" data-duplicate="${esc(activity.id)}">Zusammenführen</button>`}</div>`
+      : ''}
     ${coachReadOnly
       ? `<div class="coach-readonly-note muted">Coach-Ansicht: RPE, Schmerz und athlete-eigene Kommentare sind schreibgeschützt.</div>`
       : `<form class="journal-entry-form form-grid compact" data-activity-id="${esc(activity.id)}">
@@ -193,6 +195,7 @@ async function init() {
   try {
     const me = await api('/api/v1/me');
     coachReadOnly = me.role === 'coach';
+    if (coachReadOnly && !targetAthleteId()) return;
   } catch (error) {
     return message(error.message, false);
   }
