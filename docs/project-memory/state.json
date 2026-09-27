@@ -3,8 +3,8 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-181000-rowing-sport-os-backlog.md",
-  "currentStage": "backlog",
+  "latestEvent": "docs/project-memory/events/EVT-20260927-184000-vi-001-implemented.md",
+  "currentStage": "implementation",
   "canonicalArtifacts": [
     {
       "type": "wayfinding",
@@ -47,6 +47,12 @@
       "path": "docs/backlog/rowing-sport-os-journal-v1-dependency-order.json",
       "status": "approved",
       "ref": "f77e7dc06e95ae5eed50483f5b399505341efbd7"
+    },
+    {
+      "type": "implementation-evidence",
+      "path": "docs/engineering/vi-001/implementation-evidence.json",
+      "status": "implemented-ci-verified",
+      "ref": "b0c4649b4f2879168c7dea8fb88e42e6536ed64a"
     }
   ],
   "decisions": [
@@ -63,18 +69,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-007",
+      "id": "OPEN-008",
       "type": "pending",
-      "summary": "Implement VI-001 / GitHub #21.",
-      "nextAction": "Start the Coach↔Athlete authorization vertical slice."
+      "summary": "Review VI-001 / PR #29 on exact final head.",
+      "nextAction": "Run two-axis-code-review after current-head GitHub-hosted CI."
     }
   ],
   "lastVerified": {
-    "headSha": "f77e7dc06e95ae5eed50483f5b399505341efbd7",
-    "at": "2026-09-27T18:10:00+02:00"
+    "headSha": "b0c4649b4f2879168c7dea8fb88e42e6536ed64a",
+    "at": "2026-09-27T18:40:00+02:00"
   },
   "nextAction": {
-    "description": "Implement VI-001 / GitHub issue #21.",
-    "skill": "iterate-software-projects"
+    "description": "Run two-axis-code-review for VI-001 / PR #29.",
+    "skill": "two-axis-code-review"
   }
 }
