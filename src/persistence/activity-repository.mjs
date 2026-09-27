@@ -63,7 +63,7 @@ async function fetchCoachNotes(conn, athleteId, completedSessionId) {
 }
 
 async function attachExistingCompletion(conn, athleteId, activityId) {
-  const rows = await conn.query(`SELECT id, planned_session_id, completed_session_id, started_at, duration_s
+  const rows = await conn.query(`SELECT id, planned_session_id, completed_session_id, activity_type, started_at, duration_s
     FROM activities WHERE athlete_id=? AND id=? FOR UPDATE`, [athleteId, activityId]);
   const activity = rows[0];
   if (!activity || activity.completed_session_id) return activity || null;
