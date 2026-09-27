@@ -252,3 +252,40 @@ test('a device import after manual completion links to the existing completed se
   const counts = await db.query('SELECT COUNT(*)::int AS count FROM completed_sessions WHERE athlete_id=?', [manualFirstAthleteId]);
   assert.equal(Number(counts[0].count), 1);
 });
+
+
+test('activity linkage requires compatible session type for both plan and late completion matching', async () => {
+  const mismatchAthleteId = `activity-it-${randomUUID()}`;
+  await repository.ensureAthlete({ subject: mismatchAthleteId, athleteId: mismatchAthleteId, email: null, displayName: 'Type Match Athlete' });
+  const start = new Date();
+  start.setHours(15, 0, 0, 0);
+  const plannedSessionId = randomUUID();
+  await repository.applyPlanPackage(mismatchAthleteId, planWithSession(plannedSessionId, start, 'Rowing only'), mismatchAthleteId);
+
+  const completedId = randomUUID();
+  await repository.completeSession(mismatchAthleteId, plannedSessionId, {
+    schema_version: 1,
+    athlete_id: mismatchAthleteId,
+    generated_at: new Date().toISOString(),
+    source_refs: ['manual:test'],
+    uncertainties: [],
+    safety_flags: [],
+    completed_session_id: completedId,
+    planned_session_id: plannedSessionId,
+    started_at: start.toISOString(),
+    completed_at: new Date(start.getTime() + 3600 * 1000).toISOString(),
+    duration_min: 60,
+    session_rpe: 4,
+    session_load: 240,
+    completion_status: 'completed',
+    deviations: []
+  }, mismatchAthleteId);
+
+  const cycling = {
+    ...source('garmin', `cycling-${randomUUID()}`, new Date(start.getTime() + 15000).toISOString(), 3600, 25000, 'e'),
+    activityType: 'cycling'
+  };
+  const imported = await repository.ingestActivity(mismatchAthleteId, cycling, mismatchAthleteId);
+  assert.equal(imported.activity.planned_session_id, null);
+  assert.equal(imported.activity.completed_session_id, null);
+});
