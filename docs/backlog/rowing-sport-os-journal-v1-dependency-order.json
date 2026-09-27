@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "specId": "rowing-sport-os-journal-v1",
+  "order": [
+    "VI-001",
+    "VI-002",
+    "VI-003",
+    "VI-004",
+    "VI-005",
+    "VI-006",
+    "VI-007"
+  ],
+  "parallelizable": [
+    {
+      "after": [
+        "VI-001"
+      ],
+      "issues": [
+        "VI-002",
+        "VI-004"
+      ],
+      "reason": "Plan import and performance-test verticals share authorization but are otherwise independent."
+    },
+    {
+      "after": [
+        "VI-001",
+        "VI-002"
+      ],
+      "issues": [
+        "VI-003"
+      ],
+      "reason": "Soll/Ist journal needs target authorization and canonical planned-session import."
+    }
+  ],
+  "criticalPath": [
+    "VI-001",
+    "VI-002",
+    "VI-003",
+    "VI-005",
+    "VI-006",
+    "VI-007"
+  ],
+  "blocked": [],
+  "rationale": "Authorization is the first privacy/safety boundary. Plan and test foundations precede adaptation handoff. Full data export follows availability of all v1 domains. Production deployment closes the MVP after all vertical acceptance paths exist."
+}
