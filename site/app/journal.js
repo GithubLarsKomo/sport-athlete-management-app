@@ -1,5 +1,6 @@
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+let coachReadOnly = false;
 
 function targetAthleteId() {
   return new URLSearchParams(window.location.search).get('athlete')?.trim() || '';
@@ -82,12 +83,14 @@ function renderActivity(activity) {
       ${metric('Drag', summary.drag_factor)}
     </dl>
     ${review ? `<div class="dedupe-warning"><strong>Mögliche Dublette</strong><span>Match ${(Number(activity.match_score || 0) * 100).toFixed(0)} %</span><button class="secondary merge-activity" type="button" data-target="${esc(activity.match_candidate_activity_id)}" data-duplicate="${esc(activity.id)}">Zusammenführen</button></div>` : ''}
-    <form class="journal-entry-form form-grid compact" data-activity-id="${esc(activity.id)}">
-      <label>Session RPE <input name="session_rpe" type="number" min="0" max="10" step="0.5" value="${esc(journal.session_rpe ?? '')}" required></label>
-      <label>Schmerz 0–10 <input name="pain_0_10" type="number" min="0" max="10" step="1" value="${esc(journal.pain_0_10 ?? '')}"></label>
-      <label class="wide">Kommentar <input name="comment" type="text" maxlength="4000" value="${esc(journal.comment ?? '')}" placeholder="Wie war die Einheit?"></label>
-      <button class="primary wide" type="submit">${journal.finalized_at ? 'Journal aktualisieren' : 'Journal finalisieren'}</button>
-    </form>
+    ${coachReadOnly
+      ? `<div class="coach-readonly-note muted">Coach-Ansicht: RPE, Schmerz und athlete-eigene Kommentare sind schreibgeschützt.</div>`
+      : `<form class="journal-entry-form form-grid compact" data-activity-id="${esc(activity.id)}">
+          <label>Session RPE <input name="session_rpe" type="number" min="0" max="10" step="0.5" value="${esc(journal.session_rpe ?? '')}" required></label>
+          <label>Schmerz 0–10 <input name="pain_0_10" type="number" min="0" max="10" step="1" value="${esc(journal.pain_0_10 ?? '')}"></label>
+          <label class="wide">Kommentar <input name="comment" type="text" maxlength="4000" value="${esc(journal.comment ?? '')}" placeholder="Wie war die Einheit?"></label>
+          <button class="primary wide" type="submit">${journal.finalized_at ? 'Journal aktualisieren' : 'Journal finalisieren'}</button>
+        </form>`}
   </article>`;
 }
 
@@ -186,16 +189,32 @@ async function mergeActivity(event) {
 async function init() {
   const form = $('#activityImportForm');
   if (!form) return;
-  form.addEventListener('submit', importFile);
-  $('#concept2Sync')?.addEventListener('click', syncConcept2);
+
+  try {
+    const me = await api('/api/v1/me');
+    coachReadOnly = me.role === 'coach';
+  } catch (error) {
+    return message(error.message, false);
+  }
+
+  if (coachReadOnly) {
+    for (const control of form.querySelectorAll('input, select, button')) control.disabled = true;
+    const sync = $('#concept2Sync');
+    if (sync) sync.disabled = true;
+  } else {
+    form.addEventListener('submit', importFile);
+    $('#concept2Sync')?.addEventListener('click', syncConcept2);
+  }
   $('#journalActivities')?.addEventListener('submit', saveJournal);
   $('#journalActivities')?.addEventListener('click', mergeActivity);
   try {
     const status = await api('/api/v1/import/status');
     const c2 = $('#concept2Sync');
     if (c2) {
-      c2.disabled = !status.concept2_configured;
-      c2.title = status.concept2_configured ? 'Neue Concept2 Logbook Ergebnisse abrufen' : 'CONCEPT2_ACCESS_TOKEN ist nicht konfiguriert';
+      c2.disabled = coachReadOnly || !status.concept2_configured;
+      c2.title = coachReadOnly
+        ? 'Coach-Ansicht: Geräteimport bleibt athlete-eigen'
+        : (status.concept2_configured ? 'Neue Concept2 Logbook Ergebnisse abrufen' : 'CONCEPT2_ACCESS_TOKEN ist nicht konfiguriert');
     }
     await loadJournal();
   } catch (error) { message(error.message, false); }
