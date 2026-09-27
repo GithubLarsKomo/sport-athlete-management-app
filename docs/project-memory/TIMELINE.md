@@ -13,3 +13,5 @@
 
 - 2026-09-27 18:55 +02:00 — [EVT-20260927-185500-vi-001-review](events/EVT-20260927-185500-vi-001-review.md) — Exact-head two-axis review of PR #29: requirements PASS, quality/security PASS WITH NOTES, no blocker.
 - 2026-09-27 19:00 +02:00 — [EVT-20260927-190000-vi-001-delivered](events/EVT-20260927-190000-vi-001-delivered.md) — PR #29 merged as `a5915db7d7c2`; main CI #36334503326 green; Issue #21 completed; VI-002/#22 becomes active.
+
+- 2026-09-27 20:03 +02:00 — [EVT-20260927-200300-vi-002-delivered](events/EVT-20260927-200300-vi-002-delivered.md) — PR #31 merged as `37e45c8298da`; exact-head review PASS / PASS WITH NOTES, review CI #101 and main CI #102 green; Issue #22 completed; VI-003/#23 becomes active.
