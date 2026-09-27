@@ -73,6 +73,12 @@ async function load() {
   if (!target) return;
   try {
     const targetAthlete = new URLSearchParams(window.location.search).get('athlete')?.trim() || '';
+    if (!targetAthlete) {
+      const identityResponse = await fetch('/api/v1/me', { credentials: 'same-origin' });
+      const identity = await identityResponse.json().catch(() => ({}));
+      if (!identityResponse.ok) throw new Error(identity.error || `HTTP ${identityResponse.status}`);
+      if (identity.role === 'coach') return;
+    }
     const response = await fetch('/api/v1/p1/artifacts/latest', {
       credentials: 'same-origin',
       headers: targetAthlete ? { 'x-sam-target-athlete': targetAthlete } : {}
