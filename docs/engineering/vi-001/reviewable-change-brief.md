@@ -2,7 +2,7 @@
 
 Status: implementation complete; ready for two-axis review  
 PR: #29  
-Implementation evidence head: `9a89d334dc7f9f4d1e29980e8641992bb1776b0d`
+Implementation evidence head: `e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77`
 
 ## Outcome delivered
 
@@ -38,7 +38,7 @@ npm run coach:access -- revoke <authentik-coach-subject> <athlete-id>
 
 ## Verification
 
-GitHub Actions run `36334008337` on `9a89d334dc7f9f4d1e29980e8641992bb1776b0d` passed:
+GitHub Actions run `36334290860` on `e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77` passed:
 - unit/HTTP tests;
 - syntax check;
 - PostgreSQL migration including 006;
