@@ -10,3 +10,6 @@
 - 2026-09-27 18:40 +02:00 — [EVT-20260927-184000-vi-001-implemented](events/EVT-20260927-184000-vi-001-implemented.md) — VI-001/#21 implemented on PR #29; Coach assignment/authorship boundary proven with GitHub-hosted PostgreSQL CI; review pending.
 
 - 2026-09-27 18:50 +02:00 — [EVT-20260927-185000-vi-001-hardened](events/EVT-20260927-185000-vi-001-hardened.md) — VI-001 Coach capability/authorship boundary hardened; final code head `e9f6693bc9cc` passed complete GitHub-hosted CI; exact-head review next.
+
+- 2026-09-27 18:55 +02:00 — [EVT-20260927-185500-vi-001-review](events/EVT-20260927-185500-vi-001-review.md) — Exact-head two-axis review of PR #29: requirements PASS, quality/security PASS WITH NOTES, no blocker.
+- 2026-09-27 19:00 +02:00 — [EVT-20260927-190000-vi-001-delivered](events/EVT-20260927-190000-vi-001-delivered.md) — PR #29 merged as `a5915db7d7c2`; main CI #36334503326 green; Issue #21 completed; VI-002/#22 becomes active.
