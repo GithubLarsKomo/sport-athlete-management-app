@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#23",
+  "verticalIssueId": "VI-003",
+  "blockingGaps": [],
+  "followUps": [
+    {
+      "id": "FU-003-01",
+      "state": "planned",
+      "summary": "Consider an explicit ambiguity review state for same-sport late-completion matches if real data shows collisions.",
+      "owner": "later-journal-hardening"
+    },
+    {
+      "id": "FU-003-02",
+      "state": "deferred",
+      "summary": "Production Authentik/Coolify acceptance remains VI-007/#27.",
+      "owner": "VI-007"
+    },
+    {
+      "id": "FU-003-03",
+      "state": "out-of-scope",
+      "summary": "Garmin Connect cloud OAuth remains outside v1; manual FIT/TCX is supported.",
+      "owner": "future-device-integration"
+    }
+  ],
+  "closureState": "closed-with-followups"
+}
