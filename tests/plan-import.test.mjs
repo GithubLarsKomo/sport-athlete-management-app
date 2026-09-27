@@ -62,6 +62,25 @@ test('invalid canonical bundle is rejected before persistence', () => {
   assert.ok(normalizeCanonicalPlanImportBundle(bundle).errors.length >= 3);
 });
 
+test('companion artifacts contribute provenance and must not cross athlete scope', () => {
+  const bundle = canonicalPlanImportFixture();
+  bundle.files['endurance-plan.json'] = {
+    schema_version: 1,
+    athlete_id: 'athlete-1',
+    generated_at: '2026-09-27T16:00:00.000Z',
+    source_refs: ['endurance:source'],
+    uncertainties: [],
+    safety_flags: [],
+    note: 'transport-only companion'
+  };
+  const normalized = normalizeCanonicalPlanImportBundle(bundle);
+  assert.deepEqual(normalized.errors, []);
+  assert.ok(normalized.sourceRefs.includes('endurance:source'));
+
+  bundle.files['endurance-plan.json'].athlete_id = 'other-athlete';
+  assert.ok(validateCanonicalPlanImportBundle(bundle).some(error => error.includes('same athlete_id')));
+});
+
 test('canonical artifact athlete identifiers must agree', () => {
   const bundle = canonicalPlanImportFixture();
   bundle.files['sport-microcycle.json'].athlete_id = 'other-athlete';
