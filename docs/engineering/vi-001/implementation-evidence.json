@@ -7,7 +7,7 @@
     "base": "main",
     "baseSha": "4053761d98da8514fb1124d91965fc3b77506a2a",
     "branch": "feat/vi-001-coach-athlete-authorization",
-    "headSha": "9a89d334dc7f9f4d1e29980e8641992bb1776b0d",
+    "headSha": "e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77",
     "pr": 29
   },
   "acceptanceCriteria": [
@@ -94,11 +94,11 @@
     },
     {
       "path": "site/app/journal.js",
-      "rationale": "Carry selected athlete target and render Athlete journal/import controls read-only for Coach."
+      "rationale": "Carry selected athlete target, keep Athlete journal/import controls read-only for Coach, and avoid pre-selection errors."
     },
     {
       "path": "site/app/p1.js",
-      "rationale": "Carry selected athlete target for read-only specialist evidence."
+      "rationale": "Carry selected athlete target for read-only specialist evidence and avoid pre-selection errors."
     },
     {
       "path": "site/app/styles.css",
@@ -136,7 +136,7 @@
       "docker build"
     ],
     "external": [
-      "GitHub Actions run 36334008337: success on exact implementation head 9a89d334dc7f9f4d1e29980e8641992bb1776b0d"
+      "GitHub Actions run 36334290860: success on exact implementation code head e9f6693bc9cce02c0ddf0df1bc989e24cc7e9d77"
     ]
   },
   "impacts": {
@@ -150,6 +150,6 @@
     "Coach provisioning must occur before a new Coach first logs in; otherwise backward-compatible unknown-subject behavior creates an Athlete principal and intentional role-conflict protection prevents silent promotion.",
     "Coach UI is intentionally read-only for Athlete-authored journal/check-in/session-completion fields; separate Coach notes arrive in the later journal vertical."
   ],
-  "status": "externally-verified-ci",
+  "status": "externally-verified-ci-final-code-head",
   "nextSkill": "two-axis-code-review"
 }
