@@ -2,16 +2,9 @@ ALTER TABLE activity_journal_entries
   ADD COLUMN IF NOT EXISTS expectation_match VARCHAR(16) NULL,
   ADD COLUMN IF NOT EXISTS authored_by_subject VARCHAR(191) NULL;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'ck_activity_journal_expectation_match'
-  ) THEN
-    ALTER TABLE activity_journal_entries
-      ADD CONSTRAINT ck_activity_journal_expectation_match
-      CHECK (expectation_match IS NULL OR expectation_match IN ('easier','as_expected','harder'));
-  END IF;
-END $$;
+ALTER TABLE activity_journal_entries
+  ADD CONSTRAINT ck_activity_journal_expectation_match
+  CHECK (expectation_match IS NULL OR expectation_match IN ('easier','as_expected','harder'));
 
 CREATE TABLE IF NOT EXISTS coach_session_notes (
   id VARCHAR(64) PRIMARY KEY,
