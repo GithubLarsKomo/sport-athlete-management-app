@@ -9,7 +9,7 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling and technical Wayfinding are complete. `SPEC.md@0.1.0` has been generated and passed its consistency check. The specification is **approval pending**; issue slicing is intentionally blocked until explicit approval.
+Grilling and technical Wayfinding are complete. `SPEC.md@0.1.0` has been generated and passed its consistency check. The specification is **approved**; vertical issue slicing is released.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
@@ -23,7 +23,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260927-154700-rowing-sport-os-spec.md)
+- [Latest event](events/EVT-20260927-180200-rowing-sport-os-spec-approved.md)
 
 ## Canonical project artifacts
 
@@ -35,10 +35,10 @@ Confirmed v1 additions include:
 - [DEC-001 Coach v1](decisions/DEC-001-coach-first-class-v1.md)
 - [DEC-002 Manual-first adaptation](decisions/DEC-002-manual-first-adaptation.md)
 
-## Open loop
+## Open loops
 
-Explicit approval of `SPEC.md@0.1.0`.
+None at the specification stage.
 
 ## Next step
 
-After approval, run `spec-to-vertical-issues`, persist the backlog artifacts and create the approved GitHub implementation issues in dependency order.
+Run `spec-to-vertical-issues`, persist the backlog artifacts and create the GitHub implementation issues in dependency order.
