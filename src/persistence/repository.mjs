@@ -33,7 +33,7 @@ function entityPayload(entity) {
   return entity.payload || entity;
 }
 
-async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = false } = {}) {
+async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = false, reconcileSessions = false } = {}) {
   const assertOwnedVersion = async (table, id, incomingVersion) => {
     const rows = await conn.query(`SELECT athlete_id, version FROM ${table} WHERE id=? FOR UPDATE`, [id]);
     if (rows[0]?.athlete_id && rows[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
@@ -79,6 +79,24 @@ async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = fal
       updated_at=CURRENT_TIMESTAMP`,
     [plan.microcycle.id, athleteId, plan.mesocycle.id, plan.microcycle.start_date, plan.microcycle.end_date, plan.microcycle.focus, plan.microcycle.version, JSON.stringify(entityPayload(plan.microcycle))]);
 
+  const removedSessionIds = [];
+  if (reconcileSessions) {
+    const incomingIds = new Set(plan.sessions.map(session => session.id));
+    const existingSessions = await conn.query(
+      'SELECT id, status FROM planned_sessions WHERE athlete_id=? AND microcycle_id=? FOR UPDATE',
+      [athleteId, plan.microcycle.id]
+    );
+    for (const existingSession of existingSessions) {
+      if (incomingIds.has(existingSession.id)) continue;
+      if (!['planned', 'modified'].includes(existingSession.status)) continue;
+      await conn.query(
+        'DELETE FROM planned_sessions WHERE id=? AND athlete_id=? AND microcycle_id=?',
+        [existingSession.id, athleteId, plan.microcycle.id]
+      );
+      removedSessionIds.push(existingSession.id);
+    }
+  }
+
   let finalizedPreserved = 0;
   for (const session of plan.sessions) {
     const existing = await conn.query('SELECT athlete_id, version, status FROM planned_sessions WHERE id=? FOR UPDATE', [session.id]);
@@ -114,7 +132,8 @@ async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = fal
     mesocycle_id: plan.mesocycle.id,
     microcycle_id: plan.microcycle.id,
     session_count: plan.sessions.length,
-    finalized_sessions_preserved: finalizedPreserved
+    finalized_sessions_preserved: finalizedPreserved,
+    removed_open_session_ids: removedSessionIds
   };
 }
 
@@ -352,7 +371,10 @@ export function createRepository(db) {
         );
         const previous = latestRows[0] || null;
         const revision = previous ? Number(previous.revision) + 1 : 1;
-        const applied = await writePlanPackage(conn, athleteId, normalized.planPackage, { preserveFinalized: true });
+        const applied = await writePlanPackage(conn, athleteId, normalized.planPackage, {
+          preserveFinalized: true,
+          reconcileSessions: true
+        });
         const importId = randomUUID();
 
         await conn.query(
@@ -379,6 +401,7 @@ export function createRepository(db) {
             supersedes_import_id: previous?.id || null,
             session_count: applied.session_count,
             finalized_sessions_preserved: applied.finalized_sessions_preserved,
+            removed_open_session_ids: applied.removed_open_session_ids,
             producer: normalized.producer
           })]
         );
