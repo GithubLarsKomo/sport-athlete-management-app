@@ -562,8 +562,9 @@ export function createActivityRepository(db) {
       }
 
       const completed = sessions.filter(record => record.actual?.completed_session_id);
+      const observed = sessions.filter(record => record.actual);
       const plannedRpe = sessions.map(record => record.plan.planned_rpe).filter(value => value != null);
-      const allActual = [...completed, ...unplanned];
+      const allActual = [...observed, ...unplanned];
       const actualRpe = allActual.map(record => record.actual.session_rpe).filter(value => value != null);
       return {
         from: fromDate,
