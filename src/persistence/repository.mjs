@@ -33,7 +33,7 @@ function entityPayload(entity) {
   return entity.payload || entity;
 }
 
-async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = false, reconcileSessions = false } = {}) {
+async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = false, reconcileSessions = false, advanceSessionVersion = false } = {}) {
   const assertOwnedVersion = async (table, id, incomingVersion) => {
     const rows = await conn.query(`SELECT athlete_id, version FROM ${table} WHERE id=? FOR UPDATE`, [id]);
     if (rows[0]?.athlete_id && rows[0].athlete_id !== athleteId) throw httpError('plan_entity_conflict', 409);
@@ -108,7 +108,12 @@ async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = fal
       }
       throw httpError('cannot_overwrite_finalized_session', 409);
     }
-    if (existing[0] && Number(existing[0].version) > session.version) throw httpError('stale_plan_version', 409);
+    let operationalVersion = session.version;
+    if (existing[0] && advanceSessionVersion) {
+      operationalVersion = Math.max(Number(existing[0].version) + 1, session.version);
+    } else if (existing[0] && Number(existing[0].version) > session.version) {
+      throw httpError('stale_plan_version', 409);
+    }
     const payload = plannedPayload(session);
     await conn.query(`INSERT INTO planned_sessions (id, athlete_id, microcycle_id, local_date, planned_start, session_type, objective, planned_duration_min, planned_rpe, status, version, payload_json)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -124,7 +129,7 @@ async function writePlanPackage(conn, athleteId, plan, { preserveFinalized = fal
         version=EXCLUDED.version,
         payload_json=EXCLUDED.payload_json,
         updated_at=CURRENT_TIMESTAMP`,
-      [session.id, athleteId, plan.microcycle.id, session.local_date, new Date(session.planned_start), session.session_type, session.objective, session.planned_duration_min, session.planned_rpe ?? null, session.status || 'planned', session.version, JSON.stringify(payload)]);
+      [session.id, athleteId, plan.microcycle.id, session.local_date, new Date(session.planned_start), session.session_type, session.objective, session.planned_duration_min, session.planned_rpe ?? null, session.status || 'planned', operationalVersion, JSON.stringify(payload)]);
   }
 
   return {
@@ -373,7 +378,8 @@ export function createRepository(db) {
         const revision = previous ? Number(previous.revision) + 1 : 1;
         const applied = await writePlanPackage(conn, athleteId, normalized.planPackage, {
           preserveFinalized: true,
-          reconcileSessions: true
+          reconcileSessions: true,
+          advanceSessionVersion: true
         });
         const importId = randomUUID();
 
