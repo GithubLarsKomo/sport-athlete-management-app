@@ -138,7 +138,9 @@ export function validateCustomProtocol(value) {
   const errors = [];
   if (!object(value)) return ['protocol must be an object'];
   if (!nonEmpty(value.name)) errors.push('name required');
+  else if (value.name.length > 191) errors.push('name must be <= 191 characters');
   if (value.protocol_id != null && !nonEmpty(value.protocol_id)) errors.push('protocol_id must be non-empty when supplied');
+  else if (typeof value.protocol_id === 'string' && value.protocol_id.length > 64) errors.push('protocol_id must be <= 64 characters');
   if (value.version != null && (!Number.isInteger(Number(value.version)) || Number(value.version) < 1)) errors.push('version must be >= 1');
   if (!MODALITIES.has(value.modality)) errors.push('modality must be rowerg or bike');
   if (value.protocol_kind !== 'staged') errors.push('custom v1 protocol_kind must be staged');
@@ -170,9 +172,11 @@ export function validatePerformanceTestPlan(value) {
   if (!Number.isInteger(Number(value.protocol_version)) || Number(value.protocol_version) < 1) errors.push('protocol_version must be >= 1');
   if (!dateTime(value.scheduled_at)) errors.push('scheduled_at must be an ISO date-time');
   if (value.device != null && typeof value.device !== 'string') errors.push('device must be a string');
+  else if (typeof value.device === 'string' && value.device.length > 191) errors.push('device must be <= 191 characters');
   if (value.warm_up != null && !object(value.warm_up)) errors.push('warm_up must be an object');
   if (value.environment != null && !object(value.environment)) errors.push('environment must be an object');
   if (value.notes != null && typeof value.notes !== 'string') errors.push('notes must be a string');
+  else if (typeof value.notes === 'string' && value.notes.length > 4000) errors.push('notes must be <= 4000 characters');
   if (value.expected_targets != null) errors.push(...validateMetricMap(value.expected_targets, 'expected_targets', { expectedOnly: true }));
   if (value.retest_of_test_id != null && !nonEmpty(value.retest_of_test_id)) errors.push('retest_of_test_id must be non-empty when supplied');
   return errors;
@@ -183,10 +187,13 @@ export function validatePerformanceTestResult(value, protocol) {
   if (!object(value)) return ['test result must be an object'];
   if (!dateTime(value.performed_at)) errors.push('performed_at must be an ISO date-time');
   if (!nonEmpty(value.device)) errors.push('device required');
+  else if (value.device.length > 191) errors.push('device must be <= 191 characters');
   if (value.warm_up != null && !object(value.warm_up)) errors.push('warm_up must be an object');
   if (value.environment != null && !object(value.environment)) errors.push('environment must be an object');
   if (value.termination_reason != null && typeof value.termination_reason !== 'string') errors.push('termination_reason must be a string');
+  else if (typeof value.termination_reason === 'string' && value.termination_reason.length > 4000) errors.push('termination_reason must be <= 4000 characters');
   if (value.notes != null && typeof value.notes !== 'string') errors.push('notes must be a string');
+  else if (typeof value.notes === 'string' && value.notes.length > 4000) errors.push('notes must be <= 4000 characters');
   if (value.metrics != null) errors.push(...validateMetricMap(value.metrics, 'metrics'));
 
   if (protocol?.protocol_kind === 'fixed_effort' && (!object(value.metrics) || Object.keys(value.metrics).length < 1)) {
