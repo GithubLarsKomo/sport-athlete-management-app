@@ -6,10 +6,11 @@ import { createRepository } from './src/persistence/repository.mjs';
 import { createP1Repository } from './src/persistence/p1-repository.mjs';
 import { createActivityRepository } from './src/persistence/activity-repository.mjs';
 import { createPerformanceTestRepository } from './src/persistence/performance-test-repository.mjs';
+import { createDataExportRepository } from './src/persistence/data-export-repository.mjs';
 
 const config = loadConfig();
 const db = createDatabase(config);
-const repository = Object.assign(createRepository(db), createP1Repository(db), createActivityRepository(db), createPerformanceTestRepository(db));
+const repository = Object.assign(createRepository(db), createP1Repository(db), createActivityRepository(db), createPerformanceTestRepository(db), createDataExportRepository(db));
 const handler = createApplication({ config, repository });
 
 const server = createServer(handler);

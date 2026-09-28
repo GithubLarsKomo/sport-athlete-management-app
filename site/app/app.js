@@ -575,6 +575,30 @@ $('#applyDecision').addEventListener('click', async () => {
   }
 });
 
+$('#downloadDataExport').addEventListener('click', async () => {
+  const button = $('#downloadDataExport');
+  button.disabled = true;
+  try {
+    const dataExport = await api('/api/v1/data/export');
+    const blob = new Blob([JSON.stringify(dataExport, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `sport-athlete-data-export-${localIsoDate(new Date())}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    const counts = dataExport.manifest?.record_counts || {};
+    const total = Object.values(counts).reduce((sum, value) => sum + Number(value || 0), 0);
+    setMessage('#dataExportMessage', `Export erstellt · ${total} Datensätze/Einträge · Provider-Rohdateien nicht enthalten.`);
+  } catch (error) {
+    setMessage('#dataExportMessage', error.message, false);
+  } finally {
+    button.disabled = false;
+  }
+});
+
 $('#weekPrev').addEventListener('click', () => shiftWeek(-7));
 $('#weekNext').addEventListener('click', () => shiftWeek(7));
 $('#weekToday').addEventListener('click', () => {
