@@ -21,3 +21,5 @@
 - 2026-09-28 09:37 +02:00 — [EVT-20260928-093759-vi-004-delivered](events/EVT-20260928-093759-vi-004-delivered.md) — PR #35 merged as `c2c206df9b80`; review and main CI green; Issue #24 completed; VI-005/#25 becomes active.
 
 - 2026-09-28 14:07 +02:00 — [EVT-20260928-140703-vi-005-delivered](events/EVT-20260928-140703-vi-005-delivered.md) — PR #37 merged as `1204178245e4`; exact-head review PASS / PASS WITH NOTES; review CI #130 and main CI #131 green; Issue #25 completed; VI-006/#26 becomes active.
+
+- 2026-09-28 14:33 +02:00 — [EVT-20260928-143319-vi-006-delivered](events/EVT-20260928-143319-vi-006-delivered.md) — PR #39 merged as `dca16f94dd5a`; exact-head review PASS / PASS WITH NOTES; review CI #141 and main CI #142 green; Issue #26 completed; production privacy gate remains blocked until VI-007; VI-007/#27 becomes active.
