@@ -484,6 +484,14 @@ export function createRepository(db) {
       return rows[0] ? parseJson(rows[0].payload_json) : null;
     },
 
+    async getCheckins(athleteId, fromDate, toDate) {
+      const rows = await db.query(
+        'SELECT local_date, payload_json FROM daily_checkins WHERE athlete_id=? AND local_date BETWEEN ? AND ? ORDER BY local_date',
+        [athleteId, fromDate, toDate]
+      );
+      return rows.map(row => ({ ...parseJson(row.payload_json), local_date: String(row.local_date).slice(0, 10) }));
+    },
+
     async saveCheckin(athleteId, payload, actor) {
       const id = randomUUID();
       await db.query(`INSERT INTO daily_checkins (id, athlete_id, local_date, payload_json) VALUES (?, ?, ?, ?)
