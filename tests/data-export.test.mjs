@@ -73,14 +73,14 @@ test('sanitizer preserves ordinary provenance while stripping credential-shaped 
     sanitizeExportValue({
       provider:'concept2',
       raw_sha256:'b'.repeat(64),
-      credentials:{ password:'drop', username:'keep' },
+      credentials:{ password:'drop', username:'drop-with-container' },
       client_secret:'drop',
+      token:'drop-generic-token',
       source_ref:'concept2:123'
     }),
     {
       provider:'concept2',
       raw_sha256:'b'.repeat(64),
-      credentials:{ username:'keep' },
       source_ref:'concept2:123'
     }
   );
