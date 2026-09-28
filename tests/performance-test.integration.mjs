@@ -203,7 +203,7 @@ test('custom protocol identity is athlete-scoped and built-in identifiers stay r
   assert.equal(second.protocol_id, 'shared-bike-step');
 
   await assert.rejects(
-    () => repository.saveCustomTestProtocol(athleteId, { ...shared, protocol_id:'rowerg-2000m', name:'collision' }, actor),
+    () => repository.saveCustomTestProtocol(athleteId, { ...shared, protocol_id:'rowerg-2000m', version:2, name:'collision' }, actor),
     error => error.statusCode === 409 && error.message === 'test_protocol_id_reserved'
   );
 });
