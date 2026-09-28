@@ -171,7 +171,7 @@ function updateExpectedMetricOptions() {
 
 function fixedMetricNames(protocol) {
   if (protocol?.fixed_target?.metric === 'duration_s') {
-    return ['distance_m','power_w','heart_rate_bpm','max_heart_rate_bpm','rpe','stroke_rate_spm','work_kj'];
+    return ['duration_s','distance_m','power_w','heart_rate_bpm','max_heart_rate_bpm','rpe','stroke_rate_spm','work_kj'];
   }
   return ['duration_s','distance_m','pace_500_s','power_w','heart_rate_bpm','max_heart_rate_bpm','rpe','stroke_rate_spm','work_kj'];
 }
