@@ -9,7 +9,7 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 through VI-005/#25 are reviewed, merged and closed; exact-head and main CI evidence is green. VI-006/#26 is the active critical-path increment.
+Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 through VI-006/#26 are reviewed, merged and closed; exact-head and main CI evidence is green. VI-007/#27 is the active deployment increment.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
@@ -24,7 +24,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260928-140703-vi-005-delivered.md)
+- [Latest event](events/EVT-20260928-143319-vi-006-delivered.md)
 
 ## Canonical project artifacts
 
@@ -45,7 +45,7 @@ Confirmed v1 additions include:
 - VI-003 → GitHub #23 — **delivered**
 - VI-004 → GitHub #24 — **delivered**
 - VI-005 → GitHub #25 — **delivered**
-- VI-006 → GitHub #26
+- VI-006 → GitHub #26 — **delivered**
 - VI-007 → GitHub #27
 
 ## Delivered increments
@@ -103,14 +103,26 @@ Confirmed v1 additions include:
 - review decision: PASS / PASS WITH NOTES
 - issue state: completed
 
+### VI-006 / GitHub #26
+
+- PR #39
+- reviewed head: `767b00745c2ceeebe883a8f6f3614dbbbd11ef52`
+- merge: `dca16f94dd5a601b202050a0cefba8c5da3a5d08`
+- review-head CI: `36422358258` success
+- main CI: `36422509882` success
+- [Delivery status](../engineering/vi-006/engineering-delivery-status.json)
+- review decision: PASS / PASS WITH NOTES
+- issue state: completed
+- broad-rollout privacy gate: intentionally blocked pending VI-007 production verification
+
 ## Current engineering increment
 
-VI-006 / GitHub #26 — athlete self-service data export and privacy rollout gate.
+VI-007 / GitHub #27 — Hetzner/Coolify deployment behind Authentik, production smoke suite and privacy-gate verification.
 
 ## Open loop
 
-Implement and review VI-006.
+Implement and review VI-007.
 
 ## Next step
 
-Start VI-006 from current main.
+Start VI-007 from current main.
