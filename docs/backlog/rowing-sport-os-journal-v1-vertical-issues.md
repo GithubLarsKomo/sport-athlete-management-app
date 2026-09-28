@@ -34,6 +34,7 @@ Status: ready
 
 ## VI-002 — Import canonical Skillz training plans with revision history
 
+**Status:** DELIVERED · PR #31 · merge `37e45c8298da` · main CI green  
 **GitHub:** #22 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/22
 
 **Outcome:** An Athlete or assigned Coach can import a canonical Skillz plan bundle, re-import identical content idempotently, and retain explicit history for changed plans.
@@ -61,6 +62,7 @@ Status: ready
 
 ## VI-003 — Unify FIT/manual journal completion with plan-vs-actual views
 
+**Status:** DELIVERED · PR #33 · merge `50acab469685` · main CI green  
 **GitHub:** #23 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/23
 
 **Outcome:** An Athlete can finalize a real session once—whether manual or FIT-backed—with RPE and subjective context, and Athlete/assigned Coach can inspect transparent session/week Soll-Ist.
@@ -150,6 +152,7 @@ Status: ready
 
 ## VI-006 — Provide athlete data export and privacy rollout gate
 
+**Status:** DELIVERED · PR #39 · merge `dca16f94dd5a` · main CI green · production rollout gate intentionally pending VI-007  
 **GitHub:** #26 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/26
 
 **Outcome:** Athletes can self-export their longitudinal data, assigned Coaches are authorization-bound, and the product has a verifiable retention/deletion/logging gate before broad multi-user rollout.
