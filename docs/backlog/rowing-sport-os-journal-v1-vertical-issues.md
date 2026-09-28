@@ -89,6 +89,7 @@ Status: ready
 
 ## VI-004 — Add structured RowErg and bike performance testing
 
+**Status:** DELIVERED · PR #35 · merge `c2c206df9b80` · main CI green  
 **GitHub:** #24 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/24
 
 **Outcome:** Athlete or assigned Coach can plan, execute and review fixed RowErg and staged lactate tests while measured, derived and estimated values remain distinguishable.
@@ -118,6 +119,7 @@ Status: ready
 
 ## VI-005 — Export deterministic adaptation handoff and apply validated proposals explicitly
 
+**Status:** DELIVERED · PR #37 · merge `1204178245e4` · main CI green  
 **GitHub:** #25 — https://github.com/GithubLarsKomo/sport-athlete-management-app/issues/25
 
 **Outcome:** Athlete or assigned Coach can download an inspectable minimized adaptation JSON, import a validated proposal, and explicitly apply it once without any model directly mutating the plan.

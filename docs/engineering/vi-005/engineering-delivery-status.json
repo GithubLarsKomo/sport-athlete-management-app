@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#25",
+  "verticalIssueId": "VI-005",
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "base": "main",
+    "featureBranch": "feat/vi-005-adaptation-handoff",
+    "reviewedHeadSha": "3e989a8ab318d7e16f1f46d7aa60d759a2f50b25",
+    "pr": 37,
+    "mergeSha": "1204178245e40834dc576da53989e10311e77824"
+  },
+  "review": {
+    "axis1": "pass",
+    "axis2": "pass-with-notes",
+    "decision": "approve",
+    "reviewEvidenceCommentId": 5869507986,
+    "reviewFreshnessAtMerge": "fresh"
+  },
+  "checks": {
+    "reviewHeadCi": {
+      "runId": 36419480520,
+      "runNumber": 130,
+      "headSha": "3e989a8ab318d7e16f1f46d7aa60d759a2f50b25",
+      "conclusion": "success"
+    },
+    "mainPushCi": {
+      "runId": 36419711173,
+      "runNumber": 131,
+      "headSha": "1204178245e40834dc576da53989e10311e77824",
+      "conclusion": "success"
+    }
+  },
+  "mergeState": "merged",
+  "deploymentState": "not-applicable-for-vi-005",
+  "issueClosure": {
+    "issue": 25,
+    "trackerState": "closed",
+    "stateReason": "completed",
+    "closureState": "verified"
+  },
+  "requirements": {
+    "sourceIds": [
+      "REQ-AI-001",
+      "REQ-AI-002",
+      "REQ-AI-003",
+      "REQ-AI-004",
+      "REQ-AI-005",
+      "REQ-AI-006",
+      "REQ-AI-007",
+      "REQ-BRAIN-001",
+      "REQ-BRAIN-002",
+      "REQ-BRAIN-003"
+    ],
+    "closureState": "verified-for-v1",
+    "evidence": [
+      "PR #37 exact-head review anchored to 3e989a8ab318d7e16f1f46d7aa60d759a2f50b25",
+      "GitHub Actions run 36419480520 passed on reviewed head",
+      "Squash merge 1204178245e40834dc576da53989e10311e77824",
+      "GitHub Actions main push run 36419711173 passed",
+      "Issue #25 closed with reason completed"
+    ]
+  },
+  "deliveredCapabilities": [
+    "Deterministic versioned sport-athlete-adaptation-handoff generated from a bounded seven-day training window",
+    "Allow-list minimization of profile, plan, Soll/Ist, subjective journal, Morning Check, performance-test and provenance context",
+    "Inspectable browser preview and explicit JSON download with no automatic external transmission",
+    "Strict athlete-bound proposal schema validation with stale-handoff conflict detection and RED safety gate",
+    "Proposal import persists an auditable adaptation decision without mutating the active plan",
+    "Explicit Athlete or assigned-Coach apply uses transaction locking and expected plan version, records actor and prior/new versions, and is single-application safe",
+    "Unassigned Coach export, proposal import and apply are denied through the existing authorization boundary",
+    "Future Athlete-learning promotion boundary is contract-only with automatic_write false and Knowledge Promotion Gate metadata",
+    "Post-session UI no longer triggers automatic adaptation evaluation"
+  ],
+  "residualRisks": [
+    "Self-service longitudinal data export, retention/deletion procedure and sensitive-log rollout gate remain owned by VI-006/#26.",
+    "Production Authentik/Coolify end-to-end verification remains owned by VI-007/#27.",
+    "The legacy explicit /api/v1/adaptation/evaluate endpoint remains available for deliberate invocation, but does not directly mutate the plan and is not called automatically by session completion.",
+    "Embedded OpenAI-compatible provider configuration and automatic model invocation remain intentionally outside v1 MVP scope."
+  ],
+  "status": "closed-with-followups",
+  "nextSkill": "iterate-software-projects"
+}

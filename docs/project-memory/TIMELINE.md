@@ -17,3 +17,7 @@
 - 2026-09-27 20:03 +02:00 — [EVT-20260927-200300-vi-002-delivered](events/EVT-20260927-200300-vi-002-delivered.md) — PR #31 merged as `37e45c8298da`; exact-head review PASS / PASS WITH NOTES, review CI #101 and main CI #102 green; Issue #22 completed; VI-003/#23 becomes active.
 
 - 2026-09-27 22:48 +02:00 — [EVT-20260927-224800-vi-003-delivered](events/EVT-20260927-224800-vi-003-delivered.md) — PR #33 merged as `50acab469685`; exact-head review PASS / PASS WITH NOTES, review CI #116 and main CI #117 green; Issue #23 completed; VI-004/#24 becomes active.
+
+- 2026-09-28 09:37 +02:00 — [EVT-20260928-093759-vi-004-delivered](events/EVT-20260928-093759-vi-004-delivered.md) — PR #35 merged as `c2c206df9b80`; review and main CI green; Issue #24 completed; VI-005/#25 becomes active.
+
+- 2026-09-28 14:07 +02:00 — [EVT-20260928-140703-vi-005-delivered](events/EVT-20260928-140703-vi-005-delivered.md) — PR #37 merged as `1204178245e4`; exact-head review PASS / PASS WITH NOTES; review CI #130 and main CI #131 green; Issue #25 completed; VI-006/#26 becomes active.
