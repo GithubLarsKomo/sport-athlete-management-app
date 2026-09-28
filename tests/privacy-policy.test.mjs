@@ -16,13 +16,14 @@ test('privacy gate stays blocked until production retention, backup and proxy ch
   assert.deepEqual(pending.map(control=>control.id),['PRIV-PROD-001','PRIV-PROD-002','PRIV-PROD-003','PRIV-PROD-004']);
   assert.ok(pending.every(control=>control.owner==='VI-007/#27'));
   assert.equal(gate.implementationControls.providerRawFilesInSelfExport,'references-only');
-  assert.equal(gate.implementationControls.securityAuditTreatment,'retained-after-primary-deletion');
+  assert.equal(gate.implementationControls.securityAuditTreatment,'event-metadata-retained-sensitive-details-redacted');
 });
 
 test('runbook makes backup survival and deletion replay explicit', () => {
   assert.match(runbook,/deleted data may therefore remain recoverable only until the applicable backup expires/i);
   assert.match(runbook,/re-apply all later deletion requests/i);
   assert.match(runbook,/before restored service is exposed to users/i);
+  assert.match(runbook,/historical athlete-scoped .*details_json.*redaction marker/is);
   assert.match(runbook,/audit-retention window/i);
   assert.match(runbook,/Request bodies must not be logged by default/i);
 });
