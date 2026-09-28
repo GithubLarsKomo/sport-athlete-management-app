@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, js, p1] = await Promise.all([
+const [html, js, p1, performance] = await Promise.all([
   readFile(new URL('../site/index.html', import.meta.url), 'utf8'),
   readFile(new URL('../site/app/app.js', import.meta.url), 'utf8'),
-  readFile(new URL('../site/app/p1.js', import.meta.url), 'utf8')
+  readFile(new URL('../site/app/p1.js', import.meta.url), 'utf8'),
+  readFile(new URL('../site/app/performance-tests.js', import.meta.url), 'utf8')
 ]);
 
 test('dashboard exposes the complete athlete-facing P0 controls', () => {
@@ -54,4 +55,27 @@ test('weekly Soll-Ist UI is explicit and does not use an opaque compliance score
   assert.match(js, /RPE Ist/);
   assert.match(js, /kein zusammenfassender Compliance-Score/);
   assert.doesNotMatch(js, /compliance_score/i);
+});
+
+
+test('VI-004 performance testing UI plans and records provenance-classified evidence', () => {
+  for (const id of ['performanceTestCard', 'performanceTestPlanForm', 'performanceProtocol', 'performanceResultEditor', 'performanceResultForm', 'performanceMetricInputs', 'performanceStages', 'performanceTests']) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(html, /gemessen, abgeleitet oder angenommen\/geschätzt/);
+  assert.match(html, /sportwissenschaftliche Interpretation bleibt bei Skillz/);
+  assert.match(performance, /\/api\/v1\/tests\/protocols/);
+  assert.match(performance, /\/api\/v1\/tests\?limit=30/);
+  assert.match(performance, /measurement_class:'assumed_or_estimated'/);
+  assert.match(performance, /measurement_class:classInput\?\.value \|\| 'measured'/);
+  assert.match(performance, /classBadge\(value\.measurement_class\)/);
+  assert.doesNotMatch(performance, /lactate.*threshold|threshold.*lactate|compliance_score/i);
+});
+
+test('generic staged test protocol remains available as an explicit advanced workflow', () => {
+  assert.match(html, /id="customTestProtocolForm"/);
+  assert.match(html, /Eigenes Stufenprotokoll/);
+  assert.match(performance, /protocol_kind:'staged'/);
+  assert.match(performance, /stage_fields:stageFields/);
+  assert.match(performance, /stages/);
 });

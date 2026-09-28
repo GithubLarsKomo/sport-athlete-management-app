@@ -14,6 +14,7 @@ import { produceSpecialistArtifacts } from './domain/specialist-producer.mjs';
 import { normalizeAnySpecialistArtifact, specialistDescriptor, specialistTypesForLayer } from './domain/specialist-registry.mjs';
 import { normalizeConcept2Result, normalizeFileImport } from './domain/activity-import.mjs';
 import { fetchConcept2Results } from './domain/concept2-client.mjs';
+import { validateCustomProtocol, validatePerformanceTestPlan, validatePerformanceTestResult } from './domain/performance-tests.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
@@ -49,6 +50,9 @@ function coachActionAllowed(method, pathname) {
   if (method === 'POST' && pathname === '/api/v1/adaptation/evaluate') return true;
   if (method === 'POST' && /^\/api\/v1\/adaptation\/[^/]+\/apply$/.test(pathname)) return true;
   if (method === 'PUT' && /^\/api\/v1\/completed-sessions\/[^/]+\/coach-note$/.test(pathname)) return true;
+  if (method === 'POST' && pathname === '/api/v1/tests/protocols') return true;
+  if (method === 'POST' && pathname === '/api/v1/tests') return true;
+  if (method === 'PUT' && /^\/api\/v1\/tests\/[^/]+\/result$/.test(pathname)) return true;
   return false;
 }
 
@@ -388,6 +392,44 @@ export function createApplication({ config, repository }) {
         const errors = validateCompletedSession(completed);
         if (errors.length) return sendJson(res, 400, { error: 'invalid_completed_session', details: errors });
         return sendJson(res, 201, { completed_session: await repository.completeSession(athleteId, plannedSessionId, completed, identity.subject) });
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/tests/protocols') {
+        return sendJson(res, 200, { protocols: await repository.listTestProtocols(athleteId) });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/v1/tests/protocols') {
+        const body = await readJson(req, 512 * 1024);
+        const errors = validateCustomProtocol(body);
+        if (errors.length) return sendJson(res, 422, { error: 'invalid_test_protocol', details: errors });
+        const protocol = await repository.saveCustomTestProtocol(athleteId, body, identity.subject);
+        return sendJson(res, 201, { protocol });
+      }
+      if (req.method === 'GET' && url.pathname === '/api/v1/tests') {
+        return sendJson(res, 200, { tests: await repository.listPerformanceTests(athleteId, url.searchParams.get('limit')) });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/v1/tests') {
+        const body = await readJson(req, 512 * 1024);
+        const errors = validatePerformanceTestPlan(body);
+        if (errors.length) return sendJson(res, 422, { error: 'invalid_performance_test_plan', details: errors });
+        const test = await repository.planPerformanceTest(athleteId, body, identity.subject);
+        return sendJson(res, 201, { test });
+      }
+
+      const testResultMatch = url.pathname.match(/^\/api\/v1\/tests\/([^/]+)\/result$/);
+      if (req.method === 'PUT' && testResultMatch) {
+        const test = await repository.getPerformanceTest(athleteId, testResultMatch[1]);
+        if (!test) return sendJson(res, 404, { error: 'performance_test_not_found' });
+        const body = await readJson(req, 1024 * 1024);
+        const errors = validatePerformanceTestResult(body, test.protocol);
+        if (errors.length) return sendJson(res, 422, { error: 'invalid_performance_test_result', details: errors });
+        return sendJson(res, 200, { test: await repository.performPerformanceTest(athleteId, test.test_id, body, identity.subject) });
+      }
+
+      const testDetailMatch = url.pathname.match(/^\/api\/v1\/tests\/([^/]+)$/);
+      if (req.method === 'GET' && testDetailMatch) {
+        const test = await repository.getPerformanceTest(athleteId, testDetailMatch[1]);
+        if (!test) return sendJson(res, 404, { error: 'performance_test_not_found' });
+        return sendJson(res, 200, { test });
       }
 
       if (req.method === 'POST' && url.pathname === '/api/v1/adaptation/evaluate') {
