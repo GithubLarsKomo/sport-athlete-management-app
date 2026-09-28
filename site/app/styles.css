@@ -260,3 +260,56 @@ button{min-height:44px}
 .brand-heading{display:flex;align-items:center;gap:14px;min-width:0}
 .brand-mark{display:block;width:58px;height:58px;flex:0 0 auto;filter:brightness(0) invert(1);opacity:.98}
 @media(max-width:760px){.brand-heading{gap:10px}.brand-mark{width:46px;height:46px}}
+
+/* VI-004 structured performance testing */
+.performance-test-card{margin-bottom:20px;border-top:3px solid var(--sam-energy)}
+.performance-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:18px;align-items:start}
+.performance-plan-form{margin-top:18px}
+.evidence-note{margin:0;padding:10px 12px;border-left:3px solid var(--sam-energy);background:var(--sam-surface-subtle);font-size:.78rem;color:var(--sam-text-muted)}
+.custom-protocol{margin-top:18px;border:1px solid var(--sam-border);border-radius:12px;background:var(--sam-surface-subtle);padding:12px}
+.custom-protocol summary{cursor:pointer;font-weight:850;font-size:.84rem}
+.compact-protocol-form textarea{width:100%;resize:vertical;border:1px solid var(--sam-border-strong);border-radius:10px;padding:10px;background:var(--sport-white);color:var(--sam-text);font:500 .78rem/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.performance-result-editor{margin:18px 0;padding:16px;border:1px solid var(--sam-border);border-radius:14px;background:var(--sam-surface-subtle)}
+.performance-result-editor h3,.performance-history-head h3{margin:.25rem 0 .4rem}
+.performance-result-form{display:grid;gap:14px}
+.performance-metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:4px}
+.performance-metric-input{padding:9px;border:1px solid var(--sam-border);border-radius:10px;background:var(--sport-white)}
+.performance-metric-input label{display:grid;gap:5px;font-size:.75rem;font-weight:800}
+.metric-input-line{display:grid;grid-template-columns:minmax(80px,.8fr) minmax(140px,1.2fr);gap:6px}
+.metric-input-line input,.metric-input-line select,.performance-stage-editor input{min-height:40px;border:1px solid var(--sam-border-strong);border-radius:8px;padding:7px 8px;background:var(--sport-white);color:var(--sam-text);width:100%}
+.performance-stages{display:grid;gap:10px}
+.performance-stage-editor{padding:12px;border:1px solid var(--sam-border);border-radius:12px;background:var(--sport-white)}
+.performance-stage-editor>label{display:grid;gap:5px;margin-top:9px;font-size:.76rem;font-weight:800}
+.test-stage-head{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.test-stage-head .secondary{min-height:34px;padding:5px 9px;font-size:.72rem}
+.stage-toolbar{display:flex;justify-content:flex-end}
+.performance-history-head{padding-top:18px;margin-top:18px;border-top:1px solid var(--sam-border)}
+.performance-tests{display:grid;gap:11px;margin-top:12px}
+.performance-test-row{padding:15px;border:1px solid var(--sam-border);border-radius:13px;background:var(--sam-surface-subtle)}
+.performance-test-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.performance-test-row h3{margin:.4rem 0 .2rem;font-size:1rem}
+.test-state-row{display:flex;gap:6px;align-items:center}
+.test-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}
+.test-metric{display:grid;gap:3px;padding:8px;border:1px solid var(--sam-border);border-radius:9px;background:var(--sport-white);min-width:0}
+.test-metric>span:first-child{font-size:.65rem;text-transform:uppercase;letter-spacing:.04em;color:var(--sam-text-muted);font-weight:800}
+.test-metric b{font-size:.82rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.measurement-class{display:inline-flex;width:max-content;max-width:100%;border-radius:999px;padding:.14rem .4rem;font-size:.61rem;font-weight:850;border:1px solid var(--sam-border);background:var(--sam-surface);color:var(--sam-text-muted)}
+.measurement-measured{border-color:#AFCDB1;background:var(--sam-success-soft);color:var(--sam-success)}
+.measurement-derived{border-color:#C8D5E1;background:#EAF0F7;color:var(--sport-navy)}
+.measurement-assumed_or_estimated{border-color:#E5C56A;background:var(--sam-warning-soft);color:#6C4800}
+.test-expected,.test-result{margin-top:12px;padding-top:10px;border-top:1px solid var(--sam-border)}
+.test-expected>strong{font-size:.76rem}
+.test-stage-result{margin-top:9px;padding:9px;border:1px dashed var(--sam-border-strong);border-radius:10px;background:var(--sport-white)}
+.test-provenance{margin:.7rem 0 0;font-size:.69rem;color:var(--sam-text-muted);overflow-wrap:anywhere}
+.mini-state.performed{background:var(--sam-success-soft);color:var(--sam-success);border-color:#BBD9BD}
+@media(max-width:980px){
+  .performance-layout{grid-template-columns:1fr}
+  .performance-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .test-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .performance-metric-grid,.test-metrics{grid-template-columns:1fr}
+  .metric-input-line{grid-template-columns:1fr}
+  .performance-test-head{flex-direction:column}
+  .performance-test-head .secondary{width:100%}
+}
