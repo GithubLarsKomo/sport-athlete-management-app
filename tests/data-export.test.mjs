@@ -53,7 +53,7 @@ test('athlete data export recursively removes secrets and raw provider payload k
   assert.equal(result.manifest.record_counts.activity_sources, 1);
   assert.equal(result.data.journal.activity_sources[0].raw_sha256, 'a'.repeat(64));
   assert.equal(result.data.profiles[0].profile.nested.safe, 'ok');
-  assert.equal(exportContainsForbiddenKeys(result), false);
+  assert.equal(exportContainsForbiddenKeys(result.data), false);
 
   const serialized = JSON.stringify(result);
   for (const forbiddenValue of ['secret-2','must-never-appear','drop']) {
