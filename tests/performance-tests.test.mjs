@@ -71,6 +71,13 @@ test('fixed test result accepts measured and derived values only when every valu
     metrics: { power_w: { value: 300, unit: 'W' } }
   }, protocol);
   assert.match(invalid.join('\n'), /measurement_class invalid/);
+
+  const empty = validatePerformanceTestResult({
+    performed_at: '2026-10-01T17:10:00.000Z',
+    device: 'Concept2 PM5',
+    metrics: {}
+  }, protocol);
+  assert.match(empty.join('\n'), /requires at least one metric/);
 });
 
 test('lactate and generic staged protocols validate without schema redesign', () => {
@@ -128,4 +135,10 @@ test('lactate and generic staged protocols validate without schema redesign', ()
     ]
   }, lactate);
   assert.match(duplicateStage.join('\n'), /duplicate result stage_number 1/);
+  assert.match(duplicateStage.join('\n'), /must contain at least one classified value/);
+
+  assert.match(
+    validateCustomProtocol({ ...custom, version: 0 }).join('\n'),
+    /version must be >= 1/
+  );
 });
