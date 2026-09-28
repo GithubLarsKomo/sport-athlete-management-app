@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#24",
+  "verticalIssueId": "VI-004",
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "base": "main",
+    "featureBranch": "feat/vi-004-performance-testing",
+    "reviewedHeadSha": "e29ae921fcf77859c86ee55494d31323b05dd0c2",
+    "pr": 35,
+    "mergeSha": "c2c206df9b80746467dcc5a27c200c2df88d0e2f"
+  },
+  "review": {
+    "axis1": "pass",
+    "axis2": "pass",
+    "decision": "approve",
+    "reviewEvidenceCommentId": 5865524592,
+    "reviewFreshnessAtMerge": "fresh"
+  },
+  "checks": {
+    "reviewHeadCi": {
+      "runId": 36392561650,
+      "runNumber": 126,
+      "headSha": "e29ae921fcf77859c86ee55494d31323b05dd0c2",
+      "conclusion": "success"
+    },
+    "mainPushCi": {
+      "runId": 36392652047,
+      "runNumber": 127,
+      "headSha": "c2c206df9b80746467dcc5a27c200c2df88d0e2f",
+      "conclusion": "success"
+    }
+  },
+  "mergeState": "merged",
+  "deploymentState": "not-applicable-for-vi-004",
+  "issueClosure": {
+    "issue": 24,
+    "trackerState": "closed",
+    "stateReason": "completed",
+    "closureState": "verified"
+  },
+  "requirements": {
+    "sourceIds": [
+      "REQ-TST-001",
+      "REQ-TST-002",
+      "REQ-TST-003",
+      "REQ-TST-004",
+      "REQ-TST-005",
+      "REQ-TST-006",
+      "REQ-TST-007"
+    ],
+    "closureState": "verified-for-v1",
+    "evidence": [
+      "PR #35 exact-head review anchored to e29ae921fcf77859c86ee55494d31323b05dd0c2",
+      "GitHub Actions run 36392561650 passed on reviewed head",
+      "Squash merge c2c206df9b80746467dcc5a27c200c2df88d0e2f",
+      "GitHub Actions main push run 36392652047 passed",
+      "Issue #24 closed with reason completed"
+    ]
+  },
+  "deliveredCapabilities": [
+    "Built-in RowErg 500 m, 1,000 m, 2,000 m, 5,000 m and 30 min protocols",
+    "RowErg and bike lactate step tests",
+    "Athlete-scoped custom staged protocols without schema redesign",
+    "Explicit measured, derived and assumed_or_estimated classification on relevant values",
+    "Planned-to-performed lifecycle with protocol snapshot, actor, device, warm-up, environment, termination reason, notes and retest linkage",
+    "Athlete and assigned-Coach planning/execution/review through the existing authorization boundary",
+    "Dashboard planning, result entry and history with visible measurement class",
+    "Persistence, authorization, multi-tenant and UI contract test coverage"
+  ],
+  "residualRisks": [
+    "Production Authentik/Coolify end-to-end verification remains owned by VI-007/#27.",
+    "Test interpretation and threshold/recommendation logic intentionally remains outside the app and owned by Skillz.",
+    "Built-in lactate protocols are generic staged templates; sport-specific prescribed stage sequences can be represented as custom protocols.",
+    "The advanced custom-protocol authoring UI uses explicit stage JSON; the underlying schema/API is complete but authoring UX can be simplified later."
+  ],
+  "status": "closed-with-followups",
+  "nextSkill": "iterate-software-projects"
+}

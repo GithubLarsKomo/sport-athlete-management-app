@@ -3,7 +3,7 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260927-224800-vi-003-delivered.md",
+  "latestEvent": "docs/project-memory/events/EVT-20260928-093759-vi-004-delivered.md",
   "currentStage": "backlog",
   "canonicalArtifacts": [
     {
@@ -83,6 +83,18 @@
       "path": "docs/project-memory/events/EVT-20260927-224800-vi-003-delivered.md",
       "status": "completed",
       "ref": "50acab4696854c94e9ceb2142d15f50ea154e746"
+    },
+    {
+      "type": "engineering-delivery-status",
+      "path": "docs/engineering/vi-004/engineering-delivery-status.json",
+      "status": "delivered",
+      "ref": "c2c206df9b80746467dcc5a27c200c2df88d0e2f"
+    },
+    {
+      "type": "delivered-increment",
+      "path": "docs/project-memory/events/EVT-20260928-093759-vi-004-delivered.md",
+      "status": "completed",
+      "ref": "c2c206df9b80746467dcc5a27c200c2df88d0e2f"
     }
   ],
   "decisions": [
@@ -99,18 +111,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-011",
+      "id": "OPEN-012",
       "type": "pending",
-      "summary": "Implement VI-004 / GitHub #24.",
-      "nextAction": "Add structured RowErg and bike performance testing with explicit measured/derived/assumed_or_estimated classification."
+      "summary": "Implement VI-005 / GitHub #25.",
+      "nextAction": "Add deterministic minimized adaptation handoff export, fail-closed proposal import and explicit single-application-safe apply."
     }
   ],
   "lastVerified": {
-    "headSha": "50acab4696854c94e9ceb2142d15f50ea154e746",
-    "at": "2026-09-27T22:48:00+02:00"
+    "headSha": "c2c206df9b80746467dcc5a27c200c2df88d0e2f",
+    "at": "2026-09-28T09:37:59+02:00"
   },
   "nextAction": {
-    "description": "Implement VI-004 / GitHub issue #24.",
+    "description": "Implement VI-005 / GitHub issue #25.",
     "skill": "iterate-software-projects"
   }
 }
