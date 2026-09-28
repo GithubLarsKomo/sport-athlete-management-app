@@ -169,3 +169,41 @@ test('RowErg and bike lactate stages plus a custom staged protocol persist witho
   assert.equal(reloaded.protocol.stages.length, 2);
   assert.equal(reloaded.protocol.stages[1].target_metrics.power_w.measurement_class, 'assumed_or_estimated');
 });
+
+
+test('custom protocol identity is athlete-scoped and built-in identifiers stay reserved', async () => {
+  const shared = {
+    protocol_id:'shared-bike-step',
+    version:1,
+    name:'Shared-name bike step',
+    modality:'bike',
+    protocol_kind:'staged',
+    stage_fields:['duration_s','power_w'],
+    stages:[{
+      stage_number:1,
+      target_metrics:{
+        duration_s:classifiedValue(300, 's', 'assumed_or_estimated'),
+        power_w:classifiedValue(180, 'W', 'assumed_or_estimated')
+      }
+    }]
+  };
+
+  const first = await repository.saveCustomTestProtocol(athleteId, shared, actor);
+  assert.equal(first.protocol_id, 'shared-bike-step');
+
+  const secondAthleteId = `perf-${randomUUID()}`;
+  const secondActor = `subject-${secondAthleteId}`;
+  await repository.ensureAthlete({
+    subject:secondActor,
+    athleteId:secondAthleteId,
+    email:null,
+    displayName:'Second Performance Athlete'
+  });
+  const second = await repository.saveCustomTestProtocol(secondAthleteId, shared, secondActor);
+  assert.equal(second.protocol_id, 'shared-bike-step');
+
+  await assert.rejects(
+    () => repository.saveCustomTestProtocol(athleteId, { ...shared, protocol_id:'rowerg-2000m', name:'collision' }, actor),
+    error => error.statusCode === 409 && error.message === 'test_protocol_id_reserved'
+  );
+});
