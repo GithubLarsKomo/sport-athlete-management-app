@@ -59,7 +59,7 @@ test('database export exposes provenance references but not raw provider telemet
   assert.equal(source.account.athlete_id,athleteId);
   assert.equal(dataExport.manifest.record_counts.activity_sources,1);
   assert.equal(dataExport.data.journal.activity_sources[0].raw_sha256,'a'.repeat(64));
-  assert.equal(exportContainsForbiddenKeys(dataExport),false);
+  assert.equal(exportContainsForbiddenKeys(dataExport.data),false);
   assert.doesNotMatch(serialized,/stored-secret|provider-secret|huge/);
   assert.equal('raw_payload_json' in dataExport.data.journal.activity_sources[0],false);
   assert.equal('samples_json' in dataExport.data.journal.activity_sources[0],false);
