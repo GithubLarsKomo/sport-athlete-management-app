@@ -159,8 +159,13 @@ export function createDataExportRepository(db) {
         if (!athlete[0]) return { deleted: false, reason: 'athlete_not_found' };
 
         await conn.query(
+          'UPDATE audit_log SET details_json=? WHERE athlete_id=?',
+          [JSON.stringify({ privacy_redacted: true, event_metadata_retained: true }), athleteId]
+        );
+
+        await conn.query(
           'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
-          [athleteId, actorSubject, 'privacy.deletion_started', 'athlete', athleteId, JSON.stringify({ procedure: 'operator-v1' })]
+          [athleteId, actorSubject, 'privacy.deletion_started', 'athlete', athleteId, JSON.stringify({ procedure: 'operator-v1', historical_audit_details_redacted: true })]
         );
 
         await conn.query('DELETE FROM specialist_artifacts WHERE athlete_id=?', [athleteId]);
