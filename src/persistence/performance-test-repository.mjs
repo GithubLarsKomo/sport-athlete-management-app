@@ -95,7 +95,7 @@ export function createPerformanceTestRepository(db) {
     async saveCustomTestProtocol(athleteId, input, actor) {
       const id = input.protocol_id || randomUUID();
       const version = Number(input.version || 1);
-      if (builtInProtocol(id, version)) {
+      if (BUILT_IN_TEST_PROTOCOLS.some(protocol => protocol.protocol_id === id)) {
         throw Object.assign(new Error('test_protocol_id_reserved'), { statusCode: 409 });
       }
       const definition = {
