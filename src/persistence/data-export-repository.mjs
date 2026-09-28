@@ -151,6 +151,50 @@ export function createDataExportRepository(db) {
         },
         audit: mapRows(audit, { details_json: 'details' })
       };
+    },
+
+    async deleteAthleteData(athleteId, actorSubject) {
+      return db.transaction(async conn => {
+        const athlete = await conn.query('SELECT id FROM athletes WHERE id=? FOR UPDATE', [athleteId]);
+        if (!athlete[0]) return { deleted: false, reason: 'athlete_not_found' };
+
+        await conn.query(
+          'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+          [athleteId, actorSubject, 'privacy.deletion_started', 'athlete', athleteId, JSON.stringify({ procedure: 'operator-v1' })]
+        );
+
+        await conn.query('DELETE FROM specialist_artifacts WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM specialist_reasoning_runs WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM performance_tests WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM performance_test_protocols WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM coach_session_notes WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM activity_journal_entries WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM activity_sources WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM activity_import_cursors WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM activities WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM training_plan_revisions WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM adaptation_decisions WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM completed_sessions WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM planned_sessions WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM training_plan_imports WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM microcycles WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM mesocycles WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM seasons WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM competitions WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM goals WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM daily_checkins WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM athlete_profiles WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM coach_athlete_assignments WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM app_principals WHERE athlete_id=?', [athleteId]);
+        await conn.query('DELETE FROM athletes WHERE id=?', [athleteId]);
+
+        await conn.query(
+          'INSERT INTO audit_log (athlete_id, actor_subject, event_type, entity_type, entity_id, details_json) VALUES (?, ?, ?, ?, ?, ?)',
+          [athleteId, actorSubject, 'privacy.deletion_completed', 'athlete', athleteId, JSON.stringify({ retained_security_audit: true, primary_data_deleted: true })]
+        );
+
+        return { deleted: true, retained_security_audit: true };
+      });
     }
   };
 }
