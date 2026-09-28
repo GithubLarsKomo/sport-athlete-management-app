@@ -313,3 +313,20 @@ button{min-height:44px}
   .performance-test-head{flex-direction:column}
   .performance-test-head .secondary{width:100%}
 }
+
+
+/* VI-005 manual-first adaptation handoff */
+.adaptation-handoff-card{margin-bottom:20px;border-top:3px solid var(--sam-energy)}
+.handoff-controls{display:grid;grid-template-columns:minmax(210px,.8fr) auto auto;gap:10px;align-items:end;margin-top:16px}
+.handoff-controls label{display:grid;gap:5px;font-size:.76rem;font-weight:800}
+.handoff-controls input{min-height:42px;border:1px solid var(--sam-border-strong);border-radius:9px;padding:8px;background:var(--sport-white);color:var(--sam-text)}
+.handoff-meta{margin:12px 0 8px;overflow-wrap:anywhere;font-size:.75rem}
+.handoff-preview{max-height:430px;overflow:auto;margin:0;padding:13px;border:1px solid var(--sam-border);border-radius:11px;background:var(--sam-surface-subtle);font:500 .72rem/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;tab-size:2}
+.proposal-import{display:grid;gap:8px;margin-top:16px;padding-top:15px;border-top:1px solid var(--sam-border)}
+.proposal-import textarea{width:100%;resize:vertical;border:1px solid var(--sam-border-strong);border-radius:10px;padding:11px;background:var(--sport-white);color:var(--sam-text);font:500 .74rem/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.proposal-import .primary{justify-self:start}
+@media(max-width:760px){
+  .handoff-controls{grid-template-columns:1fr}
+  .handoff-controls button,.proposal-import .primary{width:100%}
+  .handoff-preview{max-height:340px;font-size:.68rem}
+}

@@ -304,6 +304,36 @@
       </article>
     </section>
 
+    <section id="adaptationHandoffCard" class="card adaptation-handoff-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">ADAPTATION · MANUAL FIRST</p>
+          <h2>Kontrollierter Skillz-/LLM-Handoff</h2>
+          <p class="muted">Erzeuge zuerst einen minimierten, deterministischen JSON-Snapshot. Er wird nur angezeigt und heruntergeladen – niemals automatisch an einen externen Dienst gesendet. Ein zurückgegebenes JSON bleibt bis zum separaten Apply-Schritt ausschließlich ein Vorschlag.</p>
+        </div>
+        <span class="pill">Export → Proposal → Apply</span>
+      </div>
+
+      <div class="handoff-controls">
+        <label>Trainingsfenster ab
+          <input id="adaptationHandoffFrom" type="date" required>
+        </label>
+        <button id="buildAdaptationHandoff" class="secondary" type="button">Handoff erzeugen</button>
+        <button id="downloadAdaptationHandoff" class="secondary" type="button" disabled>JSON herunterladen</button>
+      </div>
+
+      <div id="adaptationHandoffMeta" class="handoff-meta muted">Noch kein Handoff erzeugt.</div>
+      <pre id="adaptationHandoffPreview" class="handoff-preview hidden" tabindex="0"></pre>
+
+      <div class="proposal-import">
+        <label for="adaptationProposalJson"><strong>Validiertes Proposal zurückgeben</strong></label>
+        <p class="muted">Das Proposal muss auf die angezeigte <code>handoff_id</code> und denselben Starttag verweisen. Veraltete oder schemawidrige Rückgaben werden fail-closed abgewiesen und ändern keinen Plan.</p>
+        <textarea id="adaptationProposalJson" rows="12" spellcheck="false" placeholder='{"schema_version":1,"kind":"sport-athlete-adaptation-proposal","contract_version":"1.0.0",...}'></textarea>
+        <button id="importAdaptationProposal" class="primary" type="button">Proposal prüfen &amp; importieren</button>
+      </div>
+      <p id="adaptationHandoffMessage" class="message"></p>
+    </section>
+
     <section class="card adaptation-card">
       <div class="section-head">
         <div><p class="eyebrow">ADAPTATION</p><h2>Letzte Entscheidung</h2></div>
@@ -327,5 +357,6 @@
   <script type="module" src="/app/p1.js"></script>
   <script type="module" src="/app/journal.js"></script>
   <script type="module" src="/app/performance-tests.js"></script>
+  <script type="module" src="/app/adaptation-handoff.js"></script>
 </body>
 </html>

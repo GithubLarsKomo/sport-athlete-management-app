@@ -4,7 +4,7 @@ import { extname, resolve, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { resolveIdentity } from './auth.mjs';
 import { readJson, sendJson, sendText } from './http.mjs';
-import { commonEnvelope, validateCheckin, validateCompletedSession } from './domain/contracts.mjs';
+import { commonEnvelope, validateAdaptationDecision, validateCheckin, validateCompletedSession } from './domain/contracts.mjs';
 import { evaluateAdaptation } from './domain/skillz-adapter.mjs';
 import { validatePlanPackage, validateSessionRevisionCommand } from './domain/planning.mjs';
 import { normalizeCanonicalPlanImportBundle } from './domain/plan-import.mjs';
@@ -15,6 +15,7 @@ import { normalizeAnySpecialistArtifact, specialistDescriptor, specialistTypesFo
 import { normalizeConcept2Result, normalizeFileImport } from './domain/activity-import.mjs';
 import { fetchConcept2Results } from './domain/concept2-client.mjs';
 import { validateCustomProtocol, validatePerformanceTestPlan, validatePerformanceTestResult } from './domain/performance-tests.mjs';
+import { buildAdaptationHandoff, proposalToAdaptationDecision, validateAdaptationProposal } from './domain/adaptation-handoff.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
@@ -48,6 +49,7 @@ function coachActionAllowed(method, pathname) {
   if (method === 'PUT' && pathname === '/api/v1/planning/active') return true;
   if (method === 'POST' && pathname === '/api/v1/planning/import') return true;
   if (method === 'POST' && pathname === '/api/v1/adaptation/evaluate') return true;
+  if (method === 'POST' && pathname === '/api/v1/adaptation/proposals') return true;
   if (method === 'POST' && /^\/api\/v1\/adaptation\/[^/]+\/apply$/.test(pathname)) return true;
   if (method === 'PUT' && /^\/api\/v1\/completed-sessions\/[^/]+\/coach-note$/.test(pathname)) return true;
   if (method === 'POST' && pathname === '/api/v1/tests/protocols') return true;
@@ -430,6 +432,48 @@ export function createApplication({ config, repository }) {
         const test = await repository.getPerformanceTest(athleteId, testDetailMatch[1]);
         if (!test) return sendJson(res, 404, { error: 'performance_test_not_found' });
         return sendJson(res, 200, { test });
+      }
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/adaptation/handoff') {
+        const from = url.searchParams.get('from') || localDate();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(from)) return sendJson(res, 400, { error: 'invalid_handoff_from_date' });
+        const handoff = await buildAdaptationHandoff(repository, athleteId, from);
+        await repository.audit(athleteId, identity.subject, 'adaptation.handoff_exported', 'adaptation_handoff', handoff.handoff_id, {
+          from: handoff.window.from,
+          to: handoff.window.to,
+          source_ref_count: handoff.source_refs.length
+        });
+        return sendJson(res, 200, { handoff });
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/v1/adaptation/proposals') {
+        const body = await readJson(req, 1024 * 1024);
+        const errors = validateAdaptationProposal(body, { athleteId });
+        if (errors.length) return sendJson(res, 422, { error: 'invalid_adaptation_proposal', details: errors });
+
+        const handoff = await buildAdaptationHandoff(repository, athleteId, body.handoff_from);
+        if (handoff.handoff_id !== body.handoff_id) {
+          return sendJson(res, 409, {
+            error: 'adaptation_handoff_changed',
+            current_handoff_id: handoff.handoff_id
+          });
+        }
+
+        if (body.revised_plan != null) {
+          const revisionErrors = validateSessionRevisionCommand(body.revised_plan);
+          if (revisionErrors.length) return sendJson(res, 422, { error: 'unsupported_plan_revision', details: revisionErrors });
+        }
+
+        const decision = proposalToAdaptationDecision(body, handoff);
+        const decisionErrors = validateAdaptationDecision(decision);
+        if (decisionErrors.length) return sendJson(res, 422, { error: 'invalid_adaptation_proposal', details: decisionErrors });
+        const saved = await repository.saveAdaptation(athleteId, decision, identity.subject);
+        await repository.audit(athleteId, identity.subject, 'adaptation.proposal_imported', 'adaptation_decision', saved.adaptation_decision_id, {
+          external_proposal_id: body.proposal_id,
+          handoff_id: handoff.handoff_id,
+          has_revision: Boolean(body.revised_plan)
+        });
+        return sendJson(res, 201, { decision: saved });
       }
 
       if (req.method === 'POST' && url.pathname === '/api/v1/adaptation/evaluate') {

@@ -524,9 +524,7 @@ $('#sessionForm').addEventListener('submit', async (event) => {
         deviations: [...event.currentTarget.querySelectorAll('input[name="deviations"]:checked')].map(input => input.value)
       })
     });
-    const result = await api('/api/v1/adaptation/evaluate', { method:'POST', body:'{}' });
-    renderDecision(result.decision);
-    setMessage('#sessionMessage','Session gespeichert. Der Adaptationsvorschlag ist protokolliert, aber noch nicht automatisch angewandt.');
+    setMessage('#sessionMessage','Session gespeichert. Es wurde keine automatische Adaptation ausgelöst. Erzeuge bei Bedarf unten einen kontrollierten Handoff.');
     await load();
   } catch (error) {
     setMessage('#sessionMessage',error.message,false);

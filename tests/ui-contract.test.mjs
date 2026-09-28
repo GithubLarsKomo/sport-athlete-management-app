@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, js, p1, performance] = await Promise.all([
+const [html, js, p1, performance, handoff] = await Promise.all([
   readFile(new URL('../site/index.html', import.meta.url), 'utf8'),
   readFile(new URL('../site/app/app.js', import.meta.url), 'utf8'),
   readFile(new URL('../site/app/p1.js', import.meta.url), 'utf8'),
-  readFile(new URL('../site/app/performance-tests.js', import.meta.url), 'utf8')
+  readFile(new URL('../site/app/performance-tests.js', import.meta.url), 'utf8'),
+  readFile(new URL('../site/app/adaptation-handoff.js', import.meta.url), 'utf8')
 ]);
 
 test('dashboard exposes the complete athlete-facing P0 controls', () => {
@@ -78,4 +79,27 @@ test('generic staged test protocol remains available as an explicit advanced wor
   assert.match(performance, /protocol_kind:'staged'/);
   assert.match(performance, /stage_fields:stageFields/);
   assert.match(performance, /stages/);
+});
+
+
+test('VI-005 UI makes adaptation a manual export -> proposal -> explicit apply workflow', () => {
+  for (const id of [
+    'adaptationHandoffCard','adaptationHandoffFrom','buildAdaptationHandoff','downloadAdaptationHandoff',
+    'adaptationHandoffPreview','adaptationProposalJson','importAdaptationProposal','applyDecision'
+  ]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
+  assert.match(html, /niemals automatisch an einen externen Dienst gesendet/);
+  assert.match(html, /bis zum separaten Apply-Schritt ausschließlich ein Vorschlag/);
+  assert.match(handoff, /\/api\/v1\/adaptation\/handoff\?from=/);
+  assert.match(handoff, /\/api\/v1\/adaptation\/proposals/);
+  assert.match(handoff, /sport-athlete-adaptation-handoff-/);
+  assert.match(handoff, /revised_plan:null/);
+  assert.match(js, /\/api\/v1\/adaptation\/[^/]+\/apply/);
+});
+
+test('session completion no longer invokes automatic adaptation evaluation', () => {
+  const completionBlock = js.slice(js.indexOf("$('#sessionForm').addEventListener"), js.indexOf("$('#weekComparisonDetails').addEventListener"));
+  assert.doesNotMatch(completionBlock, /\/api\/v1\/adaptation\/evaluate/);
+  assert.match(completionBlock, /keine automatische Adaptation ausgelöst/);
 });
