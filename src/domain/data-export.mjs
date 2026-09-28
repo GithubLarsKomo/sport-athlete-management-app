@@ -14,13 +14,17 @@ const FORBIDDEN_EXACT_KEYS = new Set([
   'apikey',
   'password',
   'authorization',
-  'cookie'
+  'cookie',
+  'token',
+  'secret',
+  'private_key',
+  'credentials'
 ]);
 
 function forbiddenKey(key) {
   const normalized = String(key || '').toLowerCase();
   if (FORBIDDEN_EXACT_KEYS.has(normalized)) return true;
-  return /(^|[_-])(access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|service[_-]?secret|password|authorization|credential|cookie)([_-]|$)/i.test(normalized);
+  return /(^|[_-])(token|secret|access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|service[_-]?secret|private[_-]?key|password|authorization|credentials?|cookie)([_-]|$)/i.test(normalized);
 }
 
 export function sanitizeExportValue(value) {
