@@ -120,12 +120,31 @@ function minimizeSubjective(subjective) {
 
 function minimizeActual(actual) {
   if (!object(actual)) return null;
+  const evidence = pick(actual.evidence, [
+    'duration_s','distance_m','avg_power_w','avg_hr_bpm','max_hr_bpm','stroke_rate_spm',
+    'pace_500_s','work_kj','interval_count'
+  ]) || {};
+  const provenance = object(actual.provenance) ? {
+    canonical_source: actual.provenance.canonical_source || null,
+    completion_source_refs: Array.isArray(actual.provenance.completion_source_refs)
+      ? actual.provenance.completion_source_refs
+      : [],
+    activity_sources: Array.isArray(actual.provenance.activity_sources)
+      ? actual.provenance.activity_sources.map(source => pick(source, ['provider','external_activity_id','raw_sha256'])).filter(Boolean)
+      : []
+  } : {};
+  const coachNotes = Array.isArray(actual.coach_notes)
+    ? actual.coach_notes.map(note => pick(note, ['id','completed_session_id','authored_by_subject','note','created_at','updated_at'])).filter(Boolean)
+    : [];
   return {
     ...pick(actual, [
       'completed_session_id','activity_id','session_type','started_at','completed_at','duration_min',
-      'session_rpe','completion_status','evidence','provenance','coach_notes'
+      'session_rpe','completion_status'
     ]),
-    subjective: minimizeSubjective(actual.subjective)
+    subjective: minimizeSubjective(actual.subjective),
+    evidence,
+    provenance,
+    coach_notes: coachNotes
   };
 }
 
