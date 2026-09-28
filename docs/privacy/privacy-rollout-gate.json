@@ -1,7 +1,12 @@
 {
   "schemaVersion": 1,
   "gateId": "rowing-sport-os-v1-privacy-rollout",
-  "requirements": ["REQ-DATA-001", "REQ-DATA-002", "REQ-DATA-003", "REQ-DATA-004"],
+  "requirements": [
+    "REQ-DATA-001",
+    "REQ-DATA-002",
+    "REQ-DATA-003",
+    "REQ-DATA-004"
+  ],
   "status": "blocked-for-broad-rollout-until-production-controls-verified",
   "implementationControls": {
     "athleteSelfServiceExport": "implemented",
@@ -11,7 +16,7 @@
     "recursiveSecretRemoval": "implemented",
     "operatorDeletionProcedure": "implemented",
     "primaryDataDeletion": "transactional",
-    "securityAuditTreatment": "retained-after-primary-deletion",
+    "securityAuditTreatment": "event-metadata-retained-sensitive-details-redacted",
     "applicationRequestBodyLogging": "disabled-by-design"
   },
   "productionControlsRequiredBeforeBroadRollout": [
@@ -44,7 +49,7 @@
     "providerRawStorage": "primary-database-provenance-and-reconciliation-only",
     "providerRawSelfExport": "excluded",
     "deletionRequest": "operator-controlled-v1",
-    "auditAfterDeletion": "retain-bounded-security-evidence",
+    "auditAfterDeletion": "retain-event-metadata-redact-historical-details",
     "restoreRule": "reapply-post-restore-point-deletions-before-service-exposure"
   },
   "evidence": {
