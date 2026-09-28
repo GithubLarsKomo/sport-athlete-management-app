@@ -41,7 +41,6 @@ function handoffMessage(text, ok=true) {
 }
 
 function proposalTemplate(handoff) {
-  const session = handoff.plan_vs_actual?.sessions?.find(record => record.plan && ['planned','modified'].includes(record.plan.status))?.plan || null;
   return {
     schema_version:1,
     kind:'sport-athlete-adaptation-proposal',
@@ -61,12 +60,7 @@ function proposalTemplate(handoff) {
     source_refs:[handoff.handoff_id],
     uncertainties:[],
     safety_flags:[],
-    revised_plan:session ? {
-      entity_type:'planned_session',
-      entity_id:session.planned_session_id,
-      expected_version:Number(session.version),
-      patch:{planned_duration_min:Number(session.planned_duration_min)}
-    } : null
+    revised_plan:null
   };
 }
 
