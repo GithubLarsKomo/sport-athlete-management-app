@@ -9,13 +9,14 @@ Deliver a Hetzner-hosted, Authentik-protected longitudinal training journal for 
 
 ## Current status
 
-Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21, VI-002/#22 and VI-003/#23 are reviewed, merged and closed; main CI is green. VI-004/#24 is the active critical-path increment.
+Grilling, Wayfinding and specification are complete. `SPEC.md@0.1.0` is approved. VI-001/#21 through VI-005/#25 are reviewed, merged and closed; exact-head and main CI evidence is green. VI-006/#26 is the active critical-path increment.
 
 Confirmed v1 additions include:
 - Coach as first-class user with explicit Athlete assignment;
 - post-session RPE + expectation match + pain/deviation/comment;
 - RowErg 500 m, 1k, 2k, 5k and 30 min tests;
 - RowErg and bike lactate tests plus configurable staged protocol;
+- deterministic manual-first adaptation handoff with explicit one-time apply;
 - self-service data export;
 - contract-only Athlete Second-Brain preparation.
 
@@ -23,7 +24,7 @@ Confirmed v1 additions include:
 
 - [state.json](state.json)
 - [Timeline](TIMELINE.md)
-- [Latest event](events/EVT-20260927-224800-vi-003-delivered.md)
+- [Latest event](events/EVT-20260928-140703-vi-005-delivered.md)
 
 ## Canonical project artifacts
 
@@ -42,8 +43,8 @@ Confirmed v1 additions include:
 - VI-001 → GitHub #21 — **delivered**
 - VI-002 → GitHub #22 — **delivered**
 - VI-003 → GitHub #23 — **delivered**
-- VI-004 → GitHub #24
-- VI-005 → GitHub #25
+- VI-004 → GitHub #24 — **delivered**
+- VI-005 → GitHub #25 — **delivered**
 - VI-006 → GitHub #26
 - VI-007 → GitHub #27
 
@@ -80,14 +81,36 @@ Confirmed v1 additions include:
 - review decision: PASS / PASS WITH NOTES
 - issue state: completed
 
+### VI-004 / GitHub #24
+
+- PR #35
+- reviewed head: `e29ae921fcf77859c86ee55494d31323b05dd0c2`
+- merge: `c2c206df9b80746467dcc5a27c200c2df88d0e2f`
+- review-head CI: `36392561650` success
+- main CI: `36392652047` success
+- [Delivery status](../engineering/vi-004/engineering-delivery-status.json)
+- review decision: PASS / PASS
+- issue state: completed
+
+### VI-005 / GitHub #25
+
+- PR #37
+- reviewed head: `3e989a8ab318d7e16f1f46d7aa60d759a2f50b25`
+- merge: `1204178245e40834dc576da53989e10311e77824`
+- review-head CI: `36419480520` success
+- main CI: `36419711173` success
+- [Delivery status](../engineering/vi-005/engineering-delivery-status.json)
+- review decision: PASS / PASS WITH NOTES
+- issue state: completed
+
 ## Current engineering increment
 
-VI-004 / GitHub #24 — structured RowErg and bike performance testing with explicit measurement class.
+VI-006 / GitHub #26 — athlete self-service data export and privacy rollout gate.
 
 ## Open loop
 
-Implement and review VI-004.
+Implement and review VI-006.
 
 ## Next step
 
-Start VI-004 from current main.
+Start VI-006 from current main.
