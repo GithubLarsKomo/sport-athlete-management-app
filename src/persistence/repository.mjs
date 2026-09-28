@@ -489,7 +489,10 @@ export function createRepository(db) {
         'SELECT local_date, payload_json FROM daily_checkins WHERE athlete_id=? AND local_date BETWEEN ? AND ? ORDER BY local_date',
         [athleteId, fromDate, toDate]
       );
-      return rows.map(row => ({ ...parseJson(row.payload_json), local_date: String(row.local_date).slice(0, 10) }));
+      return rows.map(row => ({
+        ...parseJson(row.payload_json),
+        local_date: row.local_date instanceof Date ? row.local_date.toISOString().slice(0, 10) : String(row.local_date).slice(0, 10)
+      }));
     },
 
     async saveCheckin(athleteId, payload, actor) {
