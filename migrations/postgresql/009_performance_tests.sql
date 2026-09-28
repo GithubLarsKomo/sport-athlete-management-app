@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS performance_test_protocols (
   definition_json JSONB NOT NULL,
   created_by_subject VARCHAR(191) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id, version),
+  PRIMARY KEY (athlete_id, id, version),
   CONSTRAINT fk_test_protocol_athlete FOREIGN KEY (athlete_id) REFERENCES athletes(id) ON DELETE CASCADE,
   CONSTRAINT ck_test_protocol_version CHECK (version >= 1),
   CONSTRAINT ck_test_protocol_modality CHECK (modality IN ('rowerg','bike')),
