@@ -36,16 +36,16 @@ Deletion is an operator-controlled v1 procedure rather than a self-service destr
 4. Enable the destructive path only for the bounded maintenance action with `PRIVACY_DELETE_ENABLED=true`.
 5. Execute with both `--execute` and `--confirm=<athlete-id>`. Set `PRIVACY_OPERATOR_SUBJECT` to an auditable operator/service identity.
 6. Verify that the athlete account and athlete-owned primary data are absent.
-7. Verify that `privacy.deletion_started` and `privacy.deletion_completed` remain in the security audit trail.
+7. Verify that historical audit detail payloads are redacted while event metadata remains, and that `privacy.deletion_started` and `privacy.deletion_completed` remain in the security audit trail.
 8. Record the request/ticket reference in the operational system without copying sensitive training payloads into logs or tickets.
 
 The transaction deletes profiles, goals, competitions, plans/imports/revisions, check-ins, completed sessions, activities and provider raw records, journal data, tests, adaptation records, specialist records, coach assignment to that athlete and the athlete principal/account.
 
 ## Security audit treatment
 
-`audit_log` is not deleted by the primary-data deletion transaction. The retained records are limited to security/operational evidence already recorded by the application, including deletion evidence. They may retain the internal athlete identifier and actor subject and therefore remain access-controlled personal/security data.
+`audit_log` is not deleted by the primary-data deletion transaction. As a bounded privacy-deletion exception, historical athlete-scoped `details_json` is replaced with a redaction marker before the live data is removed. Event type, entity reference, actor subject and timestamp remain as security/operational evidence; the new deletion-started/completed events retain only minimal deletion metadata.
 
-The production deployment must define and record an audit-retention window before broad rollout. Normal application operations must not rewrite or silently prune audit evidence.
+The retained audit metadata may still contain the internal athlete identifier and actor subject and therefore remains access-controlled personal/security data. The production deployment must define and record an audit-retention window before broad rollout. Outside the documented privacy-deletion redaction step, normal application operations must not rewrite or silently prune audit evidence.
 
 ## Backups and restore windows
 
