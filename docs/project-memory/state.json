@@ -3,8 +3,8 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260928-140703-vi-005-delivered.md",
-  "currentStage": "backlog",
+  "latestEvent": "docs/project-memory/events/EVT-20260928-143319-vi-006-delivered.md",
+  "currentStage": "deployment",
   "canonicalArtifacts": [
     {
       "type": "wayfinding",
@@ -107,6 +107,18 @@
       "path": "docs/project-memory/events/EVT-20260928-140703-vi-005-delivered.md",
       "status": "completed",
       "ref": "1204178245e40834dc576da53989e10311e77824"
+    },
+    {
+      "type": "engineering-delivery-status",
+      "path": "docs/engineering/vi-006/engineering-delivery-status.json",
+      "status": "delivered",
+      "ref": "dca16f94dd5a601b202050a0cefba8c5da3a5d08"
+    },
+    {
+      "type": "delivered-increment",
+      "path": "docs/project-memory/events/EVT-20260928-143319-vi-006-delivered.md",
+      "status": "completed",
+      "ref": "dca16f94dd5a601b202050a0cefba8c5da3a5d08"
     }
   ],
   "decisions": [
@@ -123,18 +135,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-013",
+      "id": "OPEN-014",
       "type": "pending",
-      "summary": "Implement VI-006 / GitHub #26.",
-      "nextAction": "Add authenticated athlete data export and verify retention, deletion, backup and sensitive-logging rollout gates."
+      "summary": "Implement VI-007 / GitHub #27.",
+      "nextAction": "Deploy approved v1 behind Authentik on Hetzner/Coolify, run the full production smoke suite and close the production privacy rollout controls."
     }
   ],
   "lastVerified": {
-    "headSha": "1204178245e40834dc576da53989e10311e77824",
-    "at": "2026-09-28T14:07:03+02:00"
+    "headSha": "dca16f94dd5a601b202050a0cefba8c5da3a5d08",
+    "at": "2026-09-28T14:33:19+02:00"
   },
   "nextAction": {
-    "description": "Implement VI-006 / GitHub issue #26.",
+    "description": "Implement VI-007 / GitHub issue #27.",
     "skill": "iterate-software-projects"
   }
 }
