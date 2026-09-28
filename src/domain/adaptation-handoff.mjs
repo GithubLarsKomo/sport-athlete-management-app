@@ -89,7 +89,10 @@ function minimizeContext(context) {
 
 function minimizePlanImport(record) {
   if (!object(record)) return null;
-  return pick(record, ['import_id','revision','content_hash','producer','source_refs','supersedes_import_id','imported_at']);
+  return {
+    ...pick(record, ['import_id','revision','content_hash','source_refs','supersedes_import_id','imported_at']),
+    producer: pick(record.producer, ['repository','workflow','contract_version','source_ref'])
+  };
 }
 
 function minimizeCheckin(checkin) {
@@ -347,6 +350,9 @@ export function validateAdaptationProposal(value, { athleteId = null } = {}) {
   if (value.revised_plan != null && !object(value.revised_plan)) errors.push('revised_plan must be an object or null');
   if (value.safety_state === 'RED' && !new Set(['health_route','medical_review','review_required']).has(value.action)) {
     errors.push('RED proposals cannot continue normal training progression');
+  }
+  if (value.safety_state === 'RED' && value.revised_plan != null) {
+    errors.push('RED proposals must not include a plan revision');
   }
   return errors;
 }
