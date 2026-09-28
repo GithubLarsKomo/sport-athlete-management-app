@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "issueId": "#26",
+  "verticalIssueId": "VI-006",
+  "repository": {
+    "name": "GithubLarsKomo/sport-athlete-management-app",
+    "base": "main",
+    "featureBranch": "feat/vi-006-data-export-privacy",
+    "reviewedHeadSha": "767b00745c2ceeebe883a8f6f3614dbbbd11ef52",
+    "pr": 39,
+    "mergeSha": "dca16f94dd5a601b202050a0cefba8c5da3a5d08"
+  },
+  "review": {
+    "axis1": "pass",
+    "axis2": "pass-with-notes",
+    "decision": "approve",
+    "reviewEvidenceCommentId": 5869889956,
+    "reviewFreshnessAtMerge": "fresh"
+  },
+  "checks": {
+    "reviewHeadCi": {
+      "runId": 36422358258,
+      "runNumber": 141,
+      "headSha": "767b00745c2ceeebe883a8f6f3614dbbbd11ef52",
+      "conclusion": "success"
+    },
+    "mainPushCi": {
+      "runId": 36422509882,
+      "runNumber": 142,
+      "headSha": "dca16f94dd5a601b202050a0cefba8c5da3a5d08",
+      "conclusion": "success"
+    }
+  },
+  "mergeState": "merged",
+  "deploymentState": "production-gate-owned-by-vi-007",
+  "issueClosure": {
+    "issue": 26,
+    "trackerState": "closed",
+    "stateReason": "completed",
+    "closureState": "verified"
+  },
+  "requirements": {
+    "sourceIds": ["REQ-DATA-001", "REQ-DATA-002", "REQ-DATA-003", "REQ-DATA-004"],
+    "closureState": "verified-for-v1-implementation",
+    "evidence": [
+      "PR #39 exact-head review anchored to 767b00745c2ceeebe883a8f6f3614dbbbd11ef52",
+      "GitHub Actions run 36422358258 passed on reviewed head",
+      "Squash merge dca16f94dd5a601b202050a0cefba8c5da3a5d08",
+      "GitHub Actions main push run 36422509882 passed",
+      "Issue #26 closed with reason completed"
+    ]
+  },
+  "deliveredCapabilities": [
+    "Authenticated Athlete self-service structured JSON export of longitudinal application data",
+    "Assigned-Coach export through the existing athlete authorization boundary with explicit data.exported audit",
+    "Explicit provider raw-file exclusion manifest with provenance/hash references only",
+    "SQL field allow-list plus recursive credential, token and secret-key filtering",
+    "Guarded operator deletion command with dry-run default and double destructive confirmation",
+    "Transactional deletion of athlete-owned primary data including provider raw ingestion records",
+    "Historical audit detail payload redaction while retaining bounded event/security metadata and minimal deletion evidence",
+    "Documented backup/restore deletion-replay rule and machine-readable privacy rollout gate",
+    "Automated application logging contract confirming sensitive request bodies are not emitted by default"
+  ],
+  "productionGate": {
+    "status": "blocked-for-broad-rollout-until-production-controls-verified",
+    "owner": "VI-007/#27",
+    "pending": [
+      "record production security-audit retention window",
+      "record backup retention/expiry and restore window",
+      "test deletion replay after restore",
+      "verify reverse-proxy and Authentik logs omit request bodies and credential headers"
+    ]
+  },
+  "residualRisks": [
+    "The export is synchronous and intentionally complete for one athlete; very large future longitudinal datasets may need streaming without changing the contract.",
+    "Athlete deletion is operator-controlled in v1 rather than an athlete-facing destructive UI.",
+    "Broad multi-user rollout remains blocked until VI-007 closes all production-specific privacy controls."
+  ],
+  "status": "closed-with-followups",
+  "nextSkill": "iterate-software-projects"
+}
