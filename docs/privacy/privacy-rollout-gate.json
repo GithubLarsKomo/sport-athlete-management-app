@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "gateId": "rowing-sport-os-v1-privacy-rollout",
+  "requirements": ["REQ-DATA-001", "REQ-DATA-002", "REQ-DATA-003", "REQ-DATA-004"],
+  "status": "blocked-for-broad-rollout-until-production-controls-verified",
+  "implementationControls": {
+    "athleteSelfServiceExport": "implemented",
+    "assignedCoachExportBoundary": "implemented",
+    "exportAudit": "implemented",
+    "providerRawFilesInSelfExport": "references-only",
+    "recursiveSecretRemoval": "implemented",
+    "operatorDeletionProcedure": "implemented",
+    "primaryDataDeletion": "transactional",
+    "securityAuditTreatment": "retained-after-primary-deletion",
+    "applicationRequestBodyLogging": "disabled-by-design"
+  },
+  "productionControlsRequiredBeforeBroadRollout": [
+    {
+      "id": "PRIV-PROD-001",
+      "control": "record production security-audit retention window",
+      "owner": "VI-007/#27",
+      "status": "pending"
+    },
+    {
+      "id": "PRIV-PROD-002",
+      "control": "record actual backup retention/expiry and restore window",
+      "owner": "VI-007/#27",
+      "status": "pending"
+    },
+    {
+      "id": "PRIV-PROD-003",
+      "control": "test restore and replay deletion requests completed after restored point",
+      "owner": "VI-007/#27",
+      "status": "pending"
+    },
+    {
+      "id": "PRIV-PROD-004",
+      "control": "verify reverse proxy and Authentik access logs do not emit request bodies or credential headers",
+      "owner": "VI-007/#27",
+      "status": "pending"
+    }
+  ],
+  "policy": {
+    "providerRawStorage": "primary-database-provenance-and-reconciliation-only",
+    "providerRawSelfExport": "excluded",
+    "deletionRequest": "operator-controlled-v1",
+    "auditAfterDeletion": "retain-bounded-security-evidence",
+    "restoreRule": "reapply-post-restore-point-deletions-before-service-exposure"
+  },
+  "evidence": {
+    "runbook": "docs/privacy/data-governance-v1.md",
+    "exportContract": "src/domain/data-export.mjs",
+    "exportRepository": "src/persistence/data-export-repository.mjs",
+    "operatorCommand": "npm run privacy:delete -- --athlete=<athlete-id>"
+  }
+}
