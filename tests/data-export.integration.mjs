@@ -34,6 +34,14 @@ test('database export exposes provenance references but not raw provider telemet
     access_token:'stored-secret'
   },subject);
 
+  await repository.createGoal(athleteId,{
+    goal_type:'performance',
+    description:'Sensitive private goal text',
+    target_value:360,
+    target_unit:'seconds',
+    priority:1
+  },subject);
+
   const activityId=randomUUID();
   await db.query(
     'INSERT INTO activities (id, athlete_id, activity_type, started_at, ended_at, duration_s, distance_m, canonical_source, canonical_summary_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -66,9 +74,15 @@ test('database export exposes provenance references but not raw provider telemet
   assert.equal(rawRemaining.length,0);
 
   const audit=await db.query(
-    "SELECT event_type, actor_subject, details_json FROM audit_log WHERE athlete_id=? AND event_type IN ('privacy.deletion_started','privacy.deletion_completed') ORDER BY id",
+    "SELECT event_type, actor_subject, details_json FROM audit_log WHERE athlete_id=? ORDER BY id",
     [athleteId]
   );
-  assert.deepEqual(audit.map(row=>row.event_type),['privacy.deletion_started','privacy.deletion_completed']);
-  assert.ok(audit.every(row=>row.actor_subject==='operator:test'));
+  const deletionEvents=audit.filter(row=>['privacy.deletion_started','privacy.deletion_completed'].includes(row.event_type));
+  assert.deepEqual(deletionEvents.map(row=>row.event_type),['privacy.deletion_started','privacy.deletion_completed']);
+  assert.ok(deletionEvents.every(row=>row.actor_subject==='operator:test'));
+
+  const goalAudit=audit.find(row=>row.event_type==='goal.created');
+  assert.ok(goalAudit);
+  assert.deepEqual(goalAudit.details_json,{privacy_redacted:true,event_metadata_retained:true});
+  assert.doesNotMatch(JSON.stringify(audit),/Sensitive private goal text/);
 });
