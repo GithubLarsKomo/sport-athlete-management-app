@@ -56,9 +56,16 @@ test('athlete data export recursively removes secrets and raw provider payload k
   assert.equal(exportContainsForbiddenKeys(result), false);
 
   const serialized = JSON.stringify(result);
-  for (const forbidden of ['secret-2','must-never-appear','samples_json','intervals_json','raw_payload_json','access_token','refresh_token','authorization']) {
-    assert.doesNotMatch(serialized, new RegExp(forbidden));
+  for (const forbiddenValue of ['secret-2','must-never-appear','drop']) {
+    assert.doesNotMatch(serialized, new RegExp(forbiddenValue));
   }
+  assert.deepEqual(
+    result.manifest.provider_raw_files.excluded_source_fields,
+    ['intervals_json','samples_json','raw_payload_json']
+  );
+  assert.equal('raw_payload_json' in result.data.journal.activity_sources[0], false);
+  assert.equal('samples_json' in result.data.journal.activity_sources[0], false);
+  assert.equal('intervals_json' in result.data.journal.activity_sources[0], false);
 });
 
 test('sanitizer preserves ordinary provenance while stripping credential-shaped nested keys', () => {
