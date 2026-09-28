@@ -3,7 +3,7 @@
   "projectId": "rowing-sport-os-journal",
   "repository": "GithubLarsKomo/sport-athlete-management-app",
   "memoryRoot": "docs/project-memory/INDEX.md",
-  "latestEvent": "docs/project-memory/events/EVT-20260928-093759-vi-004-delivered.md",
+  "latestEvent": "docs/project-memory/events/EVT-20260928-140703-vi-005-delivered.md",
   "currentStage": "backlog",
   "canonicalArtifacts": [
     {
@@ -95,6 +95,18 @@
       "path": "docs/project-memory/events/EVT-20260928-093759-vi-004-delivered.md",
       "status": "completed",
       "ref": "c2c206df9b80746467dcc5a27c200c2df88d0e2f"
+    },
+    {
+      "type": "engineering-delivery-status",
+      "path": "docs/engineering/vi-005/engineering-delivery-status.json",
+      "status": "delivered",
+      "ref": "1204178245e40834dc576da53989e10311e77824"
+    },
+    {
+      "type": "delivered-increment",
+      "path": "docs/project-memory/events/EVT-20260928-140703-vi-005-delivered.md",
+      "status": "completed",
+      "ref": "1204178245e40834dc576da53989e10311e77824"
     }
   ],
   "decisions": [
@@ -111,18 +123,18 @@
   ],
   "openLoops": [
     {
-      "id": "OPEN-012",
+      "id": "OPEN-013",
       "type": "pending",
-      "summary": "Implement VI-005 / GitHub #25.",
-      "nextAction": "Add deterministic minimized adaptation handoff export, fail-closed proposal import and explicit single-application-safe apply."
+      "summary": "Implement VI-006 / GitHub #26.",
+      "nextAction": "Add authenticated athlete data export and verify retention, deletion, backup and sensitive-logging rollout gates."
     }
   ],
   "lastVerified": {
-    "headSha": "c2c206df9b80746467dcc5a27c200c2df88d0e2f",
-    "at": "2026-09-28T09:37:59+02:00"
+    "headSha": "1204178245e40834dc576da53989e10311e77824",
+    "at": "2026-09-28T14:07:03+02:00"
   },
   "nextAction": {
-    "description": "Implement VI-005 / GitHub issue #25.",
+    "description": "Implement VI-006 / GitHub issue #26.",
     "skill": "iterate-software-projects"
   }
 }
