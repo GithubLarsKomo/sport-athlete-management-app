@@ -16,6 +16,7 @@ import { normalizeConcept2Result, normalizeFileImport } from './domain/activity-
 import { fetchConcept2Results } from './domain/concept2-client.mjs';
 import { validateCustomProtocol, validatePerformanceTestPlan, validatePerformanceTestResult } from './domain/performance-tests.mjs';
 import { buildAdaptationHandoff, proposalToAdaptationDecision, validateAdaptationProposal } from './domain/adaptation-handoff.mjs';
+import { buildAthleteDataExport } from './domain/data-export.mjs';
 
 const SITE_ROOT = resolve(process.cwd(), 'site');
 const TYPES = new Map([['.html','text/html; charset=utf-8'],['.css','text/css; charset=utf-8'],['.js','text/javascript; charset=utf-8'],['.svg','image/svg+xml'],['.png','image/png'],['.json','application/json; charset=utf-8']]);
@@ -214,6 +215,27 @@ export function createApplication({ config, repository }) {
           return sendJson(res, 403, { error: 'athlete_scope_forbidden' });
         }
       }
+      if (req.method === 'GET' && url.pathname === '/api/v1/data/export') {
+        const exportId = randomUUID();
+        const source = await repository.getAthleteDataExportSource(athleteId);
+        const dataExport = buildAthleteDataExport({ athleteId, exportId, source });
+        await repository.audit(
+          athleteId,
+          identity.subject,
+          'data.exported',
+          'athlete_data_export',
+          exportId,
+          {
+            actor_role: principal.role,
+            provider_raw_files_included: false,
+            record_counts: dataExport.manifest.record_counts
+          }
+        );
+        return sendJson(res, 200, dataExport, {
+          'Content-Disposition': `attachment; filename="sport-athlete-data-export-${localDate()}.json"`
+        });
+      }
+
       if (req.method === 'GET' && url.pathname === '/api/v1/athlete/profile') return sendJson(res, 200, { profile: await repository.getProfile(athleteId) });
       if (req.method === 'PUT' && url.pathname === '/api/v1/athlete/profile') {
         const body = await readJson(req);
