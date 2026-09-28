@@ -83,6 +83,7 @@ test('database export exposes provenance references but not raw provider telemet
 
   const goalAudit=audit.find(row=>row.event_type==='goal.created');
   assert.ok(goalAudit);
-  assert.deepEqual(goalAudit.details_json,{privacy_redacted:true,event_metadata_retained:true});
+  const goalAuditDetails=typeof goalAudit.details_json==='string' ? JSON.parse(goalAudit.details_json) : goalAudit.details_json;
+  assert.deepEqual(goalAuditDetails,{privacy_redacted:true,event_metadata_retained:true});
   assert.doesNotMatch(JSON.stringify(audit),/Sensitive private goal text/);
 });
