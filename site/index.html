@@ -352,6 +352,21 @@
       <h2>Adaptationsentscheidungen</h2>
       <div id="history" class="history"></div>
     </section>
+
+    <section id="dataExportCard" class="card data-export-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">DATENSCHUTZ · SELBSTAUSKUNFT</p>
+          <h2>Strukturierten Datenexport erstellen</h2>
+          <p class="muted">Der Export umfasst den longitudinalen Trainingsdatensatz und relevante Audit-Ereignisse. Rohdateien und Roh-Telemetrie der Provider werden nicht eingebettet; stattdessen enthält der Export nachvollziehbare Provider-, External-ID- und SHA-256-Referenzen. Secret-Felder werden entfernt.</p>
+        </div>
+        <span class="pill">JSON · no raw files</span>
+      </div>
+      <div class="decision-actions">
+        <button id="downloadDataExport" class="secondary" type="button">Datenexport herunterladen</button>
+      </div>
+      <p id="dataExportMessage" class="message"></p>
+    </section>
   </main>
   <script type="module" src="/app/app.js"></script>
   <script type="module" src="/app/p1.js"></script>
