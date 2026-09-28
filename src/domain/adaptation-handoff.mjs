@@ -150,17 +150,27 @@ function minimizeActual(actual) {
 
 function minimizeComparison(comparison) {
   if (!object(comparison)) return { from:null, to:null, sessions:[], unplanned:[], summary:{} };
+  const sessions = (comparison.sessions || []).map(record => ({
+    plan: minimizePlan(record.plan),
+    actual: minimizeActual(record.actual)
+  })).sort((a, b) => {
+    const left = `${a.plan?.local_date || ''}|${a.plan?.planned_start || ''}|${a.plan?.planned_session_id || ''}`;
+    const right = `${b.plan?.local_date || ''}|${b.plan?.planned_start || ''}|${b.plan?.planned_session_id || ''}`;
+    return left.localeCompare(right);
+  });
+  const unplanned = (comparison.unplanned || []).map(record => ({
+    plan: null,
+    actual: minimizeActual(record.actual)
+  })).sort((a, b) => {
+    const left = `${a.actual?.started_at || ''}|${a.actual?.completed_session_id || a.actual?.activity_id || ''}`;
+    const right = `${b.actual?.started_at || ''}|${b.actual?.completed_session_id || b.actual?.activity_id || ''}`;
+    return left.localeCompare(right);
+  });
   return {
     from: comparison.from,
     to: comparison.to,
-    sessions: (comparison.sessions || []).map(record => ({
-      plan: minimizePlan(record.plan),
-      actual: minimizeActual(record.actual)
-    })),
-    unplanned: (comparison.unplanned || []).map(record => ({
-      plan: null,
-      actual: minimizeActual(record.actual)
-    })),
+    sessions,
+    unplanned,
     summary: comparison.summary || {}
   };
 }
@@ -308,11 +318,17 @@ export async function buildAdaptationHandoff(repository, athleteId, fromDate) {
     repository.listPerformanceTests(athleteId, 20),
     repository.listPlanImports(athleteId, 1)
   ]);
-  const goals = (goalsRaw || []).map(minimizeGoal);
+  const goals = (goalsRaw || []).map(minimizeGoal).sort((a, b) => canonicalJson(a).localeCompare(canonicalJson(b)));
   const planImport = minimizePlanImport((imports || [])[0] || null);
   const comparison = minimizeComparison(comparisonRaw);
-  const checkins = (checkinsRaw || []).map(minimizeCheckin).filter(Boolean);
-  const tests = (testsRaw || []).map(minimizeTest).filter(Boolean);
+  const checkins = (checkinsRaw || []).map(minimizeCheckin).filter(Boolean)
+    .sort((a, b) => String(a.local_date || '').localeCompare(String(b.local_date || '')));
+  const tests = (testsRaw || []).map(minimizeTest).filter(Boolean)
+    .sort((a, b) => {
+      const left = `${a.scheduled_at || ''}|${a.test_id || ''}`;
+      const right = `${b.scheduled_at || ''}|${b.test_id || ''}`;
+      return left.localeCompare(right);
+    });
   const minimizedProfile = minimizeProfile(profile);
   const body = {
     schema_version: 1,
