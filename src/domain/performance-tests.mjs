@@ -138,6 +138,8 @@ export function validateCustomProtocol(value) {
   const errors = [];
   if (!object(value)) return ['protocol must be an object'];
   if (!nonEmpty(value.name)) errors.push('name required');
+  if (value.protocol_id != null && !nonEmpty(value.protocol_id)) errors.push('protocol_id must be non-empty when supplied');
+  if (value.version != null && (!Number.isInteger(Number(value.version)) || Number(value.version) < 1)) errors.push('version must be >= 1');
   if (!MODALITIES.has(value.modality)) errors.push('modality must be rowerg or bike');
   if (value.protocol_kind !== 'staged') errors.push('custom v1 protocol_kind must be staged');
   if (!Array.isArray(value.stages) || value.stages.length < 1) {
@@ -187,6 +189,10 @@ export function validatePerformanceTestResult(value, protocol) {
   if (value.notes != null && typeof value.notes !== 'string') errors.push('notes must be a string');
   if (value.metrics != null) errors.push(...validateMetricMap(value.metrics, 'metrics'));
 
+  if (protocol?.protocol_kind === 'fixed_effort' && (!object(value.metrics) || Object.keys(value.metrics).length < 1)) {
+    errors.push('fixed effort result requires at least one metric');
+  }
+
   if (protocol?.protocol_kind === 'staged') {
     if (!Array.isArray(value.stages) || value.stages.length < 1) errors.push('staged protocol requires at least one result stage');
   }
@@ -201,6 +207,7 @@ export function validatePerformanceTestResult(value, protocol) {
         if (stageNumbers.has(stage.stage_number)) errors.push(`duplicate result stage_number ${stage.stage_number}`);
         stageNumbers.add(stage.stage_number);
         errors.push(...validateMetricMap(stage.metrics || {}, `${label}.metrics`));
+        if (!object(stage.metrics) || Object.keys(stage.metrics).length < 1) errors.push(`${label}.metrics must contain at least one classified value`);
         if (stage.comment != null && typeof stage.comment !== 'string') errors.push(`${label}.comment must be a string`);
       });
     }
